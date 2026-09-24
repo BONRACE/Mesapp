@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Mon profil — NovaTickets{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto glass-strong rounded-2xl p-8 shadow-soft">
+  <h1 class="text-2xl font-bold mb-6">Mon profil</h1>
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div><label class="text-sm text-muted mb-1 block">{{ field.label }}</label>{{ field }}</div>
+    {% endfor %}
+    <button type="submit" class="btn-primary w-full mt-2">Enregistrer</button>
+  </form>
+</div>
+{% endblock %}

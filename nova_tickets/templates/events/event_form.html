@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+{% block title %}Créer un événement — NovaTickets{% endblock %}
+{% block content %}
+<style>
+  .field-label { display:block; font-size:.8rem; font-weight:600; color:#14532D; margin-bottom:.4rem; }
+  .field-input, select.field-input, textarea.field-input {
+    width:100%; background:#fff; border:1px solid #CFEAD9; border-radius:.6rem;
+    padding:.6rem .8rem; color:#0B2818; font-size:.9rem;
+  }
+  .field-input:focus { outline:none; border-color:#16A34A; box-shadow:0 0 0 3px rgba(47,111,228,.15); }
+  .upload-box {
+    border:1.5px dashed #BFE6CB; border-radius:.7rem; background:#F1FAF4; padding:1rem;
+    display:flex; align-items:center; gap:.6rem; cursor:pointer; transition:border-color .15s ease;
+    min-height:3.6rem;
+  }
+  .upload-box:hover { border-color:#16A34A; }
+  .sidebar-link { display:flex; align-items:center; gap:.65rem; padding:.7rem .9rem; border-radius:.6rem;
+    font-size:.9rem; color:#5B6B82; font-weight:500; }
+  .sidebar-link.active { background:#DCFCE7; color:#15803D; font-weight:700; }
+</style>
+
+<div class="bg-[#F2FBF5] text-[#0B2818] rounded-2xl overflow-hidden shadow-2xl grid md:grid-cols-[260px_1fr]">
+
+  <!-- Sidebar -->
+  <aside class="p-6 border-r border-black/5 bg-white/60">
+    <h2 class="text-lg font-extrabold text-[#0B2818] mb-6 leading-tight">Tableau de Bord<br>de l'Organisateur</h2>
+    <nav class="space-y-1">
+      <a href="{% url 'events:organisateur_dashboard' %}" class="sidebar-link">
+        <span>🗓️</span> Mes Événements
+      </a>
+      <a href="{% url 'events:event_create' %}" class="sidebar-link active">
+        <span>📝</span> Créer un Événement
+      </a>
+      <a href="#" class="sidebar-link opacity-60 cursor-default" title="Bientôt disponible">
+        <span>📊</span> Rapports <span class="text-[10px]">(bientôt)</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="p-8">
+    <form method="post" enctype="multipart/form-data" id="event-form">
+      {% csrf_token %}
+
+      <div class="flex items-start justify-between mb-8 gap-4 flex-wrap">
+        <h1 class="text-2xl md:text-3xl font-extrabold">Créer un Nouvel Événement</h1>
+        <button type="submit" class="bg-gradient-to-r from-[#16A34A] to-[#15803D] hover:brightness-105 text-white font-bold rounded-xl px-6 py-3 shadow-md transition">
+          Publier l'Événement
+        </button>
+      </div>
+
+      <div class="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
+
+        <!-- Carte formulaire -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm">
+          <h3 class="font-bold text-lg mb-5">Formulaire de Publication</h3>
+
+          <div class="grid md:grid-cols-2 gap-5 mb-5">
+            <div>
+              <label class="field-label">Nom de l'événement</label>
+              {{ form.nom }}
+            </div>
+            <div>
+              <label class="field-label">Visuel de l'événement</label>
+              <label for="id_visuel" class="upload-box">
+                <span>🖼️</span>
+                <span id="visuel-filename" class="text-sm text-[#5B6B82] truncate">Cliquer pour choisir un fichier</span>
+              </label>
+              {{ form.visuel }}
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-5 mb-5">
+            <div>
+              <label class="field-label">Dates de l'événement (Début et Fin)</label>
+              <div class="flex items-center gap-2">
+                {{ form.date_debut }}
+                <span class="text-[#94A3B8]">–</span>
+                {{ form.date_fin }}
+              </div>
+            </div>
+            <div>
+              <label class="field-label">Heure de début de l'événement</label>
+              {{ form.heure_debut }}
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-5 mb-5">
+            <div>
+              <label class="field-label">Date limite d'achat des tickets</label>
+              {{ form.date_limite_achat }}
+            </div>
+            <div>
+              <label class="field-label">Logo de l'événement</label>
+              <label for="id_logo" class="upload-box">
+                <span>🖼️</span>
+                <span id="logo-filename" class="text-sm text-[#5B6B82] truncate">Cliquer pour choisir un fichier</span>
+              </label>
+              {{ form.logo }}
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-5 mb-6">
+            <div>
+              <label class="field-label">Lieu</label>
+              {{ form.lieu }}
+            </div>
+            <div>
+              <label class="field-label">Ville</label>
+              {{ form.ville }}
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="field-label">Description (optionnel)</label>
+            {{ form.description }}
+          </div>
+
+          <hr class="border-[#E3F5E9] mb-6">
+
+          <!-- Types de billets -->
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h3 class="font-bold text-lg">Types et stocks de tickets disponibles</h3>
+            <button type="button" id="btn-add-ticket-type"
+                    class="bg-[#166534] hover:bg-[#14532D] text-white text-sm font-semibold rounded-lg px-4 py-2.5 transition">
+              ＋ Ajouter un type de ticket
+            </button>
+          </div>
+
+          <div id="ticket-type-list" class="space-y-2 mb-2"></div>
+          <p id="ticket-type-empty" class="text-sm text-[#94A3B8] py-2">Aucun type de ticket ajouté pour l'instant.</p>
+
+          <!-- Formset Django réel (piloté par JS, non visible) -->
+          <div class="hidden">
+            {{ formset.management_form }}
+            <div id="empty-form-row">
+              {{ formset.empty_form.nom }}
+              {{ formset.empty_form.description }}
+              {{ formset.empty_form.prix }}
+              {{ formset.empty_form.quantite_disponible }}
+              {{ formset.empty_form.couleur_badge }}
+              {{ formset.empty_form.DELETE }}
+            </div>
+            <div id="existing-forms">
+              {% for tt_form in formset %}
+              <div class="existing-form" data-index="{{ forloop.counter0 }}">
+                {{ tt_form.nom }}{{ tt_form.description }}{{ tt_form.prix }}
+                {{ tt_form.quantite_disponible }}{{ tt_form.couleur_badge }}{{ tt_form.DELETE }}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Résumé live -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm lg:sticky lg:top-6">
+          <h3 class="font-bold text-lg mb-4">Résumé de l'Événement</h3>
+          <p id="summary-nom" class="font-extrabold text-[#0B2818] mb-3">Nouvel événement</p>
+          <div class="space-y-2 text-sm">
+            <p><span class="text-[#94A3B8]">Visuel :</span> <span id="summary-visuel" class="font-semibold">—</span></p>
+            <p><span class="text-[#94A3B8]">Dates :</span> <span id="summary-dates" class="font-semibold">—</span></p>
+            <p><span class="text-[#94A3B8]">Types de billets :</span> <span id="summary-types" class="font-semibold">0</span></p>
+          </div>
+          <p class="text-xs text-[#94A3B8] mt-5 mb-1">Progression du formulaire</p>
+          <div class="w-full h-2 bg-[#E3F5E9] rounded-full overflow-hidden">
+            <div id="completion-bar" class="h-full bg-[#16A34A] transition-all" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<!-- Modal ajout/édition de type de ticket -->
+<div id="tt-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+    <h3 id="tt-modal-title" class="font-bold text-lg mb-4">Ajouter un type de ticket</h3>
+    <div class="space-y-3">
+      <div>
+        <label class="field-label">Nom (ex : VIP, Standard, Early Bird)</label>
+        <input type="text" id="tt-nom" class="field-input">
+      </div>
+      <div>
+        <label class="field-label">Avantages inclus (optionnel)</label>
+        <input type="text" id="tt-description" class="field-input">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="field-label">Prix (FCFA)</label>
+          <input type="number" id="tt-prix" class="field-input">
+        </div>
+        <div>
+          <label class="field-label">Quantité</label>
+          <input type="number" id="tt-quantite" class="field-input">
+        </div>
+      </div>
+      <div>
+        <label class="field-label">Couleur du badge</label>
+        <select id="tt-couleur" class="field-input">
+          <option value="violet">Violet</option>
+          <option value="or">Or</option>
+          <option value="cyan">Cyan</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 mt-6">
+      <button type="button" id="tt-modal-cancel" class="flex-1 border border-[#CFEAD9] text-[#5B6B82] font-semibold rounded-lg py-2.5">Annuler</button>
+      <button type="button" id="tt-modal-save" class="flex-1 bg-[#16A34A] text-white font-semibold rounded-lg py-2.5">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const PREFIX = "tickettype";
+  const totalFormsInput = document.querySelector(`#id_${PREFIX}-TOTAL_FORMS`);
+  const emptyRow = document.getElementById("empty-form-row");
+  const emptyTemplate = emptyRow.innerHTML;
+  const hiddenContainer = emptyRow.parentElement;
+  const list = document.getElementById("ticket-type-list");
+  const emptyMsg = document.getElementById("ticket-type-empty");
+  const modal = document.getElementById("tt-modal");
+  const modalTitle = document.getElementById("tt-modal-title");
+  let editIndex = null; // null = mode ajout
+
+  function fieldByName(root, suffix) {
+    return root.querySelector(`[name$="-${suffix}"]`);
+  }
+
+  function refreshSummary() {
+    const count = list.querySelectorAll(".tt-row:not(.deleted)").length;
+    document.getElementById("summary-types").textContent = count;
+    emptyMsg.classList.toggle("hidden", count > 0);
+    updateCompletion();
+  }
+
+  function updateCompletion() {
+    const requiredIds = ["id_nom", "id_date_debut", "id_date_fin", "id_heure_debut", "id_date_limite_achat"];
+    let filled = 0;
+    requiredIds.forEach(id => { const el = document.getElementById(id); if (el && el.value) filled++; });
+    const hasTicketType = list.querySelectorAll(".tt-row:not(.deleted)").length > 0 ? 1 : 0;
+    const total = requiredIds.length + 1;
+    const pct = Math.round(((filled + hasTicketType) / total) * 100);
+    document.getElementById("completion-bar").style.width = pct + "%";
+  }
+
+  function renderRow(index, data) {
+    let row = list.querySelector(`.tt-row[data-index="${index}"]`);
+    if (!row) {
+      row = document.createElement("div");
+      row.className = "tt-row flex items-center justify-between gap-3 border border-[#E3F5E9] rounded-lg px-4 py-3";
+      row.dataset.index = index;
+      list.appendChild(row);
+    }
+    const n = list.querySelectorAll(".tt-row:not(.deleted)").length;
+    row.innerHTML = `
+      <p class="text-sm text-[#0B2818]">
+        <span class="font-semibold">Type :</span> ${data.nom} —
+        <span class="font-semibold">Prix :</span> ${parseFloat(data.prix || 0).toFixed(2)} FCFA —
+        <span class="font-semibold">Quantité :</span> ${data.quantite}
+      </p>
+      <div class="flex items-center gap-3 shrink-0">
+        <button type="button" data-edit="${index}" class="text-[#5B6B82] hover:text-[#16A34A]">✏️</button>
+        <button type="button" data-delete="${index}" class="text-[#5B6B82] hover:text-red-500">🗑️</button>
+      </div>`;
+    row.querySelector(`[data-edit]`).addEventListener("click", () => openModal(index));
+    row.querySelector(`[data-delete]`).addEventListener("click", () => deleteRow(index));
+  }
+
+  function setHiddenValues(index, data) {
+    let form = hiddenContainer.querySelector(`.tt-hidden-form[data-index="${index}"]`);
+    if (!form) {
+      form = document.createElement("div");
+      form.className = "tt-hidden-form";
+      form.dataset.index = index;
+      form.innerHTML = emptyTemplate.replaceAll("__prefix__", index);
+      hiddenContainer.appendChild(form);
+    }
+    fieldByName(form, "nom").value = data.nom;
+    fieldByName(form, "description").value = data.description || "";
+    fieldByName(form, "prix").value = data.prix;
+    fieldByName(form, "quantite_disponible").value = data.quantite;
+    const couleurField = fieldByName(form, "couleur_badge");
+    if (couleurField) couleurField.value = data.couleur || "violet";
+    return form;
+  }
+
+  function addTicketType(data) {
+    const index = parseInt(totalFormsInput.value, 10);
+    setHiddenValues(index, data);
+    totalFormsInput.value = index + 1;
+    renderRow(index, data);
+    refreshSummary();
+  }
+
+  function updateTicketType(index, data) {
+    setHiddenValues(index, data);
+    renderRow(index, data);
+    refreshSummary();
+  }
+
+  function deleteRow(index) {
+    const row = list.querySelector(`.tt-row[data-index="${index}"]`);
+    if (row) { row.classList.add("deleted", "hidden"); }
+    const form = hiddenContainer.querySelector(`.tt-hidden-form[data-index="${index}"]`);
+    if (form) {
+      const del = fieldByName(form, "DELETE");
+      if (del) del.checked = true;
+    }
+    refreshSummary();
+  }
+
+  function openModal(index) {
+    editIndex = index;
+    if (index === null) {
+      modalTitle.textContent = "Ajouter un type de ticket";
+      document.getElementById("tt-nom").value = "";
+      document.getElementById("tt-description").value = "";
+      document.getElementById("tt-prix").value = "";
+      document.getElementById("tt-quantite").value = "";
+      document.getElementById("tt-couleur").value = "violet";
+    } else {
+      modalTitle.textContent = "Modifier le type de ticket";
+      const form = hiddenContainer.querySelector(`.tt-hidden-form[data-index="${index}"]`);
+      document.getElementById("tt-nom").value = fieldByName(form, "nom").value;
+      document.getElementById("tt-description").value = fieldByName(form, "description").value;
+      document.getElementById("tt-prix").value = fieldByName(form, "prix").value;
+      document.getElementById("tt-quantite").value = fieldByName(form, "quantite_disponible").value;
+      document.getElementById("tt-couleur").value = fieldByName(form, "couleur_badge").value || "violet";
+    }
+    modal.classList.remove("hidden");
+  }
+
+  document.getElementById("btn-add-ticket-type").addEventListener("click", () => openModal(null));
+  document.getElementById("tt-modal-cancel").addEventListener("click", () => modal.classList.add("hidden"));
+  document.getElementById("tt-modal-save").addEventListener("click", () => {
+    const data = {
+      nom: document.getElementById("tt-nom").value.trim(),
+      description: document.getElementById("tt-description").value.trim(),
+      prix: document.getElementById("tt-prix").value || 0,
+      quantite: document.getElementById("tt-quantite").value || 0,
+      couleur: document.getElementById("tt-couleur").value,
+    };
+    if (!data.nom) { document.getElementById("tt-nom").focus(); return; }
+    if (editIndex === null) { addTicketType(data); } else { updateTicketType(editIndex, data); }
+    modal.classList.add("hidden");
+  });
+
+  // Initialiser à partir des formulaires déjà existants (repost après erreur de validation)
+  document.querySelectorAll("#existing-forms .existing-form").forEach(div => {
+    const index = div.dataset.index;
+    const delField = fieldByName(div, "DELETE");
+    if (delField && delField.checked) return;
+    const nomVal = fieldByName(div, "nom").value;
+    if (!nomVal) return;
+    hiddenContainer.appendChild(Object.assign(document.createElement("div"), {
+      className: "tt-hidden-form", dataset: { index } }));
+    const target = hiddenContainer.querySelector(`.tt-hidden-form[data-index="${index}"]`);
+    target.innerHTML = div.innerHTML;
+    renderRow(index, {
+      nom: nomVal,
+      prix: fieldByName(div, "prix").value,
+      quantite: fieldByName(div, "quantite_disponible").value,
+    });
+  });
+  refreshSummary();
+
+  // Aperçu des fichiers uploadés
+  function bindFileInput(inputId, labelId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener("change", () => {
+      document.getElementById(labelId).textContent = input.files[0] ? input.files[0].name : "Cliquer pour choisir un fichier";
+      updateCompletion();
+      document.getElementById("summary-visuel").textContent =
+        document.getElementById("id_visuel").files[0] ? document.getElementById("id_visuel").files[0].name : "—";
+    });
+  }
+  bindFileInput("id_visuel", "visuel-filename");
+  bindFileInput("id_logo", "logo-filename");
+
+  // Résumé live
+  function updateSummary() {
+    const nom = document.getElementById("id_nom").value;
+    document.getElementById("summary-nom").textContent = nom || "Nouvel événement";
+    const d1 = document.getElementById("id_date_debut").value;
+    const d2 = document.getElementById("id_date_fin").value;
+    document.getElementById("summary-dates").textContent = (d1 || d2) ? `${d1 || "?"} → ${d2 || "?"}` : "—";
+    updateCompletion();
+  }
+  ["id_nom", "id_date_debut", "id_date_fin", "id_heure_debut", "id_date_limite_achat"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", updateSummary);
+  });
+  updateSummary();
+})();
+</script>
+{% endblock %}

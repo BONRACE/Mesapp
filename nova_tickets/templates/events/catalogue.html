@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Événements — NovaTickets{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-8">Événements à venir</h1>
+<div class="grid md:grid-cols-3 gap-6">
+  {% for event in events %}
+  <a href="{{ event.get_absolute_url }}" class="glass rounded-2xl overflow-hidden hover:shadow-glow transition group">
+    <div class="h-40 bg-gradient-to-br from-neon/30 to-neon2/20 flex items-center justify-center text-4xl">
+      {% if event.visuel %}<img src="{{ event.visuel.url }}" class="w-full h-full object-cover">{% else %}🎫{% endif %}
+    </div>
+    <div class="p-5">
+      <span class="badge bg-black/5 text-muted mb-3">{{ event.date_debut|date:"d M Y" }}</span>
+      <h3 class="font-bold group-hover:text-neon transition">{{ event.nom }}</h3>
+      <p class="text-muted text-sm mt-1">{{ event.ville }}</p>
+    </div>
+  </a>
+  {% empty %}
+  <p class="text-muted col-span-3">Aucun événement publié pour le moment.</p>
+  {% endfor %}
+</div>
+{% endblock %}

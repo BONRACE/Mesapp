@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Gérer {{ event.nom }} — NovaTickets{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-2">{{ event.nom }}</h1>
+<p class="text-muted mb-8">{{ event.date_debut|date:"d M Y" }} · {{ event.ville }}</p>
+
+<div class="grid md:grid-cols-4 gap-5 mb-10">
+  <div class="glass rounded-2xl p-5"><p class="text-muted text-xs mb-1">Billets vendus</p><p class="text-2xl font-bold text-neon">{{ event.billets_vendus }}</p></div>
+  <div class="glass rounded-2xl p-5"><p class="text-muted text-xs mb-1">Stock total</p><p class="text-2xl font-bold">{{ event.stock_total }}</p></div>
+  <div class="glass rounded-2xl p-5"><p class="text-muted text-xs mb-1">Remplissage</p><p class="text-2xl font-bold text-neon2">{{ event.taux_remplissage }}%</p></div>
+  <div class="glass rounded-2xl p-5"><p class="text-muted text-xs mb-1">Revenu</p><p class="text-2xl font-bold text-gold">{{ event.revenu_total|floatformat:0 }} FCFA</p></div>
+</div>
+
+<h2 class="text-xl font-bold mb-4">Types de billets</h2>
+<div class="grid md:grid-cols-3 gap-4 mb-10">
+  {% for tt in event.types_billets.all %}
+  <div class="glass rounded-xl p-4">
+    <p class="font-semibold">{{ tt.nom }}</p>
+    <p class="text-muted text-sm">{{ tt.quantite_vendue }} / {{ tt.quantite_disponible }} vendus</p>
+    <div class="w-full h-2 bg-black/5 rounded-full mt-2 overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-neon to-neon2" style="width:{% widthratio tt.quantite_vendue tt.quantite_disponible 100 %}%"></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 class="text-xl font-bold mb-4">Participants ({{ tickets|length }})</h2>
+<div class="glass-strong rounded-2xl overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-black/5 text-muted text-left">
+      <tr><th class="p-4">Nom</th><th class="p-4">Type</th><th class="p-4">Code</th><th class="p-4">Statut</th></tr>
+    </thead>
+    <tbody>
+      {% for t in tickets %}
+      <tr class="border-t border-black/5">
+        <td class="p-4">{{ t.spectateur.nom_complet }}</td>
+        <td class="p-4">{{ t.ticket_type.nom }}</td>
+        <td class="p-4 text-muted">{{ t.code }}</td>
+        <td class="p-4"><span class="badge bg-neon2/20 text-neon2">{{ t.get_statut_display }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

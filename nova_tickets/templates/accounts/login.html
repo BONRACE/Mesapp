@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Connexion — NovaTickets{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto glass-strong rounded-2xl p-8 shadow-soft">
+  <h1 class="text-2xl font-bold mb-6">Connexion</h1>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="text-sm text-muted mb-1 block">Nom d'utilisateur</label>
+      {{ form.username }}
+    </div>
+    <div>
+      <label class="text-sm text-muted mb-1 block">Mot de passe</label>
+      {{ form.password }}
+    </div>
+    <button type="submit" class="btn-primary w-full">Se connecter</button>
+  </form>
+  <p class="text-muted text-sm mt-6 text-center">
+    Pas de compte ? <a href="{% url 'accounts:register_choice' %}" class="text-neon2">S'inscrire</a>
+  </p>
+</div>
+{% endblock %}

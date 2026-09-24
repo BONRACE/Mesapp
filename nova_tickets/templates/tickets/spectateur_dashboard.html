@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Mon espace — NovaTickets{% endblock %}
+{% block content %}
+<div class="bg-[#F3FBF5] text-[#0B2818] rounded-2xl overflow-hidden shadow-2xl grid md:grid-cols-[280px_1fr]">
+
+  <!-- Sidebar -->
+  <aside class="p-6 border-r border-black/5">
+    <div class="bg-white rounded-2xl p-6 flex flex-col items-center text-center shadow-sm mb-6">
+      <div class="w-24 h-24 rounded-full bg-[#BEE3C8] border-2 border-[#94A3B8]/40 overflow-hidden flex items-center justify-center mb-3">
+        {% if user.photo %}
+          <img src="{{ user.photo.url }}" class="w-full h-full object-cover">
+        {% else %}
+          <span class="text-3xl text-white">🙂</span>
+        {% endif %}
+      </div>
+      <p class="text-sm text-[#94A3B8] mb-4">Photo de profil</p>
+
+      <div class="space-y-2 w-full">
+        <div>
+          <p class="text-xs text-[#94A3B8]">Nom</p>
+          <p class="font-bold text-[#0B2818]">{{ user.nom|default:"—" }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-[#94A3B8]">Prénoms</p>
+          <p class="font-bold text-[#0B2818]">{{ user.prenoms|default:"—" }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-[#94A3B8]">Sexe</p>
+          <p class="font-bold text-[#0B2818]">{{ user.get_sexe_display|default:"—" }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-[#94A3B8]">Profession</p>
+          <p class="font-bold text-[#0B2818]">{{ user.profession|default:"—" }}</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="space-y-1">
+      <a href="#tableau" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#DCFCE7] text-[#166534] font-semibold text-sm">
+        <span>🏠</span> Tableau de bord
+      </a>
+      <a href="#historique" class="flex items-center gap-3 px-4 py-3 rounded-xl text-[#5B6B82] hover:bg-white text-sm transition">
+        <span>↺</span> Historique
+      </a>
+      <a href="{% url 'accounts:profile_edit' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-[#5B6B82] hover:bg-white text-sm transition">
+        <span>⚙️</span> Modifier le profil
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="p-8" id="tableau">
+    <h1 class="text-2xl md:text-3xl font-extrabold mb-6">Tableau de Bord du Spectateur</h1>
+
+    {% if ticket_en_cours %}
+    {% with t=ticket_en_cours %}
+    <div class="bg-white rounded-2xl overflow-hidden shadow-md mb-5">
+      <div class="bg-[#15803D] px-6 py-3">
+        <h2 class="text-white font-bold">Ticket en Cours</h2>
+      </div>
+
+      <div class="relative grid grid-cols-[1fr_auto_1fr] items-stretch">
+        <!-- Encoches "perforées" -->
+        <span class="hidden md:block absolute left-[66%] -translate-x-1/2 -top-0.5 w-4 h-4 rounded-full bg-[#F3FBF5]"></span>
+        <span class="hidden md:block absolute left-[66%] -translate-x-1/2 -bottom-0.5 w-4 h-4 rounded-full bg-[#F3FBF5]"></span>
+
+        <!-- Colonne infos -->
+        <div class="px-6 py-5 col-span-2">
+          <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-full bg-gradient-to-br from-[#16A34A] to-[#22C55E] flex items-center justify-center text-white text-xs">✦</span>
+              <span class="text-sm font-semibold text-[#166534] leading-tight">Plateforme<br>de Billetterie</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-full bg-gradient-to-br from-[#4ADE80] to-[#15803D] flex items-center justify-center text-white text-xs">★</span>
+              <span class="text-sm font-medium text-[#0B2818]">{{ t.event.organisateur.nom_structure|default:t.event.organisateur.nom_complet }}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-[1fr_auto] gap-6">
+            <div>
+              <p class="text-lg font-extrabold text-[#0B2818] mb-1">{{ t.event.nom }}</p>
+              <p class="text-sm text-[#5B6B82] mb-4">{{ t.ticket_type.nom }}</p>
+
+              <p class="text-xs text-[#94A3B8]">Nom du Spectateur</p>
+              <p class="font-bold text-sm mb-1">{{ user.nom|default:"—" }}</p>
+              <p class="text-xs text-[#94A3B8]">Prénom du Spectateur</p>
+              <p class="font-bold text-sm mb-1">{{ user.prenoms|default:"—" }}</p>
+              <p class="text-xs text-[#94A3B8]">Sexe</p>
+              <p class="font-bold text-sm">{{ user.get_sexe_display|default:"—" }}</p>
+            </div>
+            <div class="flex flex-col items-center justify-center">
+              <div class="w-16 h-16 rounded-full bg-[#BEE3C8] overflow-hidden flex items-center justify-center">
+                {% if user.photo %}
+                  <img src="{{ user.photo.url }}" class="w-full h-full object-cover">
+                {% else %}
+                  <span class="text-2xl text-white">🙂</span>
+                {% endif %}
+              </div>
+              <p class="text-xs text-[#94A3B8] mt-1">Photo</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonne QR -->
+        <div class="border-l border-dashed border-[#CDEEDA] px-6 py-5 flex flex-col items-center justify-center min-w-[180px]">
+          <span class="badge bg-[#DCFCE7] text-[#166534] mb-4 text-[10px] font-bold">
+            STATUT : {{ t.statut_affiche|upper }}
+          </span>
+          <img src="{% url 'tickets:qr_image' t.id %}" class="w-28 h-28">
+          <p class="text-sm font-bold mt-2">Code QR</p>
+          <p class="text-xs text-[#94A3B8]">Scanner pour l'entrée</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-10">
+      <a href="{% url 'tickets:ticket_pdf' t.id %}"
+         class="flex items-center justify-center gap-2 bg-[#16A34A] hover:bg-[#15803D] text-white font-semibold rounded-xl py-4 transition">
+        ⬇ Télécharger la version PDF
+      </a>
+      <a href="{% url 'tickets:detail' t.id %}"
+         class="flex items-center justify-center gap-2 bg-[#166534] hover:bg-[#14532D] text-white font-semibold rounded-xl py-4 transition">
+        📱 Visualiser la version numérique
+      </a>
+    </div>
+    {% endwith %}
+    {% else %}
+    <div class="bg-white rounded-2xl p-8 text-center mb-10 shadow-sm">
+      <p class="text-[#5B6B82]">Aucun billet à venir pour le moment.</p>
+      <a href="{% url 'events:catalogue' %}" class="text-[#166534] font-semibold text-sm">Explorer les événements →</a>
+    </div>
+    {% endif %}
+
+    <!-- Historique -->
+    <div class="bg-white rounded-2xl shadow-sm p-6" id="historique">
+      <h2 class="text-xl font-bold mb-5">Historique</h2>
+      <div class="divide-y divide-black/5">
+        {% for t in historique %}
+        <div class="flex items-center gap-4 py-4">
+          <span class="bg-[#DCFCE7] text-[#166534] text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap">
+            {{ t.event.date_debut|date:"d M" }}
+          </span>
+          <p class="font-semibold flex-1">{{ t.event.nom }}</p>
+          <span class="text-sm text-[#5B6B82] hidden sm:inline">{{ t.event.date_debut|date:"d M Y" }}</span>
+          <span class="badge {{ t.statut_badge_css }} text-xs font-bold">{{ t.statut_affiche }}</span>
+        </div>
+        {% empty %}
+        <p class="text-[#94A3B8] py-4">Pas encore d'autre billet dans ton historique.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

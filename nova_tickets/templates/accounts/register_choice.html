@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Créer un compte — NovaTickets{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto text-center">
+  <h1 class="text-3xl font-bold mb-3">Rejoins NovaTickets</h1>
+  <p class="text-muted mb-10">Choisis le type de compte adapté à ton usage.</p>
+  <div class="grid md:grid-cols-2 gap-6">
+    <a href="{% url 'accounts:register_spectateur' %}" class="glass-strong rounded-2xl p-8 hover:shadow-glow transition text-left">
+      <div class="text-3xl mb-4">🙋</div>
+      <h3 class="font-bold text-lg mb-2">Je suis Spectateur</h3>
+      <p class="text-muted text-sm">Achète des billets, retrouve-les dans ton espace et accède à tes événements.</p>
+    </a>
+    <a href="{% url 'accounts:register_organisateur' %}" class="glass-strong rounded-2xl p-8 hover:shadow-glow transition text-left">
+      <div class="text-3xl mb-4">🎤</div>
+      <h3 class="font-bold text-lg mb-2">Je suis Organisateur</h3>
+      <p class="text-muted text-sm">Publie tes événements, gère les stocks de billets et suis tes statistiques.</p>
+    </a>
+  </div>
+</div>
+{% endblock %}

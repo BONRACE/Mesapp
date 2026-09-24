@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Billet — {{ ticket.event.nom }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <a href="{% url 'tickets:spectateur_dashboard' %}" class="text-muted text-sm hover:text-white">← Mon espace</a>
+    <a href="{% url 'tickets:ticket_pdf' ticket.id %}" class="btn-primary text-sm">Télécharger le PDF ↓</a>
+  </div>
+
+  <!-- Carte "Ticket d'événement officiel" — format boarding pass -->
+  <div class="relative rounded-3xl overflow-hidden shadow-2xl bg-[#166534]">
+    <div class="grid md:grid-cols-2">
+
+      <!-- Row 1 · Col 1 : logos -->
+      <div class="px-6 py-4 flex items-center gap-5">
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white text-xs">✦</span>
+          <span class="text-[11px] font-extrabold text-white leading-tight">PLATEFORME<br>DE BILLETTERIE</span>
+        </div>
+        <div class="w-px h-8 bg-white/15"></div>
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-full bg-[#4ADE80]/20 flex items-center justify-center text-[#4ADE80] text-xs">★</span>
+          <span class="text-[11px] font-bold text-white/90 leading-tight">ORGANISATEUR<br><span class="font-normal text-white/70">{{ ticket.event.organisateur.nom_structure|default:ticket.event.organisateur.nom_complet|upper }}</span></span>
+        </div>
+      </div>
+
+      <!-- Row 1 · Col 2 : nom de l'événement -->
+      <div class="px-6 py-4 flex flex-col justify-center border-t md:border-t-0 md:border-l border-dashed border-white/15">
+        <p class="text-white/60 text-xs">Nom de l'Événement :</p>
+        <p class="text-white font-extrabold text-lg leading-tight">{{ ticket.event.nom|upper }}</p>
+      </div>
+
+      <!-- Row 2 · Col 1 : bandeau titre -->
+      <div class="bg-[#052e16] px-6 py-3 flex items-center">
+        <p class="text-white font-extrabold tracking-wide text-sm">TICKET D'ÉVÉNEMENT OFFICIEL</p>
+      </div>
+
+      <!-- Row 2 · Col 2 : date / lieu -->
+      <div class="px-6 py-3 flex items-center gap-10 border-l border-dashed border-white/15">
+        <div>
+          <p class="text-white/60 text-xs">Date :</p>
+          <p class="text-white font-bold text-sm">{{ ticket.event.date_debut|date:"d F Y"|upper }}</p>
+        </div>
+        <div>
+          <p class="text-white/60 text-xs">Lieu :</p>
+          <p class="text-white font-bold text-sm">{{ ticket.event.lieu|default:ticket.event.ville|upper }}</p>
+        </div>
+      </div>
+
+      <!-- Row 3 · Col 1 : infos spectateur (fond blanc) -->
+      <div class="bg-white text-[#0B2818] px-6 py-6">
+        <p class="text-[#8494A8] text-xs">Nom du Spectateur :</p>
+        <p class="font-extrabold text-lg mb-2">{{ ticket.spectateur.nom|default:"—"|upper }}</p>
+        <p class="text-[#8494A8] text-xs">Prénom du Spectateur :</p>
+        <p class="font-extrabold text-lg mb-2">{{ ticket.spectateur.prenoms|default:"—"|upper }}</p>
+        <p class="text-[#8494A8] text-xs">Sexe :</p>
+        <p class="font-extrabold text-lg mb-4">{{ ticket.spectateur.get_sexe_display|default:"—"|upper }}</p>
+
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-16 h-16 rounded-md bg-[#E1F5E7] border border-[#CDEEDA] overflow-hidden flex items-center justify-center shrink-0">
+            {% if ticket.spectateur.photo %}
+              <img src="{{ ticket.spectateur.photo.url }}" class="w-full h-full object-cover">
+            {% else %}
+              <span class="text-2xl text-[#9AA9BC]">🙂</span>
+            {% endif %}
+          </div>
+          <p class="text-[#8494A8] text-sm">Photo du Spectateur</p>
+        </div>
+
+        <p class="text-[#8494A8] text-xs mb-1">Type de Ticket :</p>
+        <span class="inline-block bg-gradient-to-r from-[#15803D] to-[#4ADE80] text-[#0B2818] font-extrabold text-xs px-4 py-2 rounded">
+          {{ ticket.ticket_type.nom|upper }}{% if ticket.ticket_type.description %} - {{ ticket.ticket_type.description|upper }}{% endif %}
+        </span>
+      </div>
+
+      <!-- Row 3 · Col 2 : QR (fond blanc) -->
+      <div class="bg-white px-6 py-6 flex flex-col items-center justify-center border-l border-dashed border-[#E1F5E7] relative">
+        <div class="relative w-40 h-40 mb-4">
+          <span class="absolute -top-1 -left-1 w-5 h-5 border-t-2 border-l-2 border-[#0B2818]/40"></span>
+          <span class="absolute -top-1 -right-1 w-5 h-5 border-t-2 border-r-2 border-[#0B2818]/40"></span>
+          <span class="absolute -bottom-1 -left-1 w-5 h-5 border-b-2 border-l-2 border-[#0B2818]/40"></span>
+          <span class="absolute -bottom-1 -right-1 w-5 h-5 border-b-2 border-r-2 border-[#0B2818]/40"></span>
+          <img src="{% url 'tickets:qr_image' ticket.id %}" class="w-full h-full">
+        </div>
+        <p class="text-[#0B2818] font-semibold">Scanner pour l'entrée</p>
+        <div class="w-24 h-px bg-[#E1F5E7] my-2"></div>
+        <p class="text-[#8494A8] text-xs tracking-wide">TICKET ID : #{{ ticket.code }}</p>
+        <span class="absolute bottom-4 right-5 w-9 h-9 rounded-full bg-gradient-to-br from-[#86EFAC] to-[#16A34A] opacity-70"></span>
+      </div>
+    </div>
+
+    <!-- Encoches -->
+    <span class="hidden md:block absolute left-1/2 -translate-x-1/2 -top-3 w-6 h-6 rounded-full bg-base"></span>
+    <span class="hidden md:block absolute left-1/2 -translate-x-1/2 -bottom-3 w-6 h-6 rounded-full bg-base"></span>
+  </div>
+
+  <p class="text-center text-muted text-xs mt-6">Organisé par {{ ticket.event.organisateur.nom_structure|default:ticket.event.organisateur.nom_complet }}</p>
+</div>
+{% endblock %}
