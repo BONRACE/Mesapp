@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Inscription Spectateur — NovaTickets{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto glass-strong rounded-2xl p-8 shadow-soft">
+  <h1 class="text-2xl font-bold mb-6">Créer mon profil Spectateur</h1>
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="text-sm text-muted mb-1 block">Nom</label>{{ form.nom }}</div>
+      <div><label class="text-sm text-muted mb-1 block">Prénoms</label>{{ form.prenoms }}</div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="text-sm text-muted mb-1 block">Sexe</label>{{ form.sexe }}</div>
+      <div><label class="text-sm text-muted mb-1 block">Pays</label>{{ form.pays }}</div>
+    </div>
+    <div>
+      <label class="text-sm text-muted mb-1 block">Téléphone mobile</label>
+      <div class="flex items-center gap-2">
+        <span id="dial-badge" class="px-3 py-2.5 rounded-lg bg-black/5 text-sm font-semibold text-[#166534] whitespace-nowrap">🇧🇯 +229</span>
+        {{ form.telephone }}
+      </div>
+    </div>
+    <div><label class="text-sm text-muted mb-1 block">Profession</label>{{ form.profession }}</div>
+    <div><label class="text-sm text-muted mb-1 block">Photo de profil</label>{{ form.photo }}</div>
+    <hr class="border-black/10 my-2">
+    <div><label class="text-sm text-muted mb-1 block">Nom d'utilisateur</label>{{ form.username }}</div>
+    <div><label class="text-sm text-muted mb-1 block">Email</label>{{ form.email }}</div>
+    <div><label class="text-sm text-muted mb-1 block">Mot de passe</label>{{ form.password1 }}</div>
+    <div><label class="text-sm text-muted mb-1 block">Confirmation</label>{{ form.password2 }}</div>
+    <button type="submit" class="btn-primary w-full mt-2">Créer mon compte</button>
+  </form>
+</div>
+<script>
+  const dialMap = {{ dial_map_json|safe }};
+  const paysSelect = document.getElementById('id_pays');
+  const badge = document.getElementById('dial-badge');
+  function updateDialBadge() {
+    const info = dialMap[paysSelect.value];
+    badge.textContent = info ? `${info.flag} ${info.dial}` : '—';
+  }
+  paysSelect.addEventListener('change', updateDialBadge);
+  updateDialBadge();
+</script>
+{% endblock %}

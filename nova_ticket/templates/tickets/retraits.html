@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Retraits — NovaTickets{% endblock %}
+{% block content %}
+<div class="mb-8 flex items-center justify-between flex-wrap gap-4">
+  <div>
+    <h1 class="text-2xl md:text-3xl font-extrabold">Retirer mes fonds</h1>
+    <p class="text-muted text-sm mt-1">Commission plateforme : {{ commission_pourcentage }}% par billet vendu, déjà déduite du solde ci-dessous.</p>
+  </div>
+  <a href="{% url 'events:organisateur_dashboard' %}" class="btn-ghost text-sm">← Tableau de bord</a>
+</div>
+
+<div class="grid md:grid-cols-[1fr_320px] gap-6 items-start">
+
+  <!-- Formulaire de retrait -->
+  <div class="bg-white rounded-2xl p-6 shadow-sm border border-black/5">
+    <h3 class="font-bold text-lg mb-5">Nouveau retrait</h3>
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="text-sm text-muted mb-1 block">Montant à retirer (FCFA)</label>
+        <input type="number" name="montant" max="{{ solde }}" min="1" step="1" class="input-glass" placeholder="Ex: 25000" required>
+      </div>
+
+      <div>
+        <label class="text-sm text-muted mb-2 block">Moyen de paiement disponible dans ton pays</label>
+        <div class="grid sm:grid-cols-2 gap-3">
+          {% for code, label, icone in moyens %}
+          <label class="flex items-center gap-3 border border-black/10 rounded-xl px-4 py-3 cursor-pointer hover:border-[#16A34A] transition has-[:checked]:border-[#16A34A] has-[:checked]:bg-[#DCFCE7]">
+            <input type="radio" name="moyen_paiement" value="{{ code }}" class="accent-[#16A34A]" {% if forloop.first %}checked{% endif %} required>
+            <span class="text-xl">{{ icone }}</span>
+            <span class="text-sm font-semibold">{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <label class="text-sm text-muted mb-1 block">Numéro / identifiant de destination</label>
+        <input type="text" name="destination" class="input-glass" placeholder="Ex: 90 00 00 00">
+      </div>
+
+      <button type="submit" class="btn-primary w-full mt-2" {% if solde <= 0 %}disabled{% endif %}>
+        Confirmer le retrait
+      </button>
+      {% if solde <= 0 %}
+      <p class="text-xs text-muted text-center">Ton solde disponible est actuellement nul.</p>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Solde -->
+  <div class="bg-white rounded-2xl p-6 shadow-sm border border-black/5">
+    <p class="text-sm text-muted mb-1">Solde disponible</p>
+    <p class="text-3xl font-extrabold text-[#166534] mb-4">{{ solde|floatformat:0 }} FCFA</p>
+    <p class="text-xs text-muted">Ce montant correspond aux revenus de tes billets vendus, commission plateforme déjà déduite, moins tes retraits déjà effectués.</p>
+  </div>
+</div>
+
+<!-- Historique -->
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-black/5 mt-6">
+  <h3 class="font-bold text-lg mb-4">Historique des retraits</h3>
+  <div class="divide-y divide-black/5">
+    {% for r in historique %}
+    <div class="flex items-center justify-between py-3 text-sm">
+      <div>
+        <p class="font-semibold">{{ r.montant|floatformat:0 }} FCFA — {{ r.get_moyen_paiement_display }}</p>
+        <p class="text-muted text-xs">{{ r.demande_le|date:"d M Y, H:i" }}</p>
+      </div>
+      <span class="badge {% if r.statut == 'reussi' %}bg-emerald-100 text-emerald-600{% elif r.statut == 'echoue' %}bg-red-100 text-red-600{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+        {{ r.get_statut_display }}
+      </span>
+    </div>
+    {% empty %}
+    <p class="text-muted py-3">Aucun retrait effectué pour l'instant.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
