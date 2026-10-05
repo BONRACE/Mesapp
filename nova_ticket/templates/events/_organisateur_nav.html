@@ -1,0 +1,25 @@
+{% load static %}
+<style>
+  .sidebar-link { display:inline-flex; align-items:center; gap:.5rem; padding:.55rem .9rem; border-radius:.6rem;
+    font-size:.85rem; color:#5B6B82; font-weight:500; white-space:nowrap; }
+  .sidebar-link.active { background:#DCFCE7; color:#15803D; font-weight:700; }
+</style>
+
+<!-- Barre "Tableau de Bord de l'Organisateur" — commune à toutes les pages organisateur -->
+<div class="mb-8 pb-4 border-b border-black/5 flex items-center justify-between flex-wrap gap-3">
+  <p class="text-xs font-extrabold uppercase tracking-wide text-[#5B7566] shrink-0">Tableau de Bord de l'Organisateur</p>
+  <nav class="flex items-center gap-1 overflow-x-auto max-w-full">
+    <a href="{% url 'events:organisateur_dashboard' %}" class="sidebar-link {% if actif == 'dashboard' %}active{% endif %}">
+      🗓️ Mes Événements
+    </a>
+    <a href="{% url 'events:event_create' %}" class="sidebar-link {% if actif == 'creer' %}active{% endif %}">
+      📝 Créer un Événement
+    </a>
+    <a href="#" class="sidebar-link opacity-60 cursor-default" title="Bientôt disponible">
+      📊 Rapports <span class="text-[10px]">(bientôt)</span>
+    </a>
+    <a href="{% url 'accounts:profile_edit' %}" class="sidebar-link {% if actif == 'profil' %}active{% endif %}">
+      ⚙️ Modifier le profil
+    </a>
+  </nav>
+</div>

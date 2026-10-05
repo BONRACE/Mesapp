@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Tableau de bord Organisateur — NovaTickets{% endblock %}
 {% block content %}
+{% include "events/_organisateur_nav.html" with actif="dashboard" %}
 <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
   <div>
     <h1 class="text-3xl font-bold">Tableau de bord</h1>

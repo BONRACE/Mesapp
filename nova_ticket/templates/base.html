@@ -68,17 +68,29 @@
 <nav class="sticky top-0 z-40 glass-strong">
   <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
     <a href="{% url 'home' %}" class="flex items-center" aria-label="NovaTickets — accueil">
-      <img src="{% static 'img/logo-horizontal.png' %}" alt="NovaTickets" class="h-11 w-auto">
+      <img src="{% static 'img/logo-horizontal.png' %}" alt="NovaTickets" class="h-9 md:h-11 w-auto">
     </a>
+
+    <!-- Navigation desktop -->
     <div class="hidden md:flex items-center gap-6 text-sm text-muted">
       <a href="{% url 'events:catalogue' %}" class="hover:text-[#16A34A] transition">Événements</a>
       {% if user.is_authenticated %}
         <a href="{% url 'dashboard_redirect' %}" class="hover:text-[#16A34A] transition">Mon espace</a>
       {% endif %}
     </div>
-    <div class="flex items-center gap-3">
+
+    <div class="hidden md:flex items-center gap-3">
       {% if user.is_authenticated %}
-        <span class="hidden sm:inline text-sm text-muted">{{ user.nom_complet }}</span>
+        <span class="text-sm text-muted">{{ user.nom_complet }}</span>
+        <a href="{% url 'accounts:profile_edit' %}"
+           class="w-9 h-9 rounded-full bg-gradient-to-br from-[#16A34A] to-[#15803D] text-white flex items-center justify-center text-sm font-bold shadow-sm hover:brightness-110 transition shrink-0"
+           title="Mon profil" aria-label="Mon profil">
+          {% if user.photo %}
+            <img src="{{ user.photo.url }}" class="w-full h-full rounded-full object-cover">
+          {% else %}
+            👤
+          {% endif %}
+        </a>
         <form method="post" action="{% url 'accounts:logout' %}" class="inline">
           {% csrf_token %}
           <button type="submit" class="btn-ghost text-sm">Déconnexion</button>
@@ -88,8 +100,59 @@
         <a href="{% url 'accounts:register_choice' %}" class="btn-primary text-sm">S'inscrire</a>
       {% endif %}
     </div>
+
+    <!-- Bouton menu mobile -->
+    <button type="button" id="mobile-menu-btn" aria-label="Ouvrir le menu" aria-expanded="false"
+            class="md:hidden w-10 h-10 rounded-xl flex items-center justify-center text-[#0B2818] hover:bg-black/5 transition">
+      <svg id="icon-burger" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line>
+      </svg>
+      <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Panneau menu mobile -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-black/5 bg-white/95 backdrop-blur-md">
+    <div class="px-6 py-4 flex flex-col gap-1 text-sm">
+      <a href="{% url 'events:catalogue' %}" class="px-3 py-2.5 rounded-xl text-[#0B2818] hover:bg-[#16A34A]/10 transition">🎟️ Événements</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard_redirect' %}" class="px-3 py-2.5 rounded-xl text-[#0B2818] hover:bg-[#16A34A]/10 transition">🏠 Mon espace</a>
+        <a href="{% url 'accounts:profile_edit' %}" class="px-3 py-2.5 rounded-xl text-[#0B2818] hover:bg-[#16A34A]/10 transition flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-gradient-to-br from-[#16A34A] to-[#15803D] text-white flex items-center justify-center text-xs shrink-0 overflow-hidden">
+            {% if user.photo %}<img src="{{ user.photo.url }}" class="w-full h-full object-cover">{% else %}👤{% endif %}
+          </span>
+          Mon profil — {{ user.nom_complet }}
+        </a>
+        <form method="post" action="{% url 'accounts:logout' %}" class="mt-1">
+          {% csrf_token %}
+          <button type="submit" class="w-full text-left px-3 py-2.5 rounded-xl text-[#0B2818] hover:bg-black/5 transition">↪ Déconnexion</button>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="px-3 py-2.5 rounded-xl text-[#0B2818] hover:bg-[#16A34A]/10 transition">Connexion</a>
+        <a href="{% url 'accounts:register_choice' %}" class="mt-1 btn-primary text-sm text-center">S'inscrire</a>
+      {% endif %}
+    </div>
   </div>
 </nav>
+
+<script>
+  (function () {
+    var btn = document.getElementById("mobile-menu-btn");
+    var menu = document.getElementById("mobile-menu");
+    var iconBurger = document.getElementById("icon-burger");
+    var iconClose = document.getElementById("icon-close");
+    if (!btn || !menu) return;
+    btn.addEventListener("click", function () {
+      var isOpen = !menu.classList.contains("hidden");
+      menu.classList.toggle("hidden");
+      iconBurger.classList.toggle("hidden");
+      iconClose.classList.toggle("hidden");
+      btn.setAttribute("aria-expanded", String(!isOpen));
+    });
+  })();
+</script>
 
 {% if messages %}
 <div class="max-w-7xl mx-auto px-6 pt-6">

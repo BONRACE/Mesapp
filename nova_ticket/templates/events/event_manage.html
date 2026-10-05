@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Gérer {{ event.nom }} — NovaTickets{% endblock %}
 {% block content %}
-<h1 class="text-3xl font-bold mb-2">{{ event.nom }}</h1>
+{% include "events/_organisateur_nav.html" with actif="dashboard" %}
+<a href="{% url 'events:organisateur_dashboard' %}" class="text-sm text-muted hover:text-[#16A34A] transition">← Mes événements</a>
+<h1 class="text-3xl font-bold mb-2 mt-3">{{ event.nom }}</h1>
 <p class="text-muted mb-8">{{ event.date_debut|date:"d M Y" }} · {{ event.ville }}</p>
 
 <div class="grid md:grid-cols-5 gap-5 mb-10">
