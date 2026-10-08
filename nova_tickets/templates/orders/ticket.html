@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Billet {{ ticket.short_code }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'core:spectateur_dashboard' %}" class="text-sm font-medium text-emerald-700">← Mes billets</a>
+  <div class="mt-4">{% include "partials/boarding_pass.html" %}</div>
+  <div class="mx-auto mt-6 flex max-w-3xl flex-col gap-3 sm:flex-row sm:justify-center">
+    <a href="{% url 'orders:ticket_pdf' ticket.code %}" class="tap inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 font-semibold text-white hover:bg-emerald-700">⬇️ Télécharger en PDF</a>
+    <a href="{{ ticket.order.event.get_absolute_url }}" class="tap inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 font-medium">Voir l'événement</a>
+  </div>
+  <p class="mt-4 text-center text-xs text-slate-400">Astuce : sur smartphone, gardez cette page ouverte ou téléchargez le PDF pour l'entrée.</p>
+</div>
+{% endblock %}

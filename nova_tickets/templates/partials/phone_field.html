@@ -1,0 +1,25 @@
+<!-- Pays (drapeau + indicatif) et téléphone mobile obligatoire -->
+<div>
+  <label for="{{ form.country.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1.5">Pays <span class="text-red-500">*</span></label>
+  {{ form.country }}
+  {% for e in form.country.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+</div>
+<div>
+  <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1.5">Téléphone mobile <span class="text-red-500">*</span></label>
+  <div class="flex items-stretch rounded-xl border border-slate-200 bg-white focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-200">
+    <span id="dial-badge" class="flex items-center gap-1.5 whitespace-nowrap rounded-l-xl bg-slate-50 px-3 text-sm font-semibold text-slate-700 border-r border-slate-200">🌍 +…</span>
+    <input type="tel" inputmode="tel" name="{{ form.phone.html_name }}" id="{{ form.phone.id_for_label }}" value="{{ form.phone.value|default:'' }}" required placeholder="97 00 00 00" class="w-full min-w-0 rounded-r-xl bg-transparent px-3 py-3 outline-none">
+  </div>
+  {% for e in form.phone.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+</div>
+{{ countries|json_script:"countries-data" }}
+<script>
+  (function () {
+    var data = JSON.parse(document.getElementById('countries-data').textContent);
+    var map = {}; data.forEach(function (c) { map[c.code] = c; });
+    var sel = document.getElementById('{{ form.country.id_for_label }}');
+    var badge = document.getElementById('dial-badge');
+    function update() { var c = map[sel.value]; badge.textContent = c ? c.flag + ' ' + c.dial : '🌍 +…'; }
+    sel.addEventListener('change', update); update();
+  })();
+</script>

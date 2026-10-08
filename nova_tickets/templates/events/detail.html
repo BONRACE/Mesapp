@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ event.name }}{% endblock %}
+{% block content %}
+{% if not event.is_published %}
+<div class="mb-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">Brouillon : seul vous pouvez voir cette page. Publiez l'événement depuis votre tableau de bord.</div>
+{% endif %}
+
+<div class="grid gap-6 lg:grid-cols-[1fr_380px]">
+  <!-- Colonne infos -->
+  <div>
+    <div class="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-100 to-emerald-50 aspect-[16/9]">
+      {% if event.banner %}<img src="{{ event.banner.url }}" class="h-full w-full object-cover" alt="">
+      {% else %}<div class="h-full w-full grid place-items-center text-7xl">🎟️</div>{% endif %}
+    </div>
+
+    <div class="mt-5 flex items-start gap-3">
+      {% if event.logo %}<img src="{{ event.logo.url }}" class="h-12 w-12 rounded-xl object-cover border border-slate-200" alt="">{% endif %}
+      <div class="min-w-0">
+        <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight">{{ event.name }}</h1>
+        <p class="text-sm text-slate-500 mt-1">Organisé par <strong>{{ event.organizer.organizer_label }}</strong></p>
+      </div>
+    </div>
+
+    <dl class="mt-5 grid grid-cols-2 gap-3 text-sm">
+      <div class="rounded-2xl bg-white border border-slate-200 p-4"><dt class="text-slate-500">📅 Début</dt><dd class="font-semibold mt-0.5">{{ event.start_date|date:"l d F Y" }}</dd></div>
+      <div class="rounded-2xl bg-white border border-slate-200 p-4"><dt class="text-slate-500">⏰ Heure</dt><dd class="font-semibold mt-0.5">{{ event.start_time|time:"H\hi" }}</dd></div>
+      <div class="rounded-2xl bg-white border border-slate-200 p-4"><dt class="text-slate-500">🏁 Fin</dt><dd class="font-semibold mt-0.5">{{ event.end_date|date:"d F Y" }}</dd></div>
+      <div class="rounded-2xl bg-white border border-slate-200 p-4"><dt class="text-slate-500">📍 Lieu</dt><dd class="font-semibold mt-0.5">{{ event.location|default:"À confirmer" }}</dd></div>
+    </dl>
+
+    {% if event.description %}
+    <div class="mt-6">
+      <h2 class="text-lg font-bold">À propos</h2>
+      <p class="mt-2 text-slate-600 whitespace-pre-line leading-relaxed">{{ event.description }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Colonne achat (collante sur ordinateur) -->
+  <aside id="billets" class="lg:sticky lg:top-24 self-start scroll-mt-24">
+    <div class="rounded-3xl bg-white border border-slate-200 shadow-sm p-5">
+      <h2 class="text-lg font-bold">Billets</h2>
+      <p class="text-xs text-slate-500">Vente jusqu'au {{ event.sales_deadline|date:"d F Y" }}</p>
+
+      {% if is_owner %}
+        <p class="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Vous êtes l'organisateur : vous ne pouvez pas acheter de tickets pour votre propre événement.</p>
+        <a href="{% url 'events:edit' event.pk %}" class="tap mt-3 grid place-items-center rounded-xl border border-slate-300 font-medium">Modifier l'événement</a>
+      {% elif not event.sales_open %}
+        <p class="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">La vente de billets est terminée.</p>
+      {% elif not user.is_authenticated %}
+        <ul class="mt-4 space-y-2">{% for t in event.ticket_types.all %}
+          <li class="flex justify-between rounded-xl border border-slate-200 px-4 py-3"><span class="font-medium">{{ t.name }}</span><span class="font-bold text-emerald-700">{{ t.price|floatformat:0 }} FCFA</span></li>{% endfor %}</ul>
+        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="tap mt-4 grid place-items-center rounded-xl bg-emerald-600 font-semibold text-white hover:bg-emerald-700">Se connecter pour acheter</a>
+      {% else %}
+        <form method="post" action="{% url 'orders:buy' event.slug %}" class="mt-4 space-y-3" id="buy-form">{% csrf_token %}
+          {% for t in event.ticket_types.all %}
+          <label class="block {% if t.remaining == 0 %}opacity-50{% else %}cursor-pointer{% endif %}">
+            <input type="radio" name="ticket_type" value="{{ t.pk }}" data-price="{{ t.price|floatformat:0 }}" class="peer sr-only" {% if t.remaining == 0 %}disabled{% elif forloop.first %}checked{% endif %}>
+            <div class="rounded-xl border-2 border-slate-200 px-4 py-3 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 flex items-center justify-between gap-3">
+              <div><p class="font-semibold">{{ t.name }}</p><p class="text-xs text-slate-500">{% if t.remaining == 0 %}Épuisé{% else %}{{ t.remaining }} restant{{ t.remaining|pluralize }}{% endif %}</p></div>
+              <span class="font-bold text-emerald-700 whitespace-nowrap">{{ t.price|floatformat:0 }} FCFA</span>
+            </div>
+          </label>
+          {% endfor %}
+          <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2">
+            <span class="text-sm font-medium">Quantité</span>
+            <div class="flex items-center gap-1">
+              <button type="button" id="minus" class="tap w-11 rounded-lg bg-white border border-slate-200 text-xl">−</button>
+              <input id="qty" name="quantity" value="1" readonly class="w-12 bg-transparent text-center font-bold">
+              <button type="button" id="plus" class="tap w-11 rounded-lg bg-white border border-slate-200 text-xl">+</button>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-1"><span class="text-sm text-slate-500">Total</span><strong id="total" class="text-xl text-emerald-700">0 FCFA</strong></div>
+          <button class="tap w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white hover:bg-emerald-700">Continuer vers le paiement</button>
+        </form>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+
+<!-- Bouton d'achat fixe (smartphone) -->
+{% if event.sales_open and not is_owner %}
+<a href="#billets" class="lg:hidden fixed inset-x-4 bottom-20 z-30 tap grid place-items-center rounded-2xl bg-emerald-600 py-3 font-semibold text-white shadow-lg">🎟️ Voir les billets{% if event.min_price is not None %} · dès {{ event.min_price|floatformat:0 }} FCFA{% endif %}</a>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var f = document.getElementById('buy-form'); if (!f) return;
+    var qty = document.getElementById('qty'), total = document.getElementById('total');
+    function price() { var r = f.querySelector('input[name=ticket_type]:checked'); return r ? parseInt(r.dataset.price, 10) : 0; }
+    function render() { total.textContent = (price() * parseInt(qty.value, 10)).toLocaleString('fr-FR') + ' FCFA'; }
+    document.getElementById('minus').onclick = function () { qty.value = Math.max(1, +qty.value - 1); render(); };
+    document.getElementById('plus').onclick = function () { qty.value = Math.min(10, +qty.value + 1); render(); };
+    f.addEventListener('change', render); render();
+  })();
+</script>
+{% endblock %}
