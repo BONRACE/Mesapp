@@ -1,0 +1,53 @@
+{% load static %}
+<!-- Billet premium : vertical sur smartphone, horizontal sur ordinateur -->
+<article class="relative mx-auto w-full max-w-3xl overflow-visible rounded-3xl bg-white border border-emerald-100 shadow-xl shadow-emerald-900/5 flex flex-col md:flex-row">
+  <!-- Partie principale -->
+  <div class="flex-1 min-w-0">
+    <header class="flex items-center justify-between gap-3 rounded-t-3xl md:rounded-tr-none md:rounded-l-3xl md:rounded-bl-none bg-emerald-600 px-5 py-4 text-white">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <img src="{% static 'img/logo.png' %}" class="h-10 w-10 rounded-xl bg-white/10" alt="NovaTickets">
+        <div class="leading-tight"><p class="font-extrabold tracking-wide text-sm">NOVA TICKETS</p><p class="text-[11px] text-emerald-100">Boarding pass</p></div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wide">{{ ticket.order.ticket_type.name }}</span>
+        {% with ev=ticket.order.event %}
+        {% if ev.logo %}<img src="{{ ev.logo.url }}" class="h-10 w-10 rounded-xl bg-white object-cover" alt="">
+        {% elif ev.organizer.org_logo %}<img src="{{ ev.organizer.org_logo.url }}" class="h-10 w-10 rounded-xl bg-white object-cover" alt="">{% endif %}
+        {% endwith %}
+      </div>
+    </header>
+
+    <div class="flex gap-4 p-5">
+      {% with u=ticket.order.user %}
+      <div class="shrink-0">
+        {% if u.photo %}<img src="{{ u.photo.url }}" class="h-28 w-24 rounded-xl object-cover border border-slate-200" alt="">
+        {% else %}<div class="h-28 w-24 rounded-xl bg-emerald-50 grid place-items-center text-3xl">👤</div>{% endif %}
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Événement</p>
+        <h3 class="text-lg md:text-xl font-extrabold leading-snug text-slate-900">{{ ticket.order.event.name }}</h3>
+        <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          <div><dt class="text-[10px] uppercase tracking-widest text-slate-400">Nom</dt><dd class="font-bold truncate">{{ u.last_name|upper|default:u.username }}</dd></div>
+          <div><dt class="text-[10px] uppercase tracking-widest text-slate-400">Prénoms</dt><dd class="font-bold truncate">{{ u.first_name }}</dd></div>
+          <div><dt class="text-[10px] uppercase tracking-widest text-slate-400">Sexe</dt><dd class="font-bold">{{ u.get_sexe_display|default:"-" }}</dd></div>
+          <div><dt class="text-[10px] uppercase tracking-widest text-slate-400">Date</dt><dd class="font-bold">{{ ticket.order.event.start_date|date:"d/m/Y" }} · {{ ticket.order.event.start_time|time:"H\hi" }}</dd></div>
+        </dl>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
+
+  <!-- Ligne d'arrachage -->
+  <div class="relative ticket-notch ticket-notch-v ticket-notch-h border-t-2 border-dashed border-emerald-200 md:border-t-0 md:border-l-2"></div>
+
+  <!-- Souche : QR code -->
+  <div class="flex flex-row md:flex-col items-center justify-center gap-4 md:gap-2 p-5 md:w-52">
+    <img src="{% url 'orders:ticket_qr' ticket.code %}" alt="QR code du billet" class="h-32 w-32 md:h-36 md:w-36">
+    <div class="text-center">
+      <p class="text-xs font-bold tracking-widest text-slate-700">{{ ticket.short_code }}</p>
+      <p class="text-[11px] text-slate-400">{{ ticket.order.reference }}-{{ ticket.number }}</p>
+      {% if ticket.used %}<p class="mt-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">Déjà utilisé</p>
+      {% else %}<p class="mt-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">Valide</p>{% endif %}
+    </div>
+  </div>
+</article>
