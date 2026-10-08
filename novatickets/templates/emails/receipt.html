@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<body style="margin:0;padding:0;background:#f0fdf4;font-family:Arial,Helvetica,sans-serif;color:#0f1f14;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;padding:24px 0;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:18px;border:1px solid #dcfce7;overflow:hidden;">
+
+  <tr><td align="center" style="padding:28px 24px 8px;">
+    <img src="cid:logo" alt="{{ platform }}" width="64" height="64" style="display:block;margin:0 auto 8px;">
+    <div style="font-size:12px;color:#5b6b61;">{{ order.paid_at|date:"d F Y" }}</div>
+  </td></tr>
+
+  <tr><td align="center" style="padding:8px 24px 0;">
+    <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+      <td style="padding:0 10px;"><img src="cid:logo" alt="{{ platform }}" width="44" height="44" style="display:block;"></td>
+      <td style="font-size:20px;color:#16a34a;font-weight:bold;">+</td>
+      <td style="padding:0 10px;"><img src="cid:eventlogo" alt="{{ event.name }}" width="44" height="44" style="display:block;border-radius:8px;"></td>
+    </tr></table>
+  </td></tr>
+
+  <tr><td align="center" style="padding:18px 24px 0;">
+    <h1 style="margin:0;font-size:26px;color:#14532d;">Merci pour votre achat !</h1>
+    <p style="margin:10px 0 0;font-size:18px;font-weight:bold;color:#16a34a;">{{ event.name }}</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#5b6b61;">{{ event.start_date|date:"d/m/Y" }} · {{ event.start_time|time:"H:i" }} · {{ event.location }}</p>
+  </td></tr>
+
+  <tr><td style="padding:22px 28px 0;">
+    <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#5b6b61;font-weight:bold;margin-bottom:8px;">Spectateur</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+      <tr><td style="padding:4px 0;color:#5b6b61;width:110px;">Nom</td><td style="padding:4px 0;font-weight:bold;">{{ buyer.last_name|upper }}</td></tr>
+      <tr><td style="padding:4px 0;color:#5b6b61;">Prénoms</td><td style="padding:4px 0;font-weight:bold;">{{ buyer.first_name }}</td></tr>
+      <tr><td style="padding:4px 0;color:#5b6b61;">E-mail</td><td style="padding:4px 0;font-weight:bold;">{{ buyer.email }}</td></tr>
+      <tr><td style="padding:4px 0;color:#5b6b61;">Téléphone</td><td style="padding:4px 0;font-weight:bold;">{{ buyer.phone }}</td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding:22px 28px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1.5px solid #bbf7d0;border-radius:14px;background:#f0fdf4;font-size:14px;">
+      <tr><td colspan="2" style="padding:14px 18px 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#166534;font-weight:bold;">Détails du ticket</td></tr>
+      <tr><td style="padding:5px 18px;color:#5b6b61;">Type de ticket</td><td align="right" style="padding:5px 18px;font-weight:bold;">{{ order.ticket_type.name }}</td></tr>
+      <tr><td style="padding:5px 18px;color:#5b6b61;">Référence</td><td align="right" style="padding:5px 18px;font-weight:bold;">{{ order.reference }}</td></tr>
+      <tr><td style="padding:5px 18px;color:#5b6b61;">Prix unitaire</td><td align="right" style="padding:5px 18px;font-weight:bold;">{{ order.unit_price }} {{ currency }}</td></tr>
+      <tr><td style="padding:5px 18px;color:#5b6b61;">Quantité</td><td align="right" style="padding:5px 18px;font-weight:bold;">{{ order.quantity }}</td></tr>
+      <tr><td style="padding:5px 18px;color:#5b6b61;">Statut du paiement</td><td align="right" style="padding:5px 18px;"><span style="background:#16a34a;color:#fff;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:bold;">Payé · {{ order.payment_label }}</span></td></tr>
+      <tr><td style="padding:12px 18px;border-top:1px solid #bbf7d0;font-weight:bold;font-size:16px;">Total</td><td align="right" style="padding:12px 18px;border-top:1px solid #bbf7d0;font-weight:bold;font-size:18px;color:#14532d;">{{ order.total }} {{ currency }}</td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="padding:20px 28px 0;font-size:13px;color:#5b6b61;">
+    Vos {{ order.quantity }} billet(s) sont joints à cet e-mail au format PDF. Présentez le QR code à l'entrée de l'événement.
+  </td></tr>
+
+  <tr><td style="padding:24px 28px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="font-size:14px;">
+        <div style="font-size:12px;color:#5b6b61;">Organisateur</div>
+        <div style="font-weight:bold;font-size:16px;color:#14532d;">{{ organizer.organizer_label }}</div>
+        <div style="font-size:12px;color:#5b6b61;">{{ organizer.display_name }}</div>
+      </td>
+      <td align="right">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr><td align="center" style="border:2px solid #16a34a;border-radius:99px;padding:8px 16px;color:#16a34a;font-size:11px;font-weight:bold;letter-spacing:.06em;line-height:1.3;">✔ VÉRIFIÉ PAR<br>{{ platform|upper }}</td></tr></table>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <tr><td style="padding:26px 28px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #dcfce7;"><tr>
+      <td style="padding-top:16px;font-size:12px;color:#5b6b61;">Powered by <strong style="color:#16a34a;">{{ platform }}</strong><br>La billetterie en ligne pour l'Afrique de l'Ouest.</td>
+      <td align="right" style="padding-top:16px;">{% if ticket %}<img src="cid:qr" alt="QR code" width="64" height="64" style="display:block;">{% endif %}</td>
+    </tr></table>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load nova %}
+{% block title %}Espace organisateur{% endblock %}
+{% block content %}
+<section class="section"><div class="container">
+  <div class="row between mb">
+    <div><h1 style="margin:0">Espace organisateur</h1><span class="muted">{{ user.organizer_label }}</span></div>
+    <div class="row">
+      <a class="btn btn-outline" href="{% url 'events:withdraw' %}">💸 Retirer mes fonds</a>
+      <a class="btn" href="{% url 'events:create' %}">+ Créer un événement</a>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi main"><div class="label">Solde disponible</div><div class="value">{{ balance|money }}</div></div>
+    <div class="kpi"><div class="label">Billets vendus</div><div class="value">{{ tickets }}</div></div>
+    <div class="kpi"><div class="label">Ventes brutes</div><div class="value">{{ gross|money }}</div></div>
+    <div class="kpi"><div class="label">Commission ({{ COMMISSION }} %)</div><div class="value">{{ commission|money }}</div></div>
+    <div class="kpi"><div class="label">Revenus nets</div><div class="value">{{ net|money }}</div></div>
+  </div>
+
+  <h2 class="mt2">Mes événements</h2>
+  {% if events %}
+  <div class="card flat table-wrap" style="padding:.5rem">
+    <table class="t">
+      <thead><tr><th>Événement</th><th>Date</th><th>Ventes</th><th>Net</th><th>Statut</th><th></th></tr></thead>
+      <tbody>
+      {% for e in events %}
+        <tr>
+          <td><a href="{{ e.get_absolute_url }}"><strong>{{ e.name }}</strong></a><br><span class="muted small">{{ e.location }}</span></td>
+          <td>{{ e.start_date|date:"d/m/Y" }}</td>
+          <td style="min-width:150px"><div class="bar"><i style="width:{{ e.tickets_sold|percent:e.total_stock }}%"></i></div><span class="small muted">{{ e.tickets_sold }} / {{ e.total_stock }}</span></td>
+          <td>{{ e.net_revenue|money }}</td>
+          <td>{% if e.is_past %}<span class="badge gray">Terminé</span>{% elif e.is_published %}<span class="badge">Publié</span>{% else %}<span class="badge warn">Brouillon</span>{% endif %}</td>
+          <td style="white-space:nowrap">
+            <a class="btn btn-outline btn-sm" href="{% url 'events:edit' e.pk %}">Modifier</a>
+            <form method="post" action="{% url 'events:toggle' e.pk %}" style="display:inline">{% csrf_token %}
+              <button class="btn btn-sm {% if e.is_published %}btn-danger{% endif %}" type="submit">{% if e.is_published %}Dépublier{% else %}Publier{% endif %}</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty"><h3>Aucun événement</h3><p>Créez votre premier événement puis publiez-le.</p><a class="btn" href="{% url 'events:create' %}">Créer un événement</a></div>
+  {% endif %}
+
+  <h2 class="mt2">Dernières ventes</h2>
+  {% if recent %}
+  <div class="card flat table-wrap" style="padding:.5rem">
+    <table class="t">
+      <thead><tr><th>Date</th><th>Acheteur</th><th>Événement</th><th>Billets</th><th>Montant</th><th>Net</th></tr></thead>
+      <tbody>{% for o in recent %}
+        <tr><td>{{ o.paid_at|date:"d/m H:i" }}</td><td>{{ o.buyer.display_name }}</td><td>{{ o.event.name }}</td><td>{{ o.quantity }} × {{ o.ticket_type.name }}</td><td>{{ o.total|money }}</td><td>{{ o.organizer_amount|money }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+  </div>
+  {% else %}<p class="muted">Aucune vente pour le moment.</p>{% endif %}
+</div></section>
+{% endblock %}

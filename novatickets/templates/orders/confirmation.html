@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load nova %}
+{% block title %}Commande confirmée{% endblock %}
+{% block content %}
+<section class="section"><div class="mid">
+  <div class="card center">
+    <div style="font-size:3rem">🎉</div>
+    <h1 style="font-size:2rem">Merci pour votre achat !</h1>
+    <p class="muted">Un reçu a été envoyé à <strong>{{ user.email }}</strong>.</p>
+    <div class="sum"><span class="muted">Événement</span><strong>{{ order.event.name }}</strong></div>
+    <div class="sum"><span class="muted">Commande</span><strong>{{ order.reference }}</strong></div>
+    <div class="sum"><span class="muted">Paiement</span><strong>{{ order.payment_label }}</strong></div>
+    <div class="sum total"><span>Total payé</span><span>{{ order.total|money }}</span></div>
+  </div>
+  <h2 class="mt2">Vos billets</h2>
+  <div class="grid">
+    {% for t in tickets %}
+    <div class="ticket-mini">
+      <span class="badge">{{ order.ticket_type.name }}</span><span class="ref">{{ t.reference }}</span>
+      <span class="grow"></span>
+      <a class="btn btn-outline btn-sm" href="{% url 'orders:ticket' t.reference %}">Voir le billet</a>
+      <a class="btn btn-sm" href="{% url 'orders:ticket_pdf' t.reference %}">Télécharger le PDF</a>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="center mt2"><a class="btn btn-outline" href="{% url 'orders:my_space' %}">Aller à mes billets</a></p>
+</div></section>
+{% endblock %}

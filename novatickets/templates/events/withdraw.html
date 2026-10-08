@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load nova %}
+{% block title %}Retirer mes fonds{% endblock %}
+{% block content %}
+<section class="section"><div class="mid">
+  <a class="muted small" href="{% url 'events:orga_dashboard' %}">← Retour au tableau de bord</a>
+  <h1 class="mt">Retirer mes fonds</h1>
+  <div class="grid grid-2">
+    <div class="kpi main"><div class="label">Solde disponible</div><div class="value">{{ balance|money }}</div></div>
+    <div class="kpi"><div class="label">Pays de réception</div><div class="value" style="font-size:1.2rem"><span class="fi fi-{{ user.country|lower }}"></span> {{ user.country|country_name }}</div></div>
+  </div>
+
+  <div class="card mt2">
+    <h3>Nouveau retrait</h3>
+    <p class="muted small">Moyens proposés selon votre pays. Retrait minimum : {{ min_withdrawal|money }}. <em>Mode démonstration : aucun virement réel n'est émis.</em></p>
+    <form method="post">{% csrf_token %}
+      {% for m in methods %}
+      <label class="method"><input type="radio" name="method" value="{{ m.key }}" {% if forloop.first %}checked{% endif %}>{{ m.label }}</label>
+      {% endfor %}
+      <div class="form-grid mt">
+        <div class="field"><label for="amt">Montant ({{ CURRENCY }})</label><input id="amt" type="number" name="amount" min="{{ min_withdrawal }}" max="{{ balance }}" value="{{ balance }}" required></div>
+        <div class="field"><label for="ph">Numéro / compte de réception</label><input id="ph" type="text" name="phone" value="{{ user.phone }}" required></div>
+      </div>
+      <button class="btn" type="submit" {% if balance < min_withdrawal %}disabled{% endif %}>Retirer</button>
+    </form>
+  </div>
+
+  <h2 class="mt2">Historique</h2>
+  {% if history %}
+  <div class="card flat table-wrap" style="padding:.5rem"><table class="t">
+    <thead><tr><th>Date</th><th>Montant</th><th>Moyen</th><th>Compte</th><th>Statut</th></tr></thead>
+    <tbody>{% for w in history %}<tr><td>{{ w.created_at|date:"d/m/Y H:i" }}</td><td>{{ w.amount|money }}</td><td>{{ w.method_label }}</td><td>{{ w.phone }}</td><td><span class="badge">{{ w.get_status_display }}</span></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted">Aucun retrait pour le moment.</p>{% endif %}
+</div></section>
+{% endblock %}

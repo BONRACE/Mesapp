@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load nova %}
+{% block title %}Mes billets{% endblock %}
+{% block content %}
+<section class="section"><div class="mid">
+  <div class="row mb">
+    <div class="avatar" style="width:64px;height:64px">{% if user.photo %}<img src="{{ user.photo.url }}" alt="">{% else %}{{ user.initials }}{% endif %}</div>
+    <div class="grow"><h1 style="margin:0;font-size:1.8rem">Bonjour {{ user.first_name }}</h1><span class="muted small"><span class="fi fi-{{ user.country|lower }}"></span> {{ user.phone }}{% if user.profession %} · {{ user.profession }}{% endif %}</span></div>
+    <a class="btn btn-outline btn-sm" href="{% url 'accounts:profile' %}">Modifier mon profil</a>
+  </div>
+
+  <div class="tabs">
+    <a href="?tab=upcoming" class="{% if tab == 'upcoming' %}on{% endif %}">À venir ({{ upcoming|length }})</a>
+    <a href="?tab=past" class="{% if tab == 'past' %}on{% endif %}">Historique ({{ past|length }})</a>
+  </div>
+
+  {% for o in shown %}
+  <div class="card mb">
+    <div class="row between">
+      <div>
+        <h3 style="margin:0"><a href="{{ o.event.get_absolute_url }}">{{ o.event.name }}</a></h3>
+        <span class="muted small">📅 {{ o.event.start_date|date:"d/m/Y" }} · {{ o.event.start_time|time:"H:i" }} · 📍 {{ o.event.location }}</span>
+      </div>
+      <div style="text-align:right"><strong>{{ o.total|money }}</strong><br><span class="muted small">Commande {{ o.reference }} · {{ o.paid_at|date:"d/m/Y" }}</span></div>
+    </div>
+    <div class="grid mt">
+      {% for t in o.tickets.all %}
+      <div class="ticket-mini">
+        <span class="badge">{{ o.ticket_type.name }}</span><span class="ref">{{ t.reference }}</span>
+        {% if t.is_used %}<span class="badge gray">Utilisé</span>{% endif %}
+        <span class="grow"></span>
+        <a class="btn btn-outline btn-sm" href="{% url 'orders:ticket' t.reference %}">Voir</a>
+        <a class="btn btn-sm" href="{% url 'orders:ticket_pdf' t.reference %}">PDF</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty">
+    <h3>{% if tab == 'past' %}Aucun événement passé{% else %}Aucun billet à venir{% endif %}</h3>
+    <p>Découvrez les événements disponibles.</p><a class="btn" href="{% url 'core:home' %}">Voir les événements</a>
+  </div>
+  {% endfor %}
+</div></section>
+{% endblock %}
