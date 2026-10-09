@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:16px 8px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;">
+        <tr><td align="center" style="padding:26px 16px 8px;">
+          <img src="cid:logo" alt="NovaTickets" width="110" style="display:block;height:auto;">
+          <p style="margin:10px 0 0;font-size:14px;font-weight:bold;color:#1d4e89;">Plateforme de Billetterie</p>
+        </td></tr>
+        <tr><td align="center" style="padding:16px 24px 0;">
+          <p style="margin:0;font-size:40px;">🎁</p>
+          <h1 style="margin:6px 0 0;font-size:22px;color:#059669;">{{ buyer.display_name }} vous offre un billet !</h1>
+          <p style="margin:12px 0 0;font-size:14px;color:#475569;">Bonjour {{ order.holder_first_name }}, voici votre billet pour</p>
+          <p style="margin:6px 0 0;font-size:20px;font-weight:bold;">{{ event.name }}</p>
+          <p style="margin:4px 0 0;font-size:13px;color:#64748b;">{{ event.start_date|date:"d F Y" }} · {{ event.start_time|time:"H\hi" }}{% if event.location %} · {{ event.location }}{% endif %}</p>
+        </td></tr>
+        <tr><td style="padding:20px 24px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #a7f3d0;background:#ecfdf5;border-radius:12px;font-size:14px;"><tr><td style="padding:14px 16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="padding:4px 0;color:#64748b;">Titulaire</td><td align="right"><strong>{{ order.holder_name }}</strong></td></tr>
+              <tr><td style="padding:4px 0;color:#64748b;">Type de ticket</td><td align="right"><strong>{{ order.ticket_type.name }}{% if order.quantity > 1 %} × {{ order.quantity }}{% endif %}</strong></td></tr>
+              <tr><td style="padding:4px 0;color:#64748b;">Référence</td><td align="right"><strong>{{ order.reference }}</strong></td></tr>
+            </table>
+          </td></tr></table>
+        </td></tr>
+        <tr><td align="center" style="padding:18px 24px 0;font-size:14px;color:#475569;">
+          📎 Votre billet est en <strong>pièce jointe (PDF)</strong>. Présentez son QR code à l'entrée, sur votre téléphone ou imprimé.
+        </td></tr>
+        <tr><td style="padding:24px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td valign="middle" style="font-size:12px;color:#94a3b8;">
+              Organisé par <strong style="color:#0f172a;">{{ organizer.organizer_label }}</strong><br>
+              Powered by <strong style="color:#1d4e89;">Nova Tickets</strong>
+            </td>
+            {% if has_qr %}<td align="right" valign="middle"><img src="cid:qrcode" alt="QR" width="76" height="76" style="display:block;"></td>{% endif %}
+          </tr></table>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

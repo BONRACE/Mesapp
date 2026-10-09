@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:16px 8px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;">
+
+        <!-- En-tête : logo de la plateforme, baseline et date -->
+        <tr><td align="center" style="padding:26px 16px 8px;">
+          <img src="cid:logo" alt="NovaTickets" width="120" style="display:block;height:auto;">
+          <p style="margin:10px 0 0;font-size:14px;font-weight:bold;color:#1d4e89;">Plateforme de Billetterie</p>
+          <p style="margin:2px 0 0;font-size:12px;color:#64748b;">{{ order.created_at|date:"d F Y" }} · {{ order.created_at|date:"H:i" }}</p>
+        </td></tr>
+
+        <tr><td style="padding:12px 24px 0;"><div style="border-top:1px solid #e2e8f0;"></div></td></tr>
+
+        <!-- Logo plateforme + logo événement -->
+        <tr><td align="center" style="padding:16px 16px 4px;">
+          <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td style="padding:0 14px;" valign="middle"><img src="cid:logo" alt="" width="70" style="display:block;height:auto;"></td>
+            {% if has_event_logo %}<td style="padding:0 6px;color:#94a3b8;font-size:20px;" valign="middle">×</td>
+            <td style="padding:0 14px;" valign="middle"><img src="cid:eventlogo" alt="" width="70" style="display:block;height:auto;border-radius:10px;"></td>{% endif %}
+          </tr></table>
+        </td></tr>
+
+        <tr><td align="center" style="padding:14px 24px 0;">
+          <h1 style="margin:0;font-size:24px;color:#059669;">Merci pour votre achat !</h1>
+          <p style="margin:10px 0 0;font-size:12px;letter-spacing:1px;color:#64748b;">NOM DE L'ÉVÉNEMENT</p>
+          <p style="margin:2px 0 0;font-size:19px;font-weight:bold;">{{ event.name }}</p>
+          <p style="margin:4px 0 0;font-size:13px;color:#64748b;">{{ event.start_date|date:"d F Y" }} · {{ event.start_time|time:"H\hi" }}{% if event.location %} · {{ event.location }}{% endif %}</p>
+        </td></tr>
+
+        <!-- Informations du spectateur (titulaire du billet) -->
+        <tr><td style="padding:20px 24px 0;">
+          <p style="margin:0 0 6px;font-size:12px;font-weight:bold;letter-spacing:1px;color:#64748b;">INFORMATIONS DU SPECTATEUR</p>
+          {% if order.for_friend %}<p style="margin:0 0 8px;padding:8px 12px;background:#fff7ed;border-radius:8px;font-size:13px;color:#9a3412;">🎁 Billet offert à <strong>{{ order.holder_name }}</strong> — acheté par {{ user.display_name }}</p>{% endif %}
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+            <tr><td style="padding:3px 0;color:#64748b;">Nom</td><td align="right"><strong>{{ order.holder_last_name }}</strong></td></tr>
+            <tr><td style="padding:3px 0;color:#64748b;">Prénoms</td><td align="right"><strong>{{ order.holder_first_name }}</strong></td></tr>
+            <tr><td style="padding:3px 0;color:#64748b;">E-mail</td><td align="right">{{ order.holder_email|default:"-" }}</td></tr>
+            <tr><td style="padding:3px 0;color:#64748b;">Téléphone</td><td align="right">{{ order.holder_phone|default:"-" }}</td></tr>
+          </table>
+        </td></tr>
+
+        <!-- Détails du ticket -->
+        <tr><td style="padding:20px 24px 0;">
+          <p style="margin:0 0 6px;font-size:12px;font-weight:bold;letter-spacing:1px;color:#64748b;">DÉTAILS DU TICKET</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #a7f3d0;background:#ecfdf5;border-radius:12px;font-size:14px;">
+            <tr><td style="padding:14px 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="padding:4px 0;color:#64748b;">Type de ticket</td><td align="right"><strong>{{ order.ticket_type.name }}</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#64748b;">Référence</td><td align="right"><strong>{{ order.reference }}</strong></td></tr>
+                <tr><td style="padding:4px 0;color:#64748b;">Prix unitaire</td><td align="right">{{ order.unit_price|floatformat:0 }} FCFA</td></tr>
+                <tr><td style="padding:4px 0;color:#64748b;">Quantité</td><td align="right">{{ order.quantity }}</td></tr>
+                <tr><td style="padding:4px 0;color:#64748b;">Statut du paiement</td><td align="right"><span style="background:#059669;color:#fff;border-radius:999px;padding:2px 12px;font-size:12px;white-space:nowrap;">✔ Payé</span></td></tr>
+                <tr><td style="padding:4px 0;color:#64748b;">Moyen de paiement</td><td align="right">{{ order.payment_method }}</td></tr>
+                <tr><td style="padding:10px 0 0;border-top:1px solid #a7f3d0;font-size:16px;"><strong>Montant total</strong></td><td align="right" style="padding:10px 0 0;border-top:1px solid #a7f3d0;font-size:18px;color:#059669;"><strong>{{ order.total|floatformat:0 }} FCFA</strong></td></tr>
+              </table>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <tr><td align="center" style="padding:20px 24px 0;">
+          <a href="{{ tickets_url }}" style="display:inline-block;background:#059669;color:#ffffff;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:12px;">Voir mes billets</a>
+        </td></tr>
+
+        <!-- Signature de l'organisateur + cachet -->
+        <tr><td style="padding:24px 24px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;"><tr>
+            <td style="padding:14px 16px;">
+              <p style="margin:0;color:#64748b;font-size:12px;">Signature de l'organisateur</p>
+              <p style="margin:6px 0 0;font-size:20px;font-style:italic;color:#1d4e89;font-family:Georgia,'Times New Roman',serif;">{{ organizer.display_name }}</p>
+              <p style="margin:2px 0 0;font-size:12px;color:#64748b;">{{ organizer.organizer_label }}</p>
+            </td>
+            <td align="right" style="padding:14px 16px;"><span style="display:inline-block;border:2px solid #1d4e89;color:#1d4e89;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:bold;text-align:center;">✔ VÉRIFIÉ PAR<br>NOVA TICKETS</span></td>
+          </tr></table>
+        </td></tr>
+
+        <!-- Pied de page : Powered by + réseaux + QR -->
+        <tr><td style="padding:24px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td valign="middle" style="font-size:12px;color:#94a3b8;">
+              Powered by <strong style="color:#1d4e89;">Nova Tickets</strong><br>
+              {% for name, url in social_links %}<a href="{{ url }}" style="color:#059669;text-decoration:none;">{{ name }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}
+              <br><span style="font-size:11px;">Présentez le QR code de votre billet à l'entrée.</span>
+            </td>
+            {% if has_qr %}<td align="right" valign="middle"><img src="cid:qrcode" alt="QR" width="76" height="76" style="display:block;"></td>{% endif %}
+          </tr></table>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

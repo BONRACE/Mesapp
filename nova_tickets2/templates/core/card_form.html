@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Modifier{% else %}Créer{% endif %} une carte de visite{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'core:card_list' %}" class="text-sm font-medium text-emerald-700">← Mes cartes de visite</a>
+  <h1 class="mt-2 text-2xl md:text-3xl font-extrabold">{% if editing %}Modifier la carte{% else %}Créer une carte de visite{% endif %}</h1>
+
+  <form method="post" enctype="multipart/form-data" class="mt-6 space-y-6">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors.0 }}</div>{% endif %}
+
+    <section class="grid gap-4 md:grid-cols-2 rounded-3xl bg-white border border-slate-200 p-5 md:p-7">
+      <h2 class="md:col-span-2 font-bold">L'entreprise</h2>
+      <div class="md:col-span-2">{% with field=form.company_name %}{% include "partials/field.html" %}{% endwith %}</div>
+      <div class="md:col-span-2">{% with field=form.tagline %}{% include "partials/field.html" %}{% endwith %}</div>
+      <div class="md:col-span-2">
+        {% with field=form.logo %}{% include "partials/field.html" %}{% endwith %}
+        {% if user.org_logo and not editing %}<p class="mt-1 text-xs text-slate-500">Sans fichier, le logo de votre organisation sera utilisé.</p>{% endif %}
+      </div>
+    </section>
+
+    <section class="grid gap-4 md:grid-cols-2 rounded-3xl bg-white border border-slate-200 p-5 md:p-7">
+      <h2 class="md:col-span-2 font-bold">Le contact</h2>
+      {% with field=form.contact_name %}{% include "partials/field.html" %}{% endwith %}
+      {% with field=form.job_title %}{% include "partials/field.html" %}{% endwith %}
+      {% with field=form.phone %}{% include "partials/field.html" %}{% endwith %}
+      {% with field=form.email %}{% include "partials/field.html" %}{% endwith %}
+      {% with field=form.website %}{% include "partials/field.html" %}{% endwith %}
+      {% with field=form.address %}{% include "partials/field.html" %}{% endwith %}
+    </section>
+
+    <section class="rounded-3xl bg-white border border-slate-200 p-5 md:p-7">
+      <h2 class="font-bold">Couleur de la carte</h2>
+      <div class="mt-4 flex flex-wrap gap-4">
+        {% for r in form.color %}
+        <label class="cursor-pointer" title="{{ r.choice_label }}">
+          <input type="radio" name="color" value="{{ r.data.value }}" class="peer sr-only" {% if r.data.selected %}checked{% endif %}>
+          <span class="block h-12 w-12 rounded-full ring-2 ring-offset-2 ring-transparent peer-checked:ring-slate-900 peer-focus-visible:ring-emerald-500" style="background:{{ r.data.value }}"></span>
+          <span class="sr-only">{{ r.choice_label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      {% for e in form.color.errors %}<p class="mt-2 text-xs text-red-600">{{ e }}</p>{% endfor %}
+    </section>
+
+    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <a href="{% url 'core:card_list' %}" class="tap grid place-items-center rounded-xl border border-slate-300 bg-white px-6 font-medium">Annuler</a>
+      <button class="tap rounded-xl bg-emerald-600 px-8 py-3 font-semibold text-white hover:bg-emerald-700">{% if editing %}Enregistrer{% else %}Créer la carte{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

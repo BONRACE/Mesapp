@@ -1,0 +1,59 @@
+# ============================================================
+#  NovaTickets — configuration (copiez ce fichier en « .env »)
+#     Linux / Mac :  cp .env.example .env
+#     Windows     :  copy .env.example .env
+#  Ne partagez JAMAIS le fichier .env (mots de passe, clés).
+# ============================================================
+
+# ---------- Sécurité ----------
+# True en développement, False en production
+DEBUG=True
+# Clé secrète : obligatoire en production. Pour en générer une :
+#   python -c "from django.core.management.utils import get_random_secret_key as g; print(g())"
+SECRET_KEY=dev-only-change-me-in-production
+# Domaines autorisés, séparés par des virgules (ignoré si DEBUG=True : tout est accepté)
+ALLOWED_HOSTS=localhost,127.0.0.1
+# En production derrière HTTPS : l'adresse complète du site, ex. https://novatickets.bj
+CSRF_TRUSTED_ORIGINS=
+# Cookies sécurisés (production en HTTPS)
+COOKIE_SECURE=True
+
+# ---------- Adresse du site ----------
+# Utilisée dans les QR codes et les liens des e-mails.
+# Test sur smartphone (même Wi-Fi) : http://192.168.1.20:8000  (IP de votre PC)
+SITE_URL=http://127.0.0.1:8000
+
+# ---------- Plateforme ----------
+PLATFORM_NAME=NovaTickets
+# Commission prélevée sur chaque ticket vendu : 0.05 = 5 %
+PLATFORM_COMMISSION_RATE=0.05
+TIME_ZONE=Africa/Porto-Novo
+
+# ---------- Base de données ----------
+# sqlite (par défaut, rien à installer) ou postgres
+DB_ENGINE=sqlite
+DB_NAME=db.sqlite3
+# Si DB_ENGINE=postgres (pip install "psycopg[binary]") :
+# DB_NAME=novatickets
+# DB_USER=postgres
+# DB_PASSWORD=
+# DB_HOST=localhost
+# DB_PORT=5432
+
+# ---------- E-mails ----------
+# Développement : les e-mails s'affichent dans le terminal
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+# Production : envoi réel par SMTP (exemple Gmail avec « mot de passe d'application »)
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=True
+# EMAIL_USE_SSL=False
+# EMAIL_HOST_USER=votre.adresse@gmail.com
+# EMAIL_HOST_PASSWORD=mot-de-passe-d-application
+DEFAULT_FROM_EMAIL=NovaTickets <no-reply@novatickets.app>
+
+# ---------- Réseaux sociaux (pied des e-mails ; vide = masqué) ----------
+SOCIAL_FACEBOOK=
+SOCIAL_INSTAGRAM=
+SOCIAL_X=
