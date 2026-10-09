@@ -7,7 +7,6 @@ Plateforme de billetterie blanc/vert, pensée **ordinateur ET smartphone**.
 ```bash
 python -m venv venv && source venv/bin/activate     # Windows : venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env                # Windows : copy .env.example .env   (puis adaptez les valeurs)
 python manage.py migrate
 python manage.py seed_demo          # comptes + événements + ventes de démonstration
 python manage.py runserver 0.0.0.0:8000
@@ -54,12 +53,6 @@ Les liens Facebook / Instagram / X du pied d'e-mail se règlent dans `SOCIAL_LIN
 
 ## Mise à jour d'une base existante
 Après avoir récupéré cette version : `python manage.py migrate` (nouveaux champs « ami » et table des cartes de visite).
-
-## Configuration (.env)
-Tous les réglages sensibles sont dans le fichier `.env` (modèle : `.env.example`, jamais à partager ni à mettre sur Git).
-Principales variables : `DEBUG`, `SECRET_KEY`, `ALLOWED_HOSTS`, `SITE_URL`, `PLATFORM_COMMISSION_RATE`,
-`DB_ENGINE` (sqlite ou postgres), `EMAIL_*` (envoi réel par SMTP), `SOCIAL_FACEBOOK` / `SOCIAL_INSTAGRAM` / `SOCIAL_X`.
-Avec `DEBUG=False`, le projet refuse de démarrer tant qu'une vraie `SECRET_KEY` n'est pas définie.
 
 ## À brancher en production
 - **Paiement réel** : remplacer `charge()` dans `orders/services.py` par FedaPay / KkiaPay / CinetPay.
