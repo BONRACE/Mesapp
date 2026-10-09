@@ -1,6 +1,8 @@
-Django>=5.0,<6
+Django<6,>=5.0
 Pillow
 qrcode[pil]
 reportlab
 pycountry
 phonenumbers
+python-dotenv
+gunicorn
