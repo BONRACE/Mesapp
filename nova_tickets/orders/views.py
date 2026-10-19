@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -51,6 +52,27 @@ def buy(request, slug):
     return redirect("orders:pay", reference=order.reference)
 
 
+def _notify_receipt(request, sent, order, prefix):
+    """Dit clairement à l'utilisateur si le reçu est parti, et pourquoi sinon."""
+    if not sent:
+        messages.warning(request, f"{prefix} Mais le reçu n'a pas pu être envoyé par e-mail. "
+                                  "Vous pouvez le renvoyer depuis « Mes billets » (bouton « Renvoyer le reçu »).")
+    elif settings.EMAIL_BACKEND.endswith("console.EmailBackend"):
+        messages.info(request, f"{prefix} Mode développement : l'e-mail n'est pas réellement envoyé, il s'affiche dans "
+                               "le terminal du serveur. Configurez la section E-mails du fichier .env pour l'envoyer.")
+    else:
+        messages.success(request, f"{prefix} Votre reçu a été envoyé à {order.user.email} "
+                                  "(pensez à vérifier les courriers indésirables).")
+
+
+@login_required
+@require_POST
+def resend_receipt(request, reference):
+    order = get_object_or_404(Order, reference=reference, user=request.user, status=Order.PAID)
+    _notify_receipt(request, services.send_receipt(order), order, "Reçu renvoyé.")
+    return redirect("core:spectateur_dashboard")
+
+
 @login_required
 def pay(request, reference):
     order = get_object_or_404(Order, reference=reference, user=request.user)
@@ -70,8 +92,7 @@ def pay(request, reference):
             except services.PaymentError as exc:
                 messages.error(request, str(exc))
             else:
-                services.send_receipt(order)
-                messages.success(request, "Paiement validé ! Votre reçu vous a été envoyé par e-mail.")
+                _notify_receipt(request, services.send_receipt(order), order, "Paiement validé !")
                 return redirect("core:spectateur_dashboard")
     return render(request, "orders/pay.html", {
         "order": order, "methods": methods,

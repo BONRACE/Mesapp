@@ -1,51 +1,143 @@
 {% extends "base.html" %}
-{% block title %}{% if editing %}Modifier{% else %}Créer{% endif %} une carte de visite{% endblock %}
+{% block title %}{% if editing %}Modifier{% else %}Créer{% endif %} ma carte de visite{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-3xl">
-  <a href="{% url 'core:card_list' %}" class="text-sm font-medium text-emerald-700">← Mes cartes de visite</a>
-  <h1 class="mt-2 text-2xl md:text-3xl font-extrabold">{% if editing %}Modifier la carte{% else %}Créer une carte de visite{% endif %}</h1>
+<a href="{% url 'core:card_list' %}" class="text-sm font-medium text-emerald-700">← Mes cartes de visite</a>
+<h1 class="mt-2 text-2xl md:text-3xl font-extrabold">{% if editing %}Modifier ma carte{% else %}Créer ma carte de visite{% endif %}</h1>
+<p class="text-sm text-slate-500">Choisissez un modèle, remplissez vos infos : l'aperçu se met à jour en direct. La carte HD est générée pour {{ CARD_PRICE }} FCFA.</p>
 
-  <form method="post" enctype="multipart/form-data" class="mt-6 space-y-6">{% csrf_token %}
+<form method="post" enctype="multipart/form-data" id="cardform" class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)] lg:items-start">{% csrf_token %}
+  {% if card %}<input type="hidden" name="card_id" value="{{ card.pk }}">{% endif %}
+
+  <!-- Aperçu : en haut sur smartphone (collé), à droite sur ordinateur -->
+  <aside class="order-first lg:order-last lg:sticky lg:top-24">
+    <div class="sticky top-14 z-10 -mx-4 bg-slate-50/95 px-4 py-2 backdrop-blur lg:static lg:mx-0 lg:bg-transparent lg:p-0">
+      <div class="mb-2 flex gap-1 rounded-xl bg-slate-200/70 p-1 text-sm font-semibold lg:hidden" role="tablist">
+        <button type="button" data-tab="recto" class="tabbtn tap flex-1 rounded-lg bg-white shadow">Recto</button>
+        <button type="button" data-tab="verso" class="tabbtn tap flex-1 rounded-lg text-slate-600">Verso</button>
+      </div>
+      <div class="grid gap-3">
+        <div data-pane="recto" class="relative"><img id="pv-recto" alt="Recto" class="w-full rounded-xl bg-white shadow-lg ring-1 ring-slate-200 aspect-[7/4] object-cover"><span class="spin hidden absolute right-3 top-3 h-5 w-5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent"></span></div>
+        <div data-pane="verso" class="relative hidden lg:block"><img id="pv-verso" alt="Verso" class="w-full rounded-xl bg-white shadow-lg ring-1 ring-slate-200 aspect-[7/4] object-cover"><span class="spin hidden absolute right-3 top-3 h-5 w-5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent"></span></div>
+      </div>
+      <p class="mt-2 hidden text-xs text-slate-400 lg:block">Aperçu filigrané. Le fichier final (2100 × 1200 px, PDF d'impression) est débloqué après paiement.</p>
+    </div>
+  </aside>
+
+  <div class="space-y-6">
     {% if form.non_field_errors %}<div class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors.0 }}</div>{% endif %}
 
-    <section class="grid gap-4 md:grid-cols-2 rounded-3xl bg-white border border-slate-200 p-5 md:p-7">
-      <h2 class="md:col-span-2 font-bold">L'entreprise</h2>
+    <section class="rounded-3xl bg-white border border-slate-200 p-5 md:p-6">
+      <h2 class="font-bold">1 · Le style</h2>
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3" id="tpls">
+        {% for value, label, hint in templates %}
+        <label class="cursor-pointer">
+          <input type="radio" name="template" value="{{ value }}" class="peer sr-only" {% if form.template.value == value or not form.template.value and forloop.first %}checked{% endif %}>
+          <span class="block overflow-hidden rounded-xl border-2 border-slate-200 bg-white p-1.5 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-400">
+            <img data-tpl="{{ value }}" alt="{{ label }}" loading="lazy" class="w-full rounded-lg aspect-[7/4] object-cover bg-slate-100">
+            <span class="mt-1.5 block px-1 text-sm font-bold">{{ label }}</span>
+            <span class="block px-1 pb-1 text-xs text-slate-500">{{ hint }}</span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+      <h3 class="mt-5 text-sm font-semibold text-slate-700">Couleur</h3>
+      <div class="mt-2 flex flex-wrap gap-4">
+        {% for r in form.color %}
+        <label class="cursor-pointer" title="{{ r.choice_label }}">
+          <input type="radio" name="color" value="{{ r.data.value }}" class="peer sr-only" {% if r.data.selected %}checked{% endif %}>
+          <span class="block h-11 w-11 rounded-full ring-2 ring-offset-2 ring-transparent peer-checked:ring-slate-900 peer-focus-visible:ring-emerald-500" style="background:{{ r.data.value }}"></span>
+          <span class="sr-only">{{ r.choice_label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="grid gap-4 md:grid-cols-2 rounded-3xl bg-white border border-slate-200 p-5 md:p-6">
+      <h2 class="md:col-span-2 font-bold">2 · L'entreprise</h2>
       <div class="md:col-span-2">{% with field=form.company_name %}{% include "partials/field.html" %}{% endwith %}</div>
       <div class="md:col-span-2">{% with field=form.tagline %}{% include "partials/field.html" %}{% endwith %}</div>
       <div class="md:col-span-2">
         {% with field=form.logo %}{% include "partials/field.html" %}{% endwith %}
-        {% if user.org_logo and not editing %}<p class="mt-1 text-xs text-slate-500">Sans fichier, le logo de votre organisation sera utilisé.</p>{% endif %}
+        {% if user.org_logo and not editing %}<p class="mt-1 text-xs text-slate-500">Sans fichier, le logo de votre organisation sera utilisé. Sans logo, vos initiales sont dessinées.</p>{% endif %}
       </div>
     </section>
 
-    <section class="grid gap-4 md:grid-cols-2 rounded-3xl bg-white border border-slate-200 p-5 md:p-7">
-      <h2 class="md:col-span-2 font-bold">Le contact</h2>
+    <section class="grid gap-4 md:grid-cols-2 rounded-3xl bg-white border border-slate-200 p-5 md:p-6">
+      <h2 class="md:col-span-2 font-bold">3 · Le contact</h2>
       {% with field=form.contact_name %}{% include "partials/field.html" %}{% endwith %}
       {% with field=form.job_title %}{% include "partials/field.html" %}{% endwith %}
       {% with field=form.phone %}{% include "partials/field.html" %}{% endwith %}
       {% with field=form.email %}{% include "partials/field.html" %}{% endwith %}
       {% with field=form.website %}{% include "partials/field.html" %}{% endwith %}
-      {% with field=form.address %}{% include "partials/field.html" %}{% endwith %}
-    </section>
-
-    <section class="rounded-3xl bg-white border border-slate-200 p-5 md:p-7">
-      <h2 class="font-bold">Couleur de la carte</h2>
-      <div class="mt-4 flex flex-wrap gap-4">
-        {% for r in form.color %}
-        <label class="cursor-pointer" title="{{ r.choice_label }}">
-          <input type="radio" name="color" value="{{ r.data.value }}" class="peer sr-only" {% if r.data.selected %}checked{% endif %}>
-          <span class="block h-12 w-12 rounded-full ring-2 ring-offset-2 ring-transparent peer-checked:ring-slate-900 peer-focus-visible:ring-emerald-500" style="background:{{ r.data.value }}"></span>
-          <span class="sr-only">{{ r.choice_label }}</span>
-        </label>
-        {% endfor %}
-      </div>
-      {% for e in form.color.errors %}<p class="mt-2 text-xs text-red-600">{{ e }}</p>{% endfor %}
+      {% with field=form.social %}{% include "partials/field.html" %}{% endwith %}
+      <div class="md:col-span-2">{% with field=form.address %}{% include "partials/field.html" %}{% endwith %}</div>
     </section>
 
     <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
       <a href="{% url 'core:card_list' %}" class="tap grid place-items-center rounded-xl border border-slate-300 bg-white px-6 font-medium">Annuler</a>
-      <button class="tap rounded-xl bg-emerald-600 px-8 py-3 font-semibold text-white hover:bg-emerald-700">{% if editing %}Enregistrer{% else %}Créer la carte{% endif %}</button>
+      <button class="tap rounded-xl bg-emerald-600 px-8 py-3 font-semibold text-white hover:bg-emerald-700">{% if editing %}Enregistrer{% else %}Enregistrer et continuer{% endif %}</button>
     </div>
-  </form>
-</div>
+  </div>
+</form>
+
+<script>
+(function () {
+  var form = document.getElementById('cardform');
+  var urls = {recto: "{% url 'core:card_preview' 'recto' %}", verso: "{% url 'core:card_preview' 'verso' %}"};
+  var sample = "{% url 'core:card_sample' 'TPL' 'abcdef' 'recto' %}";
+  var fields = {company: 'company_name', tagline: 'tagline', name: 'contact_name', title: 'job_title', phone: 'phone',
+                email: 'email', website: 'website', address: 'address', social: 'social'};
+  var timer = null, tokens = {recto: 0, verso: 0}, urlsToFree = {};
+
+  function val(n) { var e = form.elements[n]; return e ? e.value : ''; }
+  function checked(n) { var e = form.querySelector('input[name=' + n + ']:checked'); return e ? e.value : ''; }
+
+  function refreshSamples() {
+    var color = checked('color').replace('#', '') || '059669';
+    form.querySelectorAll('img[data-tpl]').forEach(function (img) {
+      img.src = sample.replace('TPL', img.dataset.tpl).replace('abcdef', color);
+    });
+  }
+  function build() {
+    var fd = new FormData();
+    fd.append('csrfmiddlewaretoken', form.elements.csrfmiddlewaretoken.value);
+    Object.keys(fields).forEach(function (k) { fd.append(fields[k], val(fields[k])); });
+    fd.append('template', checked('template')); fd.append('color', checked('color'));
+    if (form.elements.card_id) fd.append('card_id', form.elements.card_id.value);
+    var f = form.elements.logo && form.elements.logo.files[0];
+    if (f) fd.append('logo', f);
+    return fd;
+  }
+  function render(side) {
+    var t = ++tokens[side], pane = document.getElementById('pv-' + side), spin = pane.parentNode.querySelector('.spin');
+    spin.classList.remove('hidden');
+    fetch(urls[side], {method: 'POST', body: build(), credentials: 'same-origin'})
+      .then(function (r) { if (!r.ok) throw 0; return r.blob(); })
+      .then(function (b) {
+        if (t !== tokens[side]) return;
+        var u = URL.createObjectURL(b), old = pane.src; pane.src = u;
+        if (old && old.indexOf('blob:') === 0) URL.revokeObjectURL(old);
+      }).catch(function () {})
+      .then(function () { if (t === tokens[side]) spin.classList.add('hidden'); });
+  }
+  function all(delay) { clearTimeout(timer); timer = setTimeout(function () { render('recto'); render('verso'); }, delay); }
+
+  form.addEventListener('input', function (e) { if (e.target.name === 'color') refreshSamples(); all(350); });
+  form.addEventListener('change', function (e) { if (e.target.name === 'color') refreshSamples(); all(50); });
+
+  // Onglets recto / verso sur smartphone
+  document.querySelectorAll('.tabbtn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.tabbtn').forEach(function (x) {
+        var on = x === b; x.classList.toggle('bg-white', on); x.classList.toggle('shadow', on); x.classList.toggle('text-slate-600', !on);
+      });
+      document.querySelectorAll('[data-pane]').forEach(function (p) {
+        var on = p.dataset.pane === b.dataset.tab; p.classList.toggle('hidden', !on); p.classList.toggle('lg:block', true);
+        if (!on) p.classList.add('hidden'); else p.classList.remove('hidden');
+      });
+    });
+  });
+  refreshSamples(); all(0);
+})();
+</script>
 {% endblock %}

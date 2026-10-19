@@ -29,6 +29,8 @@ class Order(models.Model):
     payment_phone = models.CharField(max_length=30, blank=True)
     status = models.CharField(max_length=10, choices=STATUSES, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Date d'envoi réel du reçu par e-mail (vide = pas encore parti, la relance est automatique)
+    receipt_sent_at = models.DateTimeField(null=True, blank=True)
 
     # Billet offert à un ami : c'est lui le titulaire du billet
     for_friend = models.BooleanField(default=False)

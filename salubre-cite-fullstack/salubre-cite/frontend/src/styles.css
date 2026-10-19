@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Khand:wght@600;700&family=Hind:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap");
+:root { --deep:#054544; --teal:#178f92; --teal-dark:#005f62; --sky:#4fb6ca; --ochre:#ae8548; --clay:#845d29; --earth:#4e3910; --bg:#f7fafa; --card:#edf4f4; --ink:#19302f; --muted:#4f6867; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:Hind, system-ui, sans-serif; font-size:16px; }
+.display { font-family:Khand, sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:-0.015em; line-height:.92; }
+.label { font-family:Khand, sans-serif; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
+.mono { font-family:"IBM Plex Mono", monospace; }
+@keyframes ticker { from { transform:translateX(0) } to { transform:translateX(-50%) } }
+.ticker { animation: ticker 42s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -36 } }
+.flow { stroke-dasharray: 7 11; animation: dash 1.4s linear infinite; }
+@keyframes pulseRing { 0% { transform:scale(0.85); opacity:0.8 } 100% { transform:scale(1.65); opacity:0 } }
+.pulse-ring { animation: pulseRing 2.2s cubic-bezier(.2,.7,.2,1) infinite; transform-origin:center; }
+@keyframes rise { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:none } }
+.rise { animation: rise .55s cubic-bezier(.2,.7,.2,1) both; }
+.field { position:relative; }
+.field input, .field select { width:100%; height:56px; padding:21px 15px 5px; border-radius:14px; border:1.5px solid #cde0e0; background:#fff; font:inherit; color:var(--ink); outline:none; transition:border-color .18s, box-shadow .18s; box-sizing:border-box; appearance:none; }
+.field label { position:absolute; left:16px; top:17px; color:var(--muted); pointer-events:none; transition:all .16s ease; font-size:15px; }
+.field input:focus, .field select:focus { border-color:var(--teal); box-shadow:0 0 0 4px rgba(23,143,146,.16); }
+.field input:focus + label, .field input:not(:placeholder-shown) + label, .field select + label { top:7px; font-size:13px; color:var(--teal-dark); font-weight:600; }
+@media (prefers-reduced-motion: reduce) { .ticker, .flow, .pulse-ring, .rise { animation:none } }

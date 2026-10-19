@@ -1,0 +1,3 @@
+Polices utilisées pour les cartes de visite (rendu image/PDF) :
+Inter, Poppins, Playfair Display, Cormorant Garamond, Caveat
+Toutes sous licence SIL Open Font License 1.1 (usage libre, y compris commercial) — fonts.google.com

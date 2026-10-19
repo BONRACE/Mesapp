@@ -1,5 +1,6 @@
 """Paiement (simulé), QR code stylisé, PDF du billet et e-mail reçu."""
 import io
+import logging
 from pathlib import Path
 
 import qrcode
@@ -9,6 +10,7 @@ from email.mime.image import MIMEImage
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.template.loader import render_to_string
+from django.utils import timezone
 from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.colormasks import SolidFillColorMask
 from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
@@ -17,6 +19,8 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 from .models import Order, Ticket
+
+logger = logging.getLogger(__name__)
 
 GREEN = HexColor("#059669")
 DARK = HexColor("#0f172a")
@@ -229,9 +233,28 @@ def _build(subject, to, template, ctx, order, text):
     return msg
 
 
+def email_is_console():
+    """True si les e-mails sont seulement affichés dans le terminal (rien n'est réellement envoyé)."""
+    return settings.EMAIL_BACKEND.endswith("console.EmailBackend")
+
+
+def _send(msg):
+    """Envoie le message ; en cas d'échec, l'erreur est écrite dans le terminal (jamais masquée)."""
+    try:
+        msg.send()
+        return True
+    except Exception:
+        logger.exception("Échec d'envoi de l'e-mail « %s » à %s (vérifiez la section E-mails du fichier .env)",
+                         msg.subject, msg.to)
+        return False
+
+
 def send_receipt(order: Order):
-    """Reçu envoyé à l'acheteur après un paiement validé."""
+    """Reçu envoyé à l'acheteur après un paiement validé. Retourne True si tout est parti."""
     user, event = order.user, order.event
+    if not user.email:
+        logger.error("Reçu %s non envoyé : l'acheteur n'a pas d'adresse e-mail.", order.reference)
+        return False
     text = (
         f"Merci pour votre achat, {user.first_name} !\n"
         f"Événement : {event.name}\nRéférence : {order.reference}\n"
@@ -242,9 +265,14 @@ def send_receipt(order: Order):
     text += f"Vos billets : {settings.SITE_URL}/mes-billets/"
     msg = _build(f"Votre reçu NovaTickets – {event.name}", [user.email], "emails/receipt.html",
                  {"user": user}, order, text)
-    msg.send(fail_silently=True)
+    ok = _send(msg)
+    if ok and not email_is_console():
+        # Le reçu est réellement parti : on le note (sinon la commande send_pending_receipts le relancera).
+        order.receipt_sent_at = timezone.now()
+        Order.objects.filter(pk=order.pk).update(receipt_sent_at=order.receipt_sent_at)
     if order.for_friend and order.friend_email:
-        send_friend_ticket(order)
+        ok = send_friend_ticket(order) and ok
+    return ok
 
 
 def send_friend_ticket(order: Order):
@@ -259,4 +287,4 @@ def send_friend_ticket(order: Order):
                  "emails/friend_ticket.html", {"buyer": buyer}, order, text)
     for t in order.tickets.all():
         msg.attach(f"billet-{t.short_code}.pdf", ticket_pdf(t), "application/pdf")
-    msg.send(fail_silently=True)
+    return _send(msg)

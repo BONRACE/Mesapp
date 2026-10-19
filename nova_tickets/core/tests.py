@@ -210,6 +210,30 @@ class FriendTicketTests(TestCase):
         pdf = self.client.get(reverse("orders:ticket_pdf", args=[t.code]))
         self.assertTrue(b"".join(pdf.streaming_content).startswith(b"%PDF"))
 
+    def test_mail_failure_is_reported_and_never_blocks_the_purchase(self):
+        from unittest import mock
+        self._buy(self.spec)
+        order = Order.objects.latest("id")
+        with mock.patch("django.core.mail.EmailMultiAlternatives.send", side_effect=OSError("SMTP en panne")), \
+                self.assertLogs("orders.services", level="ERROR"):
+            r = self.client.post(reverse("orders:pay", args=[order.reference]),
+                                 {"payment_method": "MTN Mobile Money", "payment_phone": "97000001"}, follow=True)
+        order.refresh_from_db()
+        self.assertEqual(order.status, Order.PAID)                     # le paiement reste validé
+        self.assertEqual(order.tickets.count(), 1)                      # le billet existe
+        self.assertContains(r, "n&#x27;a pas pu être envoyé")           # et l'utilisateur est prévenu
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend")
+    def test_console_mode_tells_the_user_that_nothing_was_sent(self):
+        import contextlib
+        import io
+        self._buy(self.spec)
+        order = Order.objects.latest("id")
+        with contextlib.redirect_stdout(io.StringIO()):
+            r = self.client.post(reverse("orders:pay", args=[order.reference]),
+                                 {"payment_method": "MTN Mobile Money", "payment_phone": "97000001"}, follow=True)
+        self.assertContains(r, "Mode développement")
+
     def test_friend_without_email_sends_only_the_receipt(self):
         self._buy(self.spec, **{**FRIEND, "friend_email": ""})
         self._pay()
@@ -246,34 +270,95 @@ class BusinessCardTests(TestCase):
 
     DATA = {"company_name": "Orga Prod", "tagline": "Événements", "contact_name": "Koffi A.",
             "job_title": "Directeur", "phone": "+229 97 00 11 22", "email": "c@orga.bj",
-            "website": "www.orga.bj", "address": "Cotonou", "color": "#1d4e89"}
+            "website": "www.orga.bj", "address": "Cotonou, Bénin", "social": "@orga",
+            "color": "#1d4e89", "template": "atelier"}
 
     def _create(self, user, **extra):
         self.client.force_login(user)
         return self.client.post(reverse("core:card_create"), {**self.DATA, **extra})
 
-    def test_create_and_download_everything(self):
+    def _pay(self, card, phone="+229 97 00 11 22", method="MTN Mobile Money"):
+        return self.client.post(reverse("core:card_pay", args=[card.pk]),
+                                {"payment_method": method, "payment_phone": phone})
+
+    def _size(self, resp):
+        return Image.open(BytesIO(resp.content)).size
+
+    def test_unpaid_card_only_gives_a_watermarked_low_res_preview(self):
         r = self._create(self.orga, logo=png_file())
         card = BusinessCard.objects.get()
         self.assertRedirects(r, card.get_absolute_url())
+        self.assertFalse(card.is_paid)
         for side in ("recto", "verso"):
             resp = self.client.get(reverse("core:card_image", args=[card.pk, side]))
-            self.assertEqual(resp["Content-Type"], "image/png")
-            self.assertEqual(Image.open(BytesIO(resp.content)).size, (1050, 600))
+            self.assertEqual(self._size(resp), (840, 480))     # aperçu, pas le fichier HD
+        for name in ("card_pdf", "card_vcf"):
+            r = self.client.get(reverse(f"core:{name}", args=[card.pk]))
+            self.assertRedirects(r, reverse("core:card_pay", args=[card.pk]), fetch_redirect_response=False)
+        r = self.client.get(reverse("core:card_image", args=[card.pk, "recto"]) + "?dl=1")
+        self.assertRedirects(r, reverse("core:card_pay", args=[card.pk]), fetch_redirect_response=False)
+        self.assertContains(self.client.get(card.get_absolute_url()), "Générer ma carte · 100 FCFA")
+
+    def test_paying_100_fcfa_unlocks_everything_and_emails_the_pdf(self):
+        self._create(self.orga, logo=png_file())
+        card = BusinessCard.objects.get()
+        mail.outbox.clear()
+        self.assertRedirects(self._pay(card), card.get_absolute_url())
+        card.refresh_from_db()
+        self.assertTrue(card.is_paid)
+        pay = card.payments.get()
+        self.assertEqual((pay.amount, pay.status, pay.method), (100, "paid", "MTN Mobile Money"))
+        self.assertTrue(pay.reference.startswith("CV-"))
+        # e-mail automatique avec PDF en pièce jointe
+        self.assertEqual(len(mail.outbox), 1)
+        msg = mail.outbox[0]
+        self.assertEqual(msg.to, ["orga@t.test"])
+        self.assertIn("100 FCFA", msg.alternatives[0][0])
+        pdfs = [a for a in msg.attachments if isinstance(a, tuple) and a[0].endswith(".pdf")]
+        self.assertTrue(pdfs and pdfs[0][1].startswith(b"%PDF"))
+        # téléchargements HD
+        for side in ("recto", "verso"):
+            self.assertEqual(self._size(self.client.get(reverse("core:card_image", args=[card.pk, side]))), (2100, 1200))
         dl = self.client.get(reverse("core:card_image", args=[card.pk, "recto"]) + "?dl=1")
         self.assertIn("attachment", dl["Content-Disposition"])
         self.assertEqual(self.client.get(reverse("core:card_image", args=[card.pk, "dos"])).status_code, 404)
         pdf = self.client.get(reverse("core:card_pdf", args=[card.pk]))
         self.assertTrue(pdf.content.startswith(b"%PDF"))
-        self.assertEqual(pdf.content.count(b"/Type /Page\n"), 2)   # recto + verso
+        self.assertEqual(pdf.content.count(b"/Type /Page\n"), 2)
         vcf = self.client.get(reverse("core:card_vcf", args=[card.pk])).content.decode()
         for needle in ("BEGIN:VCARD", "FN:Koffi A.", "ORG:Orga Prod", "TEL;TYPE=CELL:+229 97 00 11 22", "URL:https://www.orga.bj"):
             self.assertIn(needle, vcf)
-        self.assertContains(self.client.get(reverse("core:card_list")), "Orga Prod")
+        # on ne repaye pas une carte déjà payée
+        self.assertRedirects(self.client.get(reverse("core:card_pay", args=[card.pk])), card.get_absolute_url())
+        self.assertContains(self.client.get(reverse("core:card_list")), "Générée")
 
-    def test_spectateur_can_make_a_card_too(self):
+    def test_refused_payment_keeps_the_card_locked(self):
+        self._create(self.orga)
+        card = BusinessCard.objects.get()
+        mail.outbox.clear()
+        r = self._pay(card, phone="+229 97 00 0000")
+        self.assertContains(r, "refusé")
+        card.refresh_from_db()
+        self.assertFalse(card.is_paid)
+        self.assertEqual(card.payments.get().status, "failed")
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertRedirects(self.client.get(reverse("core:card_pdf", args=[card.pk])),
+                             reverse("core:card_pay", args=[card.pk]), fetch_redirect_response=False)
+
+    def test_payment_validation(self):
+        self._create(self.orga)
+        card = BusinessCard.objects.get()
+        self._pay(card, method="Bitcoin")
+        self._pay(card, phone="12")
+        self.assertEqual(card.payments.count(), 0)
+        self.assertFalse(BusinessCard.objects.get().is_paid)
+
+    def test_spectateur_can_make_and_pay_a_card_too(self):
         self._create(self.spec)
-        self.assertEqual(BusinessCard.objects.filter(user=self.spec).count(), 1)
+        card = BusinessCard.objects.get(user=self.spec)
+        self._pay(card)
+        card.refresh_from_db()
+        self.assertTrue(card.is_paid)
 
     def test_needs_a_phone_or_an_email(self):
         self._create(self.orga, phone="", email="")
@@ -284,31 +369,81 @@ class BusinessCardTests(TestCase):
         card = BusinessCard.objects.get()
         self.client.force_login(self.spec)
         for name, args in (("card_detail", [card.pk]), ("card_pdf", [card.pk]), ("card_vcf", [card.pk]),
-                           ("card_image", [card.pk, "recto"]), ("card_edit", [card.pk])):
+                           ("card_pay", [card.pk]), ("card_image", [card.pk, "recto"]), ("card_edit", [card.pk])):
             self.assertEqual(self.client.get(reverse(f"core:{name}", args=args)).status_code, 404, name)
+        self.assertEqual(self._pay(card).status_code, 404)
         self.client.post(reverse("core:card_delete", args=[card.pk]))
         self.assertEqual(BusinessCard.objects.count(), 1)
 
-    def test_edit_delete_and_prefill(self):
-        self.client.force_login(self.orga)
-        self.assertContains(self.client.get(reverse("core:card_create")), 'value="Orga Prod"')
+    def test_login_required(self):
         self._create(self.orga)
         card = BusinessCard.objects.get()
+        self.client.logout()
+        for url in (reverse("core:card_pay", args=[card.pk]), reverse("core:card_preview", args=["recto"]),
+                    reverse("core:card_sample", args=["wax", "059669", "recto"])):
+            self.assertEqual(self.client.get(url).status_code, 302, url)
+
+    def test_edit_after_payment_is_free_and_delete(self):
+        self._create(self.orga)
+        card = BusinessCard.objects.get()
+        self._pay(card)
         self.client.post(reverse("core:card_edit", args=[card.pk]), {**self.DATA, "company_name": "Nouveau Nom"})
         card.refresh_from_db()
         self.assertEqual(card.company_name, "Nouveau Nom")
+        self.assertTrue(card.is_paid)
+        self.assertEqual(self._size(self.client.get(reverse("core:card_image", args=[card.pk, "verso"]))), (2100, 1200))
         self.client.post(reverse("core:card_delete", args=[card.pk]))
         self.assertEqual(BusinessCard.objects.count(), 0)
 
-    def test_very_long_texts_still_render(self):
-        self._create(self.orga, company_name="X" * 74 + " " + "Y" * 5, tagline="T" * 100, address="A " * 70,
-                     contact_name="N" * 80, job_title="J" * 80, website="w" * 120)
-        card = BusinessCard.objects.get()
-        for side in ("recto", "verso"):
-            self.assertEqual(self.client.get(reverse("core:card_image", args=[card.pk, side])).status_code, 200)
+    def test_create_page_prefill_picker_and_price(self):
+        self.client.force_login(self.orga)
+        page = self.client.get(reverse("core:card_create"))
+        self.assertContains(page, 'value="Orga Prod"')
+        self.assertContains(page, "100 FCFA")
+        for tpl in ("atelier", "epure", "prestige", "wax", "aurore"):
+            self.assertContains(page, f'data-tpl="{tpl}"')
+
+    def test_all_templates_render_with_long_texts_and_logo(self):
+        self.client.force_login(self.orga)
+        for tpl in ("atelier", "epure", "prestige", "wax", "aurore"):
+            for color in ("#0f172a",) if tpl == "prestige" else ("#059669",):
+                self._create(self.orga, template=tpl, color=color, company_name="X" * 74 + " " + "Y" * 5,
+                             tagline="T" * 100, address="A " * 70, contact_name="N" * 80, job_title="J" * 80,
+                             website="w" * 120, social="s" * 60, logo=png_file())
+        for card in BusinessCard.objects.all():
+            card.paid_at = card.created_at
+            card.save()
+            for side in ("recto", "verso"):
+                self.assertEqual(self._size(self.client.get(reverse("core:card_image", args=[card.pk, side]))), (2100, 1200))
+
+    def test_minimal_card_renders_in_every_template(self):
+        from core import cards
+        from core.cardkit import CardData
+        for tpl in cards.TEMPLATES:
+            for side in ("recto", "verso"):
+                im = cards.render(CardData(company="A", name="B", phone="1", template=tpl), side, 0.5)
+                self.assertEqual(im.size, (525, 300))
+
+    def test_live_preview_and_samples(self):
+        self.client.force_login(self.orga)
+        resp = self.client.post(reverse("core:card_preview", args=["verso"]), {
+            "company_name": "Test", "contact_name": "Moi", "phone": "1", "template": "wax", "color": "#ea580c",
+            "logo": png_file()})
+        self.assertEqual(self._size(resp), (840, 480))
+        # valeurs invalides : retombe sur les valeurs par défaut, pas d'erreur serveur
+        bad = self.client.post(reverse("core:card_preview", args=["recto"]), {"template": "zzz", "color": "red"})
+        self.assertEqual(bad.status_code, 200)
+        self.assertEqual(self.client.post(reverse("core:card_preview", args=["dos"])).status_code, 404)
+        self.assertEqual(self.client.get(reverse("core:card_preview", args=["recto"])).status_code, 405)
+        s = self.client.get(reverse("core:card_sample", args=["prestige", "be123c", "recto"]))
+        self.assertEqual(s["Content-Type"], "image/png")
+        for args in (["inconnu", "059669", "recto"], ["wax", "nothex", "recto"], ["wax", "059669", "dos"]):
+            self.assertEqual(self.client.get(reverse("core:card_sample", args=args)).status_code, 404)
 
     def test_buttons_are_visible_on_both_dashboards_and_nav(self):
         self.client.force_login(self.orga)
         self.assertContains(self.client.get(reverse("core:organizer_dashboard")), "Créer une carte de visite")
         self.client.force_login(self.spec)
         self.assertContains(self.client.get(reverse("core:spectateur_dashboard")), reverse("core:card_list"))
+
+

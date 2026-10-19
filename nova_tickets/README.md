@@ -7,6 +7,7 @@ Plateforme de billetterie blanc/vert, pensée **ordinateur ET smartphone**.
 ```bash
 python -m venv venv && source venv/bin/activate     # Windows : venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env                # Windows : copy .env.example .env   (puis adaptez les valeurs)
 python manage.py migrate
 python manage.py seed_demo          # comptes + événements + ventes de démonstration
 python manage.py runserver 0.0.0.0:8000
@@ -49,14 +50,27 @@ Les liens Facebook / Instagram / X du pied d'e-mail se règlent dans `SOCIAL_LIN
 - Page de contrôle du QR (`/verifier/<code>/`) : l'organisateur valide l'entrée.
 - **E-mail reçu** HTML automatique après paiement validé, calqué sur la maquette (logos plateforme + événement, informations du spectateur, détails du ticket, signature de l'organisateur avec cachet « vérifié », « Powered by », réseaux, QR). Les images sont **intégrées au message** : elles s'affichent même sans site en ligne. En développement, l'e-mail s'affiche dans la console.
 - **Réserver un billet pour un ami** (spectateurs **et** organisateurs, sur les événements des autres) : case « 🎁 Réserver pour un ami » sur la fiche événement (nom, prénoms, sexe, e-mail, téléphone, photo facultative). Le billet est **au nom de l'ami** (écran, PDF, page de contrôle). Si son e-mail est renseigné, il reçoit automatiquement le(s) billet(s) en **PDF**. L'acheteur garde le reçu et retrouve le billet dans « Mes billets » (page aussi accessible aux organisateurs). Pour plusieurs amis, faites une réservation par ami.
-- **Carte de visite d'entreprise** : bouton « 💼 Créer une carte de visite » (tableau organisateur, « Mes billets », profil, menu). Nom, slogan, logo (celui de l'organisation par défaut), contact, couleur → **recto/verso** à télécharger en **PNG** ou en **PDF** (format carte 3,5 × 2 po, 300 dpi, prêt à imprimer) + fichier **.vcf**. Le QR code du verso ajoute le contact directement dans le téléphone.
+- **Carte de visite d'entreprise (100 FCFA)** : bouton « 💼 Créer une carte de visite ». Page de création avec **5 modèles** (*Atelier* : papier kraft + tampon artisanal, *Épuré*, *Prestige*, *Wax* : motifs africains, *Aurore*), 6 couleurs, logo, réseau social, et **aperçu en direct recto/verso**. Tant que la carte n'est pas payée, seul un **aperçu filigrané basse définition** est disponible. Le paiement de **100 FCFA** (`BUSINESS_CARD_PRICE` dans `.env`, moyens de paiement selon le pays) débloque le **PNG HD 2100×1200**, le **PDF d'impression** (3,5 × 2 po) et le **.vcf** ; la carte est aussi **envoyée par e-mail** avec le PDF en pièce jointe. Les modifications après paiement sont gratuites. Le QR du verso ajoute le contact dans le téléphone.
+- **Reçu par e-mail automatique** : dès que le paiement est validé, le reçu part tout seul. Avec `EMAIL_HOST_USER` + `EMAIL_HOST_PASSWORD` dans `.env`, l'envoi réel (SMTP) s'active automatiquement ; sans identifiants, l'e-mail s'affiche dans la console. Reçus non partis : `python manage.py send_pending_receipts`.
 
 ## Mise à jour d'une base existante
-Après avoir récupéré cette version : `python manage.py migrate` (nouveaux champs « ami » et table des cartes de visite).
+Après avoir récupéré cette version : `python manage.py migrate` (champs « ami », cartes de visite, paiement des cartes, suivi d'envoi des reçus).
+
+## Configuration (.env)
+Tous les réglages sensibles sont dans le fichier `.env` (modèle : `.env.example`, jamais à partager ni à mettre sur Git).
+Principales variables : `DEBUG`, `SECRET_KEY`, `ALLOWED_HOSTS`, `SITE_URL`, `PLATFORM_COMMISSION_RATE`,
+`DB_ENGINE` (sqlite ou postgres), `EMAIL_*` (envoi réel par SMTP), `SOCIAL_FACEBOOK` / `SOCIAL_INSTAGRAM` / `SOCIAL_X`.
+Avec `DEBUG=False`, le projet refuse de démarrer tant qu'une vraie `SECRET_KEY` n'est pas définie.
+
+## Le reçu n'arrive pas dans ma boîte mail ?
+1. Dans `.env`, `EMAIL_BACKEND=...console.EmailBackend` (valeur par défaut) **n'envoie rien** : l'e-mail s'affiche seulement dans le terminal. Passez au bloc SMTP de `.env.example` (Gmail : mot de passe d'**application**, pas le mot de passe habituel), puis **redémarrez le serveur**.
+2. Testez la configuration : `python manage.py send_test_email votre.adresse@gmail.com` (affiche la cause exacte de l'échec).
+3. En cas d'échec à l'achat, le paiement et les billets restent valides ; un message l'indique et l'erreur détaillée s'écrit dans le terminal. Le bouton **✉️ Renvoyer le reçu** (page « Mes billets ») renvoie l'e-mail.
+4. Vérifiez les courriers indésirables, et gardez `DEFAULT_FROM_EMAIL` identique à `EMAIL_HOST_USER` avec Gmail.
 
 ## À brancher en production
 - **Paiement réel** : remplacer `charge()` dans `orders/services.py` par FedaPay / KkiaPay / CinetPay.
   En démo, un numéro se terminant par `0000` simule un refus.
-- **E-mails réels** : configurer `EMAIL_BACKEND` SMTP dans `config/settings.py`.
+- **E-mails réels** : section E-mails du fichier `.env` (voir ci-dessus).
 - `DEBUG=False`, `SECRET_KEY`, `ALLOWED_HOSTS`, base PostgreSQL, hébergement des fichiers média.
 - Les retraits sont enregistrés « En cours » : le versement réel se fait via l'admin (`/admin/`, créez un superuser) ou une API de paiement sortant.

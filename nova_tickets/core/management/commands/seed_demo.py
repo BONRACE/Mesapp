@@ -155,7 +155,11 @@ class Command(BaseCommand):
             user=o1, company_name="Afro Vibes Productions", tagline="Concerts, festivals et événements d'entreprise",
             contact_name="Koffi Ahouansou", job_title="Directeur général", phone="+229 97 00 11 22",
             email="contact@afrovibes.demo", website="www.afrovibes.demo", address="Haie Vive, Cotonou, Bénin",
-            color="#059669")
+            color="#059669", template="atelier", social="@afrovibes", paid_at=timezone.now())
+        BusinessCard.objects.create(
+            user=o1, company_name="Afro Vibes Productions", tagline="Concerts, festivals et événements",
+            contact_name="Koffi Ahouansou", job_title="Directeur général", phone="+229 97 00 11 22",
+            email="contact@afrovibes.demo", address="Haie Vive, Cotonou, Bénin", color="#ea580c", template="wax")
 
         # --- un retrait déjà traité
         Withdrawal.objects.create(organizer=o1, amount=20000, method="MTN Mobile Money", phone="+229 97 00 11 22", status="paid")

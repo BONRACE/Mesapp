@@ -3,29 +3,38 @@
 {% block content %}
 <div class="mx-auto max-w-4xl">
   <a href="{% url 'core:card_list' %}" class="text-sm font-medium text-emerald-700">← Mes cartes de visite</a>
-  <h1 class="mt-2 text-2xl md:text-3xl font-extrabold">{{ card.company_name }}</h1>
-  <p class="text-sm text-slate-500">{{ card.contact_name }}{% if card.job_title %} · {{ card.job_title }}{% endif %}</p>
+  <div class="mt-2 flex flex-wrap items-center gap-3">
+    <h1 class="text-2xl md:text-3xl font-extrabold">{{ card.company_name }}</h1>
+    {% if card.is_paid %}<span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">✓ Carte générée</span>{% else %}<span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Aperçu · non payée</span>{% endif %}
+  </div>
+  <p class="text-sm text-slate-500">{{ card.contact_name }}{% if card.job_title %} · {{ card.job_title }}{% endif %} · modèle {{ card.get_template_display }}</p>
 
-  <!-- Recto + verso : empilés sur smartphone, côte à côte sur ordinateur -->
   <div class="mt-6 grid gap-5 md:grid-cols-2">
+    {% for side, label in sides %}
     <figure>
-      <img src="{% url 'core:card_image' card.pk 'recto' %}?v={{ card.updated_at|date:'U' }}" alt="Recto" class="w-full rounded-xl shadow-lg ring-1 ring-slate-200">
-      <figcaption class="mt-2 flex items-center justify-between text-sm"><span class="font-semibold text-slate-600">Recto</span>
-        <a href="{% url 'core:card_image' card.pk 'recto' %}?dl=1" class="font-semibold text-emerald-700">⬇️ PNG</a></figcaption>
+      <img src="{% url 'core:card_image' card.pk side %}?v={{ card.updated_at|date:'U' }}" alt="{{ label }}" class="w-full rounded-xl shadow-lg ring-1 ring-slate-200">
+      <figcaption class="mt-2 flex items-center justify-between text-sm"><span class="font-semibold text-slate-600">{{ label }}</span>
+        {% if card.is_paid %}<a href="{% url 'core:card_image' card.pk side %}?dl=1" class="font-semibold text-emerald-700">⬇️ PNG HD</a>{% endif %}</figcaption>
     </figure>
-    <figure>
-      <img src="{% url 'core:card_image' card.pk 'verso' %}?v={{ card.updated_at|date:'U' }}" alt="Verso" class="w-full rounded-xl shadow-lg ring-1 ring-slate-200">
-      <figcaption class="mt-2 flex items-center justify-between text-sm"><span class="font-semibold text-slate-600">Verso</span>
-        <a href="{% url 'core:card_image' card.pk 'verso' %}?dl=1" class="font-semibold text-emerald-700">⬇️ PNG</a></figcaption>
-    </figure>
+    {% endfor %}
   </div>
 
+  {% if card.is_paid %}
   <div class="mt-8 grid gap-3 sm:grid-cols-3">
     <a href="{% url 'core:card_pdf' card.pk %}" class="tap inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 font-semibold text-white hover:bg-emerald-700">⬇️ PDF recto/verso (impression)</a>
     <a href="{% url 'core:card_vcf' card.pk %}" class="tap inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 font-medium">👤 Fichier contact (.vcf)</a>
-    <a href="{% url 'core:card_edit' card.pk %}" class="tap inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 font-medium">✏️ Modifier</a>
+    <a href="{% url 'core:card_edit' card.pk %}" class="tap inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-300 bg-white px-5 font-medium">✏️ Modifier</a>
   </div>
-  <p class="mt-3 text-xs text-slate-400">Format 3,5 × 2 pouces (carte standard), 300 dpi. Le QR code du verso ajoute le contact directement dans le téléphone.</p>
+  <p class="mt-3 text-xs text-slate-400">Format 3,5 × 2 pouces (carte standard), 600 dpi. Le QR code du verso ajoute le contact directement dans le téléphone. Les modifications restent gratuites.</p>
+  {% else %}
+  <div class="mt-8 rounded-3xl border border-emerald-200 bg-emerald-50 p-5 md:flex md:items-center md:justify-between md:gap-6">
+    <div><p class="font-bold text-emerald-900">Prête à être générée ?</p><p class="text-sm text-emerald-800">Payez {{ CARD_PRICE }} FCFA pour débloquer le PNG HD, le PDF d'impression et le fichier contact. Vous les recevez aussi par e-mail.</p></div>
+    <div class="mt-4 flex flex-col gap-2 sm:flex-row md:mt-0">
+      <a href="{% url 'core:card_pay' card.pk %}" class="tap inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-emerald-600 px-6 font-semibold text-white hover:bg-emerald-700">Générer ma carte · {{ CARD_PRICE }} FCFA</a>
+      <a href="{% url 'core:card_edit' card.pk %}" class="tap inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-300 bg-white px-5 font-medium">✏️ Modifier</a>
+    </div>
+  </div>
+  {% endif %}
 
   <form method="post" action="{% url 'core:card_delete' card.pk %}" onsubmit="return confirm('Supprimer cette carte ?')" class="mt-6">{% csrf_token %}
     <button class="tap text-sm text-red-600">Supprimer cette carte</button>

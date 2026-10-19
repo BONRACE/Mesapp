@@ -8,9 +8,11 @@ from .models import BusinessCard
 class CardForm(forms.ModelForm):
     class Meta:
         model = BusinessCard
-        fields = ["company_name", "tagline", "contact_name", "job_title", "phone", "email", "website", "address", "logo", "color"]
+        fields = ["company_name", "tagline", "contact_name", "job_title", "phone", "email", "website", "address", "social", "logo", "template", "color"]
         widgets = {
             "color": forms.RadioSelect,
+            "template": forms.RadioSelect,
+            "social": forms.TextInput(attrs={"placeholder": "@monentreprise"}),
             "phone": forms.TextInput(attrs={"inputmode": "tel", "placeholder": "+229 97 00 00 00"}),
             "website": forms.TextInput(attrs={"placeholder": "www.monentreprise.com"}),
             "tagline": forms.TextInput(attrs={"placeholder": "Ex. Organisation d'événements"}),
@@ -19,7 +21,7 @@ class CardForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for name, f in self.fields.items():
-            if name == "color":
+            if name in ("color", "template"):
                 continue
             if isinstance(f.widget, forms.FileInput):
                 f.widget.attrs.update({
@@ -30,6 +32,8 @@ class CardForm(forms.ModelForm):
                 f.widget.attrs["class"] = INPUT
         self.fields["color"].choices = BusinessCard.COLORS
         self.fields["color"].initial = "#059669"
+        self.fields["template"].choices = BusinessCard.TEMPLATES
+        self.fields["template"].initial = "atelier"
 
     def clean(self):
         data = super().clean()
