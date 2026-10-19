@@ -1,0 +1,39 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<style>
+  @page { size: A5 landscape; margin: 12mm; }
+  body { font-family: Helvetica, Arial, sans-serif; color:#0f172a; }
+  .bp { border:1px solid #cbd5e1; border-radius:14px; overflow:hidden; }
+  .head { background:#047857; color:#fff; padding:12px 18px; }
+  .head h1 { margin:0; font-size:15px; letter-spacing:3px; }
+  table { width:100%; border-collapse:collapse; }
+  td { vertical-align:top; padding:14px 18px; }
+  .lbl { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:#64748b; }
+  .val { font-size:13px; font-weight:bold; }
+  .ev { font-size:22px; font-weight:bold; }
+  .qr { width:130px; height:130px; }
+</style></head>
+<body>
+<div class="bp">
+  <div class="head"><h1>NOVA TICKETS · BILLET D'ENTRÉE</h1></div>
+  <table>
+    <tr>
+      <td style="width:68%">
+        <div class="lbl">Événement</div><div class="ev">{{ ticket.evenement.nom }}</div>
+        <br>
+        <table>
+          <tr><td><div class="lbl">Titulaire</div><div class="val">{{ ticket.nom_titulaire }}</div></td>
+              <td><div class="lbl">Sexe</div><div class="val">{{ ticket.sexe_libelle }}</div></td>
+              <td><div class="lbl">Catégorie</div><div class="val">{{ ticket.type_ticket.nom }}</div></td></tr>
+          <tr><td><div class="lbl">Date</div><div class="val">{{ ticket.evenement.date_debut|date:"d/m/Y" }} · {{ ticket.evenement.heure_debut|time:"H\hi" }}</div></td>
+              <td><div class="lbl">Lieu</div><div class="val">{{ ticket.evenement.lieu|default:ticket.evenement.ville }}</div></td>
+              <td><div class="lbl">Référence</div><div class="val">{{ ticket.reference }}</div></td></tr>
+        </table>
+      </td>
+      <td style="width:32%;text-align:center">
+        <img class="qr" src="{{ qr }}" alt="QR">
+        <div class="lbl">Présentez à l'entrée</div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body></html>

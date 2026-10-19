@@ -1,0 +1,4 @@
+{% load static %}{% comment %}Logo NovaTickets. Remplacez static/img/logo.png par votre fichier.{% endcomment %}
+<a href="{% url 'core:accueil' %}" class="flex items-center gap-2.5" aria-label="NovaTickets, accueil">
+  <img src="{% static 'img/logo.png' %}" alt="NOVA TICKETS" class="h-9 w-auto">
+</a>

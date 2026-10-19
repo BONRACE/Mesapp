@@ -1,0 +1,24 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<style>
+  @page { size: 85mm 55mm; margin: 0; }
+  body { margin:0; font-family: Helvetica, Arial, sans-serif; }
+  .page { width:85mm; height:55mm; position:relative; overflow:hidden; box-sizing:border-box; page-break-after:always; }
+  .page:last-child { page-break-after:auto; }
+  .carte-emeraude .recto { background:#064e3b; color:#ecfdf5; padding:6mm; }
+  .carte-papier .recto { background:#f5efe2; color:#3b2f1e; padding:6mm; }
+  .carte-minimal .recto { background:#ffffff; color:#0f172a; padding:6mm; border:0.3mm solid #e2e8f0; }
+  .carte-arche .recto { background:#d1fae5; color:#064e3b; padding:6mm; }
+  .nom { font-size:15pt; font-weight:bold; margin:0; }
+  .slogan { font-size:7.5pt; opacity:.85; margin:1mm 0 0; }
+  .bas { position:absolute; left:6mm; bottom:6mm; right:6mm; }
+  .contact { font-size:9pt; font-weight:bold; margin:0; }
+  .poste { font-size:7.5pt; margin:0; opacity:.85; }
+  .coords { font-size:6.8pt; margin:1mm 0 0; opacity:.9; }
+  .verso { background:#ffffff; color:#0f172a; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:4mm; }
+  .verso img { width:28mm; height:28mm; }
+  .verso p { font-size:7pt; margin:2mm 0 0; }
+  .marque { color:#047857; font-weight:bold; }
+</style></head>
+<body>
+  {% include "cards/carte_recto.html" %}
+</body></html>

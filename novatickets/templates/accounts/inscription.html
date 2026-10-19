@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titre %}Inscription {{ mode }}{% endblock %}
+{% block contenu %}
+<div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-[1fr_1.1fr]">
+  <aside class="hidden md:block">
+    <p class="text-sm font-semibold uppercase tracking-widest text-nova-700">Étape unique · 1 minute</p>
+    <h1 class="mt-3 text-4xl font-extrabold tracking-tight">{% if mode == "organisateur" %}Organisez vos événements.{% else %}Rejoignez NovaTickets.{% endif %}</h1>
+    <p class="mt-4 text-slate-600">{% if mode == "organisateur" %}Créez votre espace organisateur, publiez vos événements et retirez vos gains en mobile money.{% else %}Achetez vos billets, offrez-en à vos amis et gardez-les dans votre poche.{% endif %}</p>
+    <ul class="mt-8 space-y-3 text-sm text-slate-700">
+      <li class="flex gap-2"><span class="text-nova-600">✓</span> Numéro de téléphone vérifié selon votre pays</li>
+      <li class="flex gap-2"><span class="text-nova-600">✓</span> Mot de passe chiffré, jamais stocké en clair</li>
+      <li class="flex gap-2"><span class="text-nova-600">✓</span> Vos données ne sont jamais revendues</li>
+    </ul>
+    <p class="mt-8 text-sm text-slate-500">Déjà inscrit ? <a href="{% url 'accounts:login' %}" class="font-semibold text-nova-700">Connectez-vous</a>{% if mode == "spectateur" %} · <a href="{% url 'accounts:inscription_organisateur' %}" class="font-semibold text-nova-700">Inscription organisateur</a>{% else %} · <a href="{% url 'accounts:inscription_spectateur' %}" class="font-semibold text-nova-700">Inscription spectateur</a>{% endif %}</p>
+  </aside>
+
+  <div class="card p-6 sm:p-10">
+    <form method="post" enctype="multipart/form-data" novalidate class="space-y-6">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ form.non_field_errors }}</div>{% endif %}
+
+      <fieldset class="grid gap-5 sm:grid-cols-2">
+        <legend class="sr-only">Identité</legend>
+        {% include "partials/champ.html" with champ=form.first_name %}
+        {% include "partials/champ.html" with champ=form.last_name %}
+        {% include "partials/champ.html" with champ=form.email type="email" %}
+        {% if mode == "spectateur" %}
+          {% include "partials/champ.html" with champ=form.sexe %}
+          {% include "partials/champ.html" with champ=form.profession %}
+        {% else %}
+          {% include "partials/champ.html" with champ=form.structure %}
+          {% include "partials/champ.html" with champ=form.site_web %}
+        {% endif %}
+      </fieldset>
+
+      <fieldset class="rounded-2xl bg-nova-50/60 p-5 ring-1 ring-nova-100">
+        <legend class="px-1 text-sm font-semibold text-nova-900">Téléphone mobile obligatoire</legend>
+        <div class="grid gap-5 sm:grid-cols-[1.1fr_1fr]">
+          <div>
+            <label for="{{ form.pays.id_for_label }}" class="mb-1.5 block text-sm font-medium text-slate-700">Pays</label>
+            {{ form.pays }}
+          </div>
+          <div>
+            <label for="{{ form.telephone.id_for_label }}" class="mb-1.5 block text-sm font-medium text-slate-700">Numéro mobile</label>
+            <div class="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-nova-500 focus-within:ring-4 focus-within:ring-nova-500/15">
+              <span data-indicatif class="flex items-center gap-1.5 whitespace-nowrap border-r border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700">🇧🇯 +229</span>
+              {{ form.telephone }}
+            </div>
+            <p data-aide-telephone class="mt-1.5 text-xs text-slate-500">Saisissez le numéro sans l'indicatif.</p>
+            {% for err in form.telephone.errors %}<p class="mt-1.5 text-sm text-rose-600">{{ err }}</p>{% endfor %}
+          </div>
+        </div>
+      </fieldset>
+
+      {% if mode == "spectateur" %}
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="{{ form.photo.id_for_label }}">Photo de profil <span class="text-slate-400">(facultatif, apparaît sur vos tickets)</span></label>
+        {{ form.photo }}
+      </div>
+      {% else %}
+      <fieldset class="grid gap-5 sm:grid-cols-2">
+        <legend class="sr-only">Structure</legend>
+        {% include "partials/champ.html" with champ=form.description %}
+        <div class="space-y-5">
+          <div><label class="mb-1.5 block text-sm font-medium text-slate-700" for="{{ form.logo.id_for_label }}">Logo de la structure</label>{{ form.logo }}</div>
+          <div><label class="mb-1.5 block text-sm font-medium text-slate-700" for="{{ form.signature.id_for_label }}">Signature (image)</label>{{ form.signature }}</div>
+        </div>
+      </fieldset>
+      {% endif %}
+
+      <fieldset class="grid gap-5 sm:grid-cols-2">
+        <legend class="sr-only">Mot de passe</legend>
+        {% include "partials/champ.html" with champ=form.password1 type="password" %}
+        {% include "partials/champ.html" with champ=form.password2 type="password" %}
+      </fieldset>
+
+      <button type="submit" class="btn w-full bg-nova-600 text-white hover:bg-nova-700">Créer mon compte {% if mode == "organisateur" %}organisateur{% endif %}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Affiche dynamiquement drapeau + indicatif et valide la longueur du numéro. */
+(function () {
+  const DATA = {{ indicatifs_json|safe }};
+  const sel = document.querySelector('[data-selecteur-pays]');
+  const tel = document.querySelector('[data-champ-telephone]');
+  const badge = document.querySelector('[data-indicatif]');
+  const aide = document.querySelector('[data-aide-telephone]');
+  function maj() {
+    const p = DATA[sel.value];
+    if (!p) return;
+    badge.textContent = p.drapeau + ' ' + p.indicatif;
+    aide.textContent = p.min === p.max
+      ? 'Numéro ' + p.nom + ' : ' + p.min + ' chiffres.'
+      : 'Numéro ' + p.nom + ' : entre ' + p.min + ' et ' + p.max + ' chiffres.';
+  }
+  sel.addEventListener('change', maj);
+  tel.addEventListener('input', () => { tel.value = tel.value.replace(/[^0-9 +]/g, ''); });
+  maj();
+})();
+</script>
+{% endblock %}

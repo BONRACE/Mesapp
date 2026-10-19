@@ -1,0 +1,18 @@
+{% comment %}Rendu partagé : une page recto + une page verso (format 85 x 55 mm).{% endcomment %}
+<div class="carte carte-{{ carte.theme }}">
+  <section class="page recto">
+    <p class="nom">{{ carte.nom_entreprise }}</p>
+    <p class="slogan">{{ carte.slogan }}</p>
+    <div class="bas">
+      <p class="contact">{{ carte.nom_contact }}</p>
+      <p class="poste">{{ carte.poste }}</p>
+      <p class="coords">{{ carte.telephone }} · {{ carte.email }}</p>
+      <p class="coords">{{ carte.site_web }}{% if carte.site_web and carte.adresse %} · {% endif %}{{ carte.adresse }}</p>
+    </div>
+  </section>
+  <section class="page verso">
+    <img src="{{ qr }}" alt="QR">
+    <p>Scannez pour découvrir l'entreprise</p>
+    <p class="marque">Créée avec NovaTickets</p>
+  </section>
+</div>

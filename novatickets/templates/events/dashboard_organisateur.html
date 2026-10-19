@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titre %}Tableau de bord{% endblock %}
+{% block contenu %}
+<div class="mx-auto max-w-6xl px-4 py-12">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div><p class="text-sm font-semibold uppercase tracking-wide text-nova-700">Espace organisateur</p><h1 class="text-3xl font-extrabold tracking-tight">Bonjour {{ user.first_name }}</h1></div>
+    <a href="{% url 'events:creer' %}" class="btn bg-nova-600 text-white hover:bg-nova-700">+ Nouvel événement</a>
+  </div>
+  <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div class="card p-5"><p class="text-sm text-slate-500">Événements actifs</p><p class="mt-2 text-3xl font-extrabold">{{ stats.evenements_actifs }}</p></div>
+    <div class="card p-5"><p class="text-sm text-slate-500">Tickets vendus</p><p class="mt-2 text-3xl font-extrabold">{{ stats.tickets_vendus }}</p></div>
+    <div class="card p-5"><p class="text-sm text-slate-500">Ventes brutes</p><p class="mt-2 text-2xl font-extrabold">{{ stats.ventes_brutes|floatformat:"0" }} <span class="text-sm font-semibold">FCFA</span></p></div>
+    <div class="card p-5"><p class="text-sm text-slate-500">Revenus nets</p><p class="mt-2 text-2xl font-extrabold text-nova-700">{{ stats.revenus_nets|floatformat:"0" }} <span class="text-sm font-semibold">FCFA</span></p></div>
+    <a href="{% url 'payments:retraits' %}" class="card block bg-nova-600 p-5 text-white transition hover:bg-nova-700"><p class="text-sm text-nova-100">Solde retirable →</p><p class="mt-2 text-2xl font-extrabold">{{ stats.solde|floatformat:"0" }} <span class="text-sm font-semibold">FCFA</span></p></a>
+  </div>
+
+  <h2 class="mt-12 text-xl font-bold">Derniers événements</h2>
+  <div class="card mt-4 overflow-hidden">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-5 py-3">Événement</th><th class="px-5 py-3">Date</th><th class="px-5 py-3">Types</th><th class="px-5 py-3">Statut</th></tr></thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for ev in evenements %}
+        <tr><td class="px-5 py-3 font-semibold"><a href="{{ ev.get_absolute_url }}" class="hover:text-nova-700">{{ ev.nom }}</a></td><td class="px-5 py-3">{{ ev.date_debut|date:"j M Y" }}</td><td class="px-5 py-3">{{ ev.nb_types }}</td><td class="px-5 py-3"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {% if ev.statut == 'publie' %}bg-nova-50 text-nova-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ ev.get_statut_display }}</span></td></tr>
+        {% empty %}
+        <tr><td colspan="4" class="px-5 py-8 text-center text-slate-500">Aucun événement. Créez le premier !</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

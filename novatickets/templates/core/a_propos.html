@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block titre %}À propos{% endblock %}
+{% block contenu %}
+<div class="mx-auto max-w-3xl px-4 py-16">
+  <h1 class="text-4xl font-extrabold tracking-tight">À propos de NovaTickets</h1>
+  <p class="mt-5 text-lg text-slate-600">NovaTickets est une billetterie pensée pour l'Afrique de l'Ouest : paiements en FCFA, mobile money, billets nominatifs et e-mails de reçu automatiques.</p>
+  <p class="mt-4 text-slate-600">Les organisateurs gardent 95 % de leurs ventes, la plateforme prélève une commission transparente de {{ NT.COMMISSION_POURCENT|floatformat:"-1" }} %.</p>
+</div>
+{% endblock %}

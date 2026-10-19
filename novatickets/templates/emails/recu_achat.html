@@ -1,0 +1,44 @@
+{% extends "emails/base_email.html" %}
+{% block contenu %}
+<tr><td align="center" style="padding:28px 24px 8px;">
+  <img src="{{ base_url }}/static/img/logo.png" alt="NovaTickets" width="160" style="display:block;margin:0 auto;">
+  <p style="margin:12px 0 0;font-size:12px;color:#64748b;">Reçu du {{ date_envoi|date:"d/m/Y à H\hi" }}</p>
+</td></tr>
+<tr><td align="center" style="padding:12px 24px 0;">
+  <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+    <td style="padding:0 10px;"><img src="{{ base_url }}/static/img/logo.png" alt="Plateforme" width="56" style="border-radius:10px;"></td>
+    <td style="padding:0 10px;">{% if evenement.logo %}<img src="{{ base_url }}{{ evenement.logo.url }}" alt="{{ evenement.nom }}" width="56" style="border-radius:10px;">{% endif %}</td>
+  </tr></table>
+</td></tr>
+<tr><td align="center" style="padding:20px 24px 0;">
+  <h1 style="margin:0;font-size:24px;color:#064e3b;">Merci pour votre achat !</h1>
+  <p style="margin:6px 0 0;font-size:18px;font-weight:bold;">{{ evenement.nom }}</p>
+</td></tr>
+<tr><td style="padding:22px 28px 0;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;">
+    <tr><td style="padding:4px 0;color:#64748b;width:40%;">Nom</td><td style="padding:4px 0;font-weight:bold;">{{ acheteur.last_name|upper }}</td></tr>
+    <tr><td style="padding:4px 0;color:#64748b;">Prénoms</td><td style="padding:4px 0;font-weight:bold;">{{ acheteur.first_name }}</td></tr>
+    <tr><td style="padding:4px 0;color:#64748b;">E-mail</td><td style="padding:4px 0;font-weight:bold;">{{ acheteur.email }}</td></tr>
+    <tr><td style="padding:4px 0;color:#64748b;">Téléphone</td><td style="padding:4px 0;font-weight:bold;">{{ acheteur.telephone_complet }}</td></tr>
+  </table>
+</td></tr>
+<tr><td style="padding:22px 28px 0;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ecfdf5;border-radius:12px;padding:16px;font-size:14px;">
+    <tr><td style="padding:6px 16px;color:#065f46;font-weight:bold;" colspan="2">Détails du ticket</td></tr>
+    {% for l in lignes %}
+    <tr><td style="padding:4px 16px;color:#334155;">{{ l.type }} · {{ l.nom }}<br><span style="font-size:12px;color:#64748b;">Réf. {{ l.reference }}</span></td><td style="padding:4px 16px;text-align:right;">{{ l.prix|floatformat:"0" }} FCFA</td></tr>
+    {% endfor %}
+    <tr><td style="padding:4px 16px;color:#334155;">Quantité</td><td style="padding:4px 16px;text-align:right;">{{ quantite }}</td></tr>
+    <tr><td style="padding:4px 16px;color:#334155;">Statut du paiement</td><td style="padding:4px 16px;text-align:right;color:#047857;font-weight:bold;">{{ statut_paiement }}</td></tr>
+    <tr><td style="padding:10px 16px;border-top:1px solid #a7f3d0;font-weight:bold;font-size:16px;">Total</td><td style="padding:10px 16px;border-top:1px solid #a7f3d0;text-align:right;font-weight:bold;font-size:16px;">{{ total|floatformat:"0" }} FCFA</td></tr>
+  </table>
+</td></tr>
+<tr><td align="center" style="padding:28px 28px 0;">
+  <p style="margin:0;font-family:'Brush Script MT',cursive;font-size:22px;color:#064e3b;">{{ organisateur.profil_organisateur.structure|default:organisateur.nom_complet }}</p>
+  <p style="margin:6px 0 0;display:inline-block;border:2px solid #047857;color:#047857;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:bold;letter-spacing:1px;transform:rotate(-3deg);">VÉRIFIÉ PAR L'ORGANISATEUR</p>
+</td></tr>
+<tr><td align="center" style="padding:28px 24px 26px;border-top:1px solid #e2e8f0;margin-top:24px;">
+  <img src="{{ qr }}" alt="QR" width="72" height="72" style="display:block;margin:0 auto;">
+  <p style="margin:8px 0 0;font-size:11px;color:#64748b;">Powered by <strong style="color:#047857;">NovaTickets</strong> · {{ NT.SUPPORT_EMAIL }}</p>
+</td></tr>
+{% endblock %}

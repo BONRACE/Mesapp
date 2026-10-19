@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titre %}{{ evenement.nom }}{% endblock %}
+{% block contenu %}
+<div class="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-[1.4fr_1fr]">
+  <div>
+    <div class="h-72 overflow-hidden rounded-3xl bg-gradient-to-br from-nova-500 to-nova-900">{% if evenement.visuel %}<img src="{{ evenement.visuel.url }}" alt="" class="h-full w-full object-cover">{% endif %}</div>
+    <p class="mt-6 text-sm font-semibold uppercase tracking-wide text-nova-700">Par {{ evenement.organisateur.profil_organisateur.structure|default:evenement.organisateur.nom_complet }}</p>
+    <h1 class="mt-2 text-4xl font-extrabold tracking-tight">{{ evenement.nom }}</h1>
+    <p class="mt-3 text-slate-600">{{ evenement.date_debut|date:"l j F Y" }} à {{ evenement.heure_debut|time:"H\hi" }}{% if evenement.date_fin != evenement.date_debut %} → {{ evenement.date_fin|date:"j F Y" }}{% endif %}</p>
+    <p class="text-slate-600">{{ evenement.lieu }}{% if evenement.ville %}, {{ evenement.ville }}{% endif %}</p>
+    <div class="prose prose-slate mt-8 max-w-none whitespace-pre-line">{{ evenement.description }}</div>
+  </div>
+
+  <aside class="lg:sticky lg:top-24 lg:self-start">
+    <div class="card p-6">
+      <h2 class="text-lg font-bold">Billets</h2>
+      <p class="text-xs text-slate-500">Achats jusqu'au {{ evenement.date_limite_achat|date:"j M Y à H\hi" }}</p>
+      <ul class="mt-4 divide-y divide-slate-100">
+        {% for t in types %}
+        <li class="flex items-center justify-between py-3">
+          <div><p class="font-semibold">{{ t.nom }}</p><p class="text-xs {% if t.epuise %}text-rose-600{% else %}text-slate-500{% endif %}">{% if t.epuise %}Épuisé{% else %}{{ t.restants }} restant(s){% endif %}</p></div>
+          <p class="font-bold text-nova-700">{{ t.prix|floatformat:"0" }} FCFA</p>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if est_proprietaire %}
+        <p class="mt-6 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">C'est votre événement : vous ne pouvez pas en acheter les billets.</p>
+      {% elif peut_acheter %}
+        <a href="{% url 'tickets:acheter' evenement.slug %}" class="btn mt-6 w-full bg-nova-600 text-white hover:bg-nova-700">Acheter des billets</a>
+      {% elif not user.is_authenticated %}
+        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn mt-6 w-full bg-nova-600 text-white hover:bg-nova-700">Connectez-vous pour acheter</a>
+      {% else %}
+        <p class="mt-6 text-sm text-rose-600">Les achats sont fermés.</p>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

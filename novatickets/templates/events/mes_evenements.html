@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titre %}Mes événements{% endblock %}
+{% block contenu %}
+<div class="mx-auto max-w-6xl px-4 py-12">
+  <div class="flex items-center justify-between"><h1 class="text-3xl font-extrabold tracking-tight">Mes événements</h1><a href="{% url 'events:creer' %}" class="btn bg-nova-600 text-white hover:bg-nova-700">+ Créer</a></div>
+  <div class="mt-8 grid gap-5 md:grid-cols-2">
+    {% for ev in evenements %}
+    <div class="card flex flex-col justify-between gap-4 p-6">
+      <div>
+        <span class="rounded-full px-2.5 py-1 text-xs font-semibold {% if ev.statut == 'publie' %}bg-nova-50 text-nova-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ ev.get_statut_display }}</span>
+        <h2 class="mt-3 text-xl font-bold">{{ ev.nom }}</h2>
+        <p class="text-sm text-slate-500">{{ ev.date_debut|date:"j M Y" }} · limite d'achat {{ ev.date_limite_achat|date:"j M H\hi" }}</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="{% url 'events:modifier' ev.pk %}" class="btn bg-slate-100 px-4 py-2 text-sm text-slate-800 hover:bg-slate-200">Modifier</a>
+        <form method="post" action="{% url 'events:publier' ev.pk %}">{% csrf_token %}<button class="btn px-4 py-2 text-sm {% if ev.statut == 'publie' %}bg-slate-100 text-slate-800 hover:bg-slate-200{% else %}bg-nova-600 text-white hover:bg-nova-700{% endif %}">{% if ev.statut == 'publie' %}Dépublier{% else %}Publier{% endif %}</button></form>
+        <a href="{{ ev.get_absolute_url }}" class="btn px-4 py-2 text-sm text-nova-700 ring-1 ring-nova-200 hover:bg-nova-50">Voir</a>
+      </div>
+    </div>
+    {% empty %}
+    <p class="col-span-full rounded-2xl bg-slate-50 p-10 text-center text-slate-500">Vous n'avez encore aucun événement.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

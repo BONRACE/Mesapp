@@ -1,0 +1,33 @@
+{% load static %}
+<div class="boarding-pass overflow-hidden rounded-[28px] bg-white shadow-xl ring-1 ring-slate-200">
+  <div class="flex items-center justify-between bg-gradient-to-r from-nova-700 to-nova-900 px-7 py-5 text-white">
+    <img src="{% static 'img/logo.png' %}" alt="NovaTickets" class="h-10 w-auto rounded bg-white/10 p-1">
+    <p class="text-xs font-semibold uppercase tracking-[0.25em] text-nova-100">Billet d'entrée</p>
+  </div>
+  <div class="grid gap-0 md:grid-cols-[1.6fr_1fr]">
+    <div class="space-y-6 p-7">
+      <div class="flex items-center gap-4 border-b border-dashed border-slate-200 pb-5">
+        {% if ticket.evenement.logo %}<img src="{{ ticket.evenement.logo.url }}" class="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200" alt="">{% elif ticket.evenement.organisateur.profil_organisateur.logo %}<img src="{{ ticket.evenement.organisateur.profil_organisateur.logo.url }}" class="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200" alt="">{% endif %}
+        <div>
+          <p class="text-xs uppercase tracking-widest text-slate-500">Événement</p>
+          <h2 class="text-2xl font-extrabold leading-tight tracking-tight">{{ ticket.evenement.nom }}</h2>
+          <p class="text-sm text-slate-500">{{ ticket.evenement.organisateur.profil_organisateur.structure|default:ticket.evenement.organisateur.nom_complet }}</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-5 sm:grid-cols-3">
+        <div class="col-span-2 sm:col-span-1"><p class="text-xs uppercase tracking-wide text-slate-500">Titulaire</p><p class="font-semibold">{{ ticket.nom_titulaire }}</p></div>
+        <div><p class="text-xs uppercase tracking-wide text-slate-500">Sexe</p><p class="font-semibold">{{ ticket.sexe_libelle }}</p></div>
+        <div><p class="text-xs uppercase tracking-wide text-slate-500">Catégorie</p><p class="font-semibold">{{ ticket.type_ticket.nom }}</p></div>
+        <div><p class="text-xs uppercase tracking-wide text-slate-500">Date</p><p class="font-semibold">{{ ticket.evenement.date_debut|date:"j M Y" }}</p></div>
+        <div><p class="text-xs uppercase tracking-wide text-slate-500">Heure</p><p class="font-semibold">{{ ticket.evenement.heure_debut|time:"H\hi" }}</p></div>
+        <div><p class="text-xs uppercase tracking-wide text-slate-500">Lieu</p><p class="font-semibold">{{ ticket.evenement.lieu|default:ticket.evenement.ville }}</p></div>
+      </div>
+    </div>
+    <div class="relative flex flex-col items-center justify-between gap-5 bg-slate-50 p-7 md:border-l md:border-dashed md:border-slate-300">
+      {% if ticket.photo_titulaire %}<img src="{{ ticket.photo_titulaire.url }}" alt="Photo du titulaire" class="h-24 w-24 rounded-2xl object-cover ring-4 ring-white shadow">{% else %}<div class="flex h-24 w-24 items-center justify-center rounded-2xl bg-nova-100 text-2xl font-bold text-nova-700">{{ ticket.nom_titulaire|slice:":1" }}</div>{% endif %}
+      <img src="{{ qr }}" alt="QR code du billet" class="h-40 w-40 rounded-xl bg-white p-2">
+      <p class="font-mono text-sm tracking-widest text-slate-700">{{ ticket.reference }}</p>
+      <p class="text-xs text-slate-500">Présentez ce QR code à l'entrée</p>
+    </div>
+  </div>
+</div>

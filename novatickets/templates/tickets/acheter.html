@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titre %}Acheter · {{ evenement.nom }}{% endblock %}
+{% block contenu %}
+<div class="mx-auto max-w-2xl px-4 py-12">
+  <p class="text-sm font-semibold uppercase tracking-wide text-nova-700">{{ evenement.nom }}</p>
+  <h1 class="mt-1 text-3xl font-extrabold tracking-tight">Choisir mes billets</h1>
+  <form method="post" class="card mt-8 space-y-6 p-6 sm:p-8" id="form-achat">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="grid gap-5 sm:grid-cols-[2fr_1fr]">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="{{ form.type_ticket.id_for_label }}">Type de ticket</label>
+        {{ form.type_ticket }}
+        {% for e in form.type_ticket.errors %}<p class="mt-1 text-sm text-rose-600">{{ e }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-slate-700" for="{{ form.quantite.id_for_label }}">Quantité</label>
+        {{ form.quantite }}
+      </div>
+    </div>
+
+    <label class="flex cursor-pointer items-center gap-3 rounded-2xl bg-nova-50/60 p-4 ring-1 ring-nova-100">
+      {{ form.pour_un_ami }}
+      <span><span class="block font-semibold text-slate-900">Réserver pour un ami</span><span class="text-sm text-slate-500">Le billet sera émis à son nom.</span></span>
+    </label>
+
+    <div id="bloc-ami" class="hidden grid gap-5 sm:grid-cols-2">
+      <div>{{ form.ami_prenom }}</div>
+      <div>{{ form.ami_nom }}</div>
+      <div>{{ form.ami_contact }}</div>
+      <div>{{ form.ami_sexe }}</div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6">
+      <a href="{{ evenement.get_absolute_url }}" class="text-sm font-semibold text-slate-500 hover:text-slate-800">← Retour</a>
+      <button class="btn bg-nova-600 text-white hover:bg-nova-700">Continuer vers le paiement</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const cb = document.querySelector('input[name="pour_un_ami"]');
+  const bloc = document.getElementById('bloc-ami');
+  const maj = () => bloc.classList.toggle('hidden', !cb.checked);
+  cb.addEventListener('change', maj); maj();
+  document.querySelectorAll('#bloc-ami input, #bloc-ami select').forEach(el => el.classList.add('w-full','rounded-xl','border','border-slate-200','px-4','py-3'));
+})();
+</script>
+{% endblock %}

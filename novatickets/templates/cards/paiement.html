@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titre %}Paiement carte de visite{% endblock %}
+{% block contenu %}
+<div class="mx-auto max-w-lg px-4 py-14">
+  <form method="post" class="card space-y-6 p-6 sm:p-8">
+    {% csrf_token %}
+    <div><p class="text-sm font-semibold uppercase tracking-wide text-nova-700">Génération de carte</p><h1 class="mt-1 text-2xl font-extrabold">{{ carte.nom_entreprise }}</h1></div>
+    <div class="rounded-2xl bg-nova-50 p-5"><p class="text-sm text-slate-600">À payer</p><p class="text-3xl font-extrabold text-nova-900">{{ prix }} FCFA</p><p class="mt-1 text-xs text-slate-500">La carte n'est générée qu'après paiement validé.</p></div>
+    <div class="grid gap-3">
+      {% for m in moyens %}
+      <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 p-4 has-[:checked]:border-nova-500 has-[:checked]:bg-nova-50">
+        <input type="radio" name="moyen" value="{{ m.slug }}" class="h-4 w-4 text-nova-600" {% if forloop.first %}checked{% endif %} required>
+        <span class="font-semibold">{{ m.libelle }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <button class="btn w-full bg-amber-500 text-white hover:bg-amber-600">Payer et générer ma carte</button>
+    <a href="{% url "cards:liste" %}" class="block text-center text-sm font-semibold text-slate-500 hover:text-slate-800">← Modifier la carte</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+Django==5.0.9
+Pillow==10.4.0
+segno==1.6.1
+WeasyPrint==62.3
+python-dotenv==1.0.1
