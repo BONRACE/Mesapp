@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load nt %}
+{% block title %}Acheter — {{ event.name }}{% endblock %}
+{% block content %}
+<section class="nt-container py-10">
+  <div class="mx-auto max-w-3xl">
+    <a href="{{ event.get_absolute_url }}" class="text-sm font-semibold text-brand-700 hover:underline">← {{ event.name }}</a>
+    <h1 class="mt-3 text-2xl font-extrabold">Choisir mes tickets</h1>
+    <p class="text-sm text-slate-500">{{ event.start_date|date:"l j F Y" }} · {{ event.start_time|time:"H:i" }}{% if event.venue %} · {{ event.venue }}{% endif %}</p>
+
+    <form method="post" enctype="multipart/form-data" class="mt-6 space-y-6" data-buy-form novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors.0 }}</div>{% endif %}
+
+      <div class="nt-card p-6">
+        <h2 class="text-lg font-bold">Type de ticket</h2>
+        <div class="mt-4 space-y-2">
+          {% for radio in form.ticket_type %}
+          {% with t=radio.data.value.instance %}
+          <label class="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-200 p-4 transition has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 has-[:disabled]:opacity-50">
+            <span class="flex items-center gap-3">
+              <input type="radio" name="{{ radio.data.name }}" value="{{ radio.data.value.value }}" data-price="{{ t.price }}" class="h-4 w-4 accent-brand-600" {% if radio.data.selected %}checked{% endif %} {% if t.sold_out %}disabled{% endif %}>
+              <span><span class="block font-semibold">{{ t.name }}</span><span class="text-xs text-slate-500">{% if t.sold_out %}Épuisé{% else %}{{ t.remaining }} restant{{ t.remaining|pluralize }}{% endif %}</span></span>
+            </span>
+            <span class="font-bold text-brand-700">{% if t.price == 0 %}Gratuit{% else %}{{ t.price|fcfa }}{% endif %}</span>
+          </label>
+          {% endwith %}
+          {% endfor %}
+        </div>
+        {% for e in form.ticket_type.errors %}<p class="nt-error">{{ e }}</p>{% endfor %}
+
+        <div class="mt-5 max-w-[10rem]">
+          <label for="{{ form.quantity.id_for_label }}" class="nt-label">Quantité</label>
+          {{ form.quantity }}
+          {% for e in form.quantity.errors %}<p class="nt-error">{{ e }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="nt-card p-6">
+        <label class="flex cursor-pointer items-start gap-3">
+          {{ form.for_friend }}
+          <span><span class="block font-semibold">Réserver pour un ami</span><span class="text-sm text-slate-500">Le ticket sera émis au nom de votre ami, qui le recevra par e-mail s'il en a un.</span></span>
+        </label>
+        <div class="mt-5 hidden space-y-4" data-friend-fields>
+          <div class="grid gap-4 sm:grid-cols-2">
+            {% include "accounts/_field.html" with field=form.friend_last_name %}
+            {% include "accounts/_field.html" with field=form.friend_first_name %}
+            {% include "accounts/_field.html" with field=form.friend_email %}
+            {% include "accounts/_field.html" with field=form.friend_phone %}
+            {% include "accounts/_field.html" with field=form.friend_sexe %}
+            {% include "accounts/_field.html" with field=form.friend_photo %}
+          </div>
+        </div>
+      </div>
+
+      <div class="nt-card flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-slate-500">Total à payer</p>
+          <p class="text-2xl font-extrabold text-brand-700" data-total>—</p>
+        </div>
+        <button class="nt-btn-primary px-8 py-3">Continuer vers le paiement</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{# Sélecteur de pays (drapeau + indicatif dynamique) et téléphone mobile. Amélioré par static/js/app.js ; sans JS le <select> reste utilisable. #}
+{{ countries|json_script:"countries-data" }}
+<div class="grid gap-4 sm:grid-cols-2">
+  <div>
+    <label for="{{ form.country.id_for_label }}" class="nt-label">Pays <span class="text-brand-600">*</span></label>
+    <div class="nt-country" data-country-picker>
+      {{ form.country }}
+    </div>
+    {% for e in form.country.errors %}<p class="nt-error">{{ e }}</p>{% endfor %}
+  </div>
+  <div>
+    <label for="{{ form.phone.id_for_label }}" class="nt-label">Téléphone mobile <span class="text-brand-600">*</span></label>
+    <div class="flex">
+      <span data-dial class="inline-flex min-w-[4.5rem] items-center justify-center rounded-l-xl border border-r-0 border-slate-200 bg-brand-50 px-3 text-sm font-semibold text-brand-800">+229</span>
+      <div class="flex-1 [&>input]:rounded-l-none">{{ form.phone }}</div>
+    </div>
+    <p class="nt-help">Numéro mobile du pays choisi, vérifié automatiquement.</p>
+    {% for e in form.phone.errors %}<p class="nt-error">{{ e }}</p>{% endfor %}
+  </div>
+</div>

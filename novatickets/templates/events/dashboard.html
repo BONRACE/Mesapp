@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load nt %}
+{% block title %}Espace organisateur — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container py-10">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-extrabold sm:text-3xl">Espace organisateur</h1>
+      <p class="mt-1 text-slate-500">{{ user.display_org }}</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'events:create' %}" class="nt-btn-primary">+ Créer un événement</a>
+      <a href="{% url 'payments:withdrawals' %}" class="nt-btn-outline">Retirer mes gains</a>
+    </div>
+  </div>
+
+  <div class="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="nt-card p-5"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Ventes brutes</p><p class="mt-2 text-2xl font-extrabold">{{ stats.gross|fcfa }}</p></div>
+    <div class="nt-card p-5"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Revenus nets</p><p class="mt-2 text-2xl font-extrabold text-brand-700">{{ stats.net|fcfa }}</p><p class="mt-1 text-xs text-slate-500">après {{ stats.commission|fcfa }} de commission</p></div>
+    <div class="nt-card p-5"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tickets vendus</p><p class="mt-2 text-2xl font-extrabold">{{ stats.tickets }}</p><p class="mt-1 text-xs text-slate-500">{{ stats.orders }} commande{{ stats.orders|pluralize }}</p></div>
+    <div class="nt-card p-5"><p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Événements actifs</p><p class="mt-2 text-2xl font-extrabold">{{ stats.active_events }}</p></div>
+  </div>
+
+  <div class="mt-6 flex flex-col items-start justify-between gap-4 rounded-2xl bg-brand-700 p-6 text-white sm:flex-row sm:items-center">
+    <div>
+      <p class="text-sm text-brand-100">Solde disponible au retrait</p>
+      <p class="text-3xl font-extrabold">{{ balance|fcfa }}</p>
+    </div>
+    <a href="{% url 'payments:withdrawals' %}" class="nt-btn bg-white text-brand-800 hover:bg-brand-50">Retirer mes gains</a>
+  </div>
+
+  <h2 class="mt-10 text-xl font-bold">Mes événements</h2>
+  {% if events %}
+  <div class="nt-card mt-4 overflow-x-auto">
+    <table class="nt-table">
+      <thead><tr><th>Événement</th><th>Date</th><th>Tickets</th><th>Statut</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for e in events %}
+        <tr>
+          <td class="font-semibold"><a href="{% url 'events:manage' e.slug %}" class="hover:text-brand-700">{{ e.name }}</a></td>
+          <td class="whitespace-nowrap text-slate-600">{{ e.start_date|date:"j M Y" }}</td>
+          <td class="whitespace-nowrap text-slate-600">{{ e.tickets_sold }} / {{ e.total_stock }}</td>
+          <td>{% if e.is_past %}<span class="nt-badge-gray">Terminé</span>{% elif e.is_published %}<span class="nt-badge-green">Publié</span>{% else %}<span class="nt-badge-amber">Brouillon</span>{% endif %}</td>
+          <td>
+            <div class="flex flex-wrap justify-end gap-2">
+              <a href="{% url 'events:edit' e.slug %}" class="nt-btn-outline px-3 py-1.5">Modifier</a>
+              {% if not e.is_past %}
+              <form method="post" action="{% url 'events:toggle_publish' e.slug %}">{% csrf_token %}
+                <button class="{% if e.is_published %}nt-btn-outline{% else %}nt-btn-primary{% endif %} px-3 py-1.5">{% if e.is_published %}Dépublier{% else %}Publier{% endif %}</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="nt-card mt-4 p-10 text-center text-slate-500">Vous n'avez pas encore d'événement. <a href="{% url 'events:create' %}" class="font-semibold text-brand-700 hover:underline">Créez le premier</a>.</div>
+  {% endif %}
+
+  <div class="mt-10 grid gap-6 lg:grid-cols-2">
+    <div>
+      <h2 class="text-xl font-bold">Dernières ventes</h2>
+      <div class="nt-card mt-4 overflow-x-auto">
+        <table class="nt-table">
+          <thead><tr><th>Acheteur</th><th>Événement</th><th class="text-right">Net</th></tr></thead>
+          <tbody>
+            {% for o in recent_orders %}
+            <tr><td>{{ o.buyer.full_name }}</td><td class="text-slate-600">{{ o.quantity }} × {{ o.ticket_type.name }} · {{ o.event.name|truncatechars:24 }}</td><td class="text-right font-semibold">{{ o.net_for_organizer|fcfa }}</td></tr>
+            {% empty %}<tr><td colspan="3" class="py-8 text-center text-slate-500">Aucune vente pour le moment.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Derniers retraits</h2><a href="{% url 'payments:withdrawals' %}" class="text-sm font-semibold text-brand-700 hover:underline">Historique →</a></div>
+      <div class="nt-card mt-4 overflow-x-auto">
+        <table class="nt-table">
+          <thead><tr><th>Date</th><th>Moyen</th><th class="text-right">Montant</th></tr></thead>
+          <tbody>
+            {% for w in recent_withdrawals %}
+            <tr><td>{{ w.created_at|date:"j M Y" }}</td><td>{{ w.method_label }}</td><td class="text-right font-semibold">{{ w.amount|fcfa }}</td></tr>
+            {% empty %}<tr><td colspan="3" class="py-8 text-center text-slate-500">Aucun retrait.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

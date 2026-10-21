@@ -1,0 +1,13 @@
+{
+  "name": "novatickets-frontend",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i static/src/input.css -o static/css/app.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.js -i static/src/input.css -o static/css/app.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17",
+    "@fontsource/inter": "5.1.1",
+    "flag-icons": "7.3.2"
+  }
+}

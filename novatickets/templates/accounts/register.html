@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Inscription {{ role }} — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container py-10">
+  <div class="mx-auto max-w-2xl">
+    <div class="mb-6 text-center">
+      <img src="{% static 'img/logo.png' %}" alt="NovaTickets" class="mx-auto h-12 w-auto">
+      <h1 class="mt-5 text-2xl font-extrabold">Compte {{ role }}</h1>
+      <p class="mt-1 text-sm text-slate-500">{% if role == 'organisateur' %}Publiez vos événements et encaissez en FCFA.{% else %}Achetez et recevez vos tickets en quelques secondes.{% endif %}
+        <a href="{% url 'accounts:register_choice' %}" class="font-semibold text-brand-700 hover:underline">Changer</a></p>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="nt-card space-y-5 p-6 sm:p-8" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors.0 }}</div>{% endif %}
+
+      {% if role == 'organisateur' %}
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% include "accounts/_field.html" with field=form.organisation_name %}
+        {% include "accounts/_field.html" with field=form.organisation_logo %}
+      </div>
+      {% endif %}
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% include "accounts/_field.html" with field=form.last_name %}
+        {% include "accounts/_field.html" with field=form.first_name %}
+        {% include "accounts/_field.html" with field=form.sexe %}
+        {% include "accounts/_field.html" with field=form.profession %}
+      </div>
+      {% include "accounts/_field.html" with field=form.photo %}
+      {% include "accounts/_field.html" with field=form.email %}
+      {% include "accounts/_country_phone.html" %}
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% include "accounts/_field.html" with field=form.password1 %}
+        {% include "accounts/_field.html" with field=form.password2 %}
+      </div>
+      <button class="nt-btn-primary w-full">Créer mon compte</button>
+      <p class="text-center text-xs text-slate-500">Déjà inscrit ? <a href="{% url 'accounts:login' %}" class="font-semibold text-brand-700 hover:underline">Se connecter</a></p>
+    </form>
+  </div>
+</section>
+{% endblock %}

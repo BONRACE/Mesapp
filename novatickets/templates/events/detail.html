@@ -1,38 +1,70 @@
 {% extends "base.html" %}
-{% block titre %}{{ evenement.nom }}{% endblock %}
-{% block contenu %}
-<div class="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-[1.4fr_1fr]">
-  <div>
-    <div class="h-72 overflow-hidden rounded-3xl bg-gradient-to-br from-nova-500 to-nova-900">{% if evenement.visuel %}<img src="{{ evenement.visuel.url }}" alt="" class="h-full w-full object-cover">{% endif %}</div>
-    <p class="mt-6 text-sm font-semibold uppercase tracking-wide text-nova-700">Par {{ evenement.organisateur.profil_organisateur.structure|default:evenement.organisateur.nom_complet }}</p>
-    <h1 class="mt-2 text-4xl font-extrabold tracking-tight">{{ evenement.nom }}</h1>
-    <p class="mt-3 text-slate-600">{{ evenement.date_debut|date:"l j F Y" }} à {{ evenement.heure_debut|time:"H\hi" }}{% if evenement.date_fin != evenement.date_debut %} → {{ evenement.date_fin|date:"j F Y" }}{% endif %}</p>
-    <p class="text-slate-600">{{ evenement.lieu }}{% if evenement.ville %}, {{ evenement.ville }}{% endif %}</p>
-    <div class="prose prose-slate mt-8 max-w-none whitespace-pre-line">{{ evenement.description }}</div>
-  </div>
-
-  <aside class="lg:sticky lg:top-24 lg:self-start">
-    <div class="card p-6">
-      <h2 class="text-lg font-bold">Billets</h2>
-      <p class="text-xs text-slate-500">Achats jusqu'au {{ evenement.date_limite_achat|date:"j M Y à H\hi" }}</p>
-      <ul class="mt-4 divide-y divide-slate-100">
-        {% for t in types %}
-        <li class="flex items-center justify-between py-3">
-          <div><p class="font-semibold">{{ t.nom }}</p><p class="text-xs {% if t.epuise %}text-rose-600{% else %}text-slate-500{% endif %}">{% if t.epuise %}Épuisé{% else %}{{ t.restants }} restant(s){% endif %}</p></div>
-          <p class="font-bold text-nova-700">{{ t.prix|floatformat:"0" }} FCFA</p>
-        </li>
-        {% endfor %}
-      </ul>
-      {% if est_proprietaire %}
-        <p class="mt-6 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">C'est votre événement : vous ne pouvez pas en acheter les billets.</p>
-      {% elif peut_acheter %}
-        <a href="{% url 'tickets:acheter' evenement.slug %}" class="btn mt-6 w-full bg-nova-600 text-white hover:bg-nova-700">Acheter des billets</a>
-      {% elif not user.is_authenticated %}
-        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn mt-6 w-full bg-nova-600 text-white hover:bg-nova-700">Connectez-vous pour acheter</a>
-      {% else %}
-        <p class="mt-6 text-sm text-rose-600">Les achats sont fermés.</p>
-      {% endif %}
+{% load static nt %}
+{% block title %}{{ event.name }} — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container py-8">
+  {% if not event.is_published %}
+    <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">Brouillon : cet événement n'est visible que par vous. <a href="{% url 'events:manage' event.slug %}" class="font-semibold underline">Le gérer et le publier</a></div>
+  {% endif %}
+  <div class="grid gap-8 lg:grid-cols-5">
+    <div class="lg:col-span-3">
+      <div class="overflow-hidden rounded-2xl border border-brand-100 bg-brand-50 shadow-soft">
+        <img src="{{ event.visual.url }}" alt="Visuel de {{ event.name }}" class="aspect-[16/10] w-full object-cover">
+      </div>
+      <div class="mt-6 flex items-center gap-3">
+        {% if event.logo %}<img src="{{ event.logo.url }}" alt="Logo de l'événement" class="h-12 w-12 rounded-xl border border-brand-100 bg-white object-contain p-1">
+        {% elif event.organizer.organisation_logo %}<img src="{{ event.organizer.organisation_logo.url }}" alt="" class="h-12 w-12 rounded-xl border border-brand-100 bg-white object-contain p-1">{% endif %}
+        <p class="text-sm text-slate-500">Organisé par <span class="font-semibold text-slate-800">{{ event.organizer.display_org }}</span></p>
+      </div>
+      <h1 class="mt-3 text-3xl font-extrabold">{{ event.name }}</h1>
+      {% if event.description %}<p class="mt-4 whitespace-pre-line leading-relaxed text-slate-600">{{ event.description }}</p>{% endif %}
     </div>
-  </aside>
-</div>
+
+    <aside class="lg:col-span-2">
+      <div class="nt-card sticky top-24 p-6">
+        <dl class="space-y-3 text-sm">
+          <div class="flex gap-3"><dt class="w-20 shrink-0 text-slate-500">Date</dt><dd class="font-semibold">{{ event.start_date|date:"l j F Y" }}{% if event.end_date != event.start_date %} → {{ event.end_date|date:"j F Y" }}{% endif %}</dd></div>
+          <div class="flex gap-3"><dt class="w-20 shrink-0 text-slate-500">Heure</dt><dd class="font-semibold">{{ event.start_time|time:"H:i" }}</dd></div>
+          {% if event.venue or event.city %}<div class="flex gap-3"><dt class="w-20 shrink-0 text-slate-500">Lieu</dt><dd class="font-semibold">{{ event.venue }}{% if event.venue and event.city %}, {% endif %}{{ event.city }}</dd></div>{% endif %}
+          <div class="flex gap-3"><dt class="w-20 shrink-0 text-slate-500">Ventes</dt><dd class="font-semibold">jusqu'au {{ event.sales_deadline|date:"j F Y à H:i" }}</dd></div>
+        </dl>
+
+        <h2 class="mt-6 text-base font-bold">Tickets</h2>
+        <ul class="mt-3 space-y-2">
+          {% for t in event.ticket_types.all %}
+          <li class="flex items-center justify-between gap-3 rounded-xl border border-brand-100 p-3">
+            <div>
+              <p class="font-semibold">{{ t.name }}</p>
+              <p class="text-xs {% if t.sold_out %}text-red-600{% else %}text-slate-500{% endif %}">{% if t.sold_out %}Épuisé{% else %}{{ t.remaining }} restant{{ t.remaining|pluralize }}{% endif %}</p>
+            </div>
+            <div class="text-right">
+              <p class="font-bold text-brand-700">{% if t.price == 0 %}Gratuit{% else %}{{ t.price|fcfa }}{% endif %}</p>
+              {% if not is_owner and event.sales_open and not t.sold_out %}
+                <a href="{% url 'tickets:buy' event.slug %}?type={{ t.pk }}" class="text-xs font-semibold text-brand-700 hover:underline">Choisir</a>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+
+        <div class="mt-5">
+          {% if is_owner %}
+            <p class="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">C'est votre événement : vous ne pouvez pas y acheter de tickets.</p>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <a href="{% url 'events:manage' event.slug %}" class="nt-btn-primary">Gérer</a>
+              <a href="{% url 'events:edit' event.slug %}" class="nt-btn-outline">Modifier</a>
+            </div>
+          {% elif not event.sales_open %}
+            <button class="nt-btn-outline w-full" disabled>Ventes fermées</button>
+          {% elif user.is_authenticated %}
+            <a href="{% url 'tickets:buy' event.slug %}" class="nt-btn-primary w-full">Acheter des tickets</a>
+          {% else %}
+            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="nt-btn-primary w-full">Se connecter pour acheter</a>
+            <p class="mt-2 text-center text-xs text-slate-500">Pas de compte ? <a class="font-semibold text-brand-700 hover:underline" href="{% url 'accounts:register_choice' %}?next={{ request.path }}">Inscrivez-vous</a></p>
+          {% endif %}
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
 {% endblock %}

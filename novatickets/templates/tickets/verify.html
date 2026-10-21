@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load nt %}
+{% block title %}Vérification du ticket — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container grid min-h-[60vh] place-items-center py-12">
+  <div class="nt-card w-full max-w-md p-7 text-center">
+    {% if ticket.used_at %}
+      <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-100 text-3xl">⚠️</div>
+      <h1 class="mt-4 text-xl font-extrabold">Ticket déjà utilisé</h1>
+      <p class="text-sm text-slate-500">Validé le {{ ticket.used_at|date:"j M Y à H:i" }}</p>
+    {% else %}
+      <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-brand-100 text-3xl text-brand-700">✓</div>
+      <h1 class="mt-4 text-xl font-extrabold">Ticket valide</h1>
+    {% endif %}
+    <dl class="mt-6 space-y-2 text-left text-sm">
+      <div class="flex justify-between gap-4"><dt class="text-slate-500">Événement</dt><dd class="text-right font-semibold">{{ ticket.event.name }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-slate-500">Titulaire</dt><dd class="text-right font-semibold">{{ ticket.holder_name }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-slate-500">Type</dt><dd class="text-right font-semibold">{{ ticket.ticket_type.name }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-slate-500">Référence</dt><dd class="font-mono text-xs font-semibold">{{ ticket.reference }}</dd></div>
+    </dl>
+    {% if is_organizer and not ticket.used_at %}
+      <form method="post" action="{% url 'tickets:mark_used' ticket.token %}" class="mt-6">{% csrf_token %}
+        <button class="nt-btn-primary w-full">Valider l'entrée</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

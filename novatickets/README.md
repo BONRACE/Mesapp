@@ -1,112 +1,81 @@
-# NovaTickets · Billetterie en ligne (Django + Tailwind)
+# NovaTickets — billetterie en ligne (Django)
 
-Plateforme de billetterie pour le Bénin et l'Afrique de l'Ouest : paiements en FCFA, mobile money, billets nominatifs, reçus e-mail automatiques et cartes de visite d'entreprise.
+Plateforme de billetterie pour le Bénin et l'Afrique de l'Ouest : paiement en FCFA (mobile money), tickets « boarding pass » avec QR code, espace spectateur et organisateur, retraits, reçu e-mail automatique et créateur de cartes de visite payant (100 FCFA).
 
-## 1. Structure
+**Stack** : Django 5 · templates Django + Tailwind CSS (déjà compilé) · SQLite · Pillow / ReportLab / qrcode.
 
-```
-novatickets/
-├── config/              réglages Django, URLs racine
-├── apps/
-│   ├── core/            accueil, 210 pays + drapeaux, QR codes, PDF, e-mails, commande seed_demo
-│   ├── accounts/        utilisateur unique (rôles spectateur / organisateur), profils
-│   ├── events/          événements, types de tickets dynamiques, publication, dashboard organisateur
-│   ├── tickets/         commandes, billets, achat (y compris pour un ami), PDF, mes tickets
-│   ├── payments/        couche provider (simulation + mobile money), paiements, retraits
-│   └── cards/           cartes de visite : éditeur en direct, 100 FCFA, PDF recto/verso
-├── templates/           interface Django + Tailwind (partials, e-mails, PDF)
-├── static/img/logo.png  ← REMPLACEZ par votre logo NovaTickets (même nom de fichier)
-├── tests/test_regles.py tests des règles métier
-└── manage.py
-```
-
-## 2. Installation
-
-Prérequis : Python 3.11+. Pour les PDF, WeasyPrint a besoin de Pango :
-- Debian / Ubuntu : `sudo apt install libpango-1.0-0 libpangoft2-1.0-0`
-- macOS : `brew install pango`
-- Windows : voir https://doc.courtbouillon.org/weasyprint/stable/first_steps.html
+## Installation rapide
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate              # Windows : .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate      # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env                   # puis ajustez les valeurs
-python manage.py makemigrations accounts events tickets payments cards core
 python manage.py migrate
-python manage.py seed_demo             # données de démonstration
-python manage.py createsuperuser       # accès /admin/
+python manage.py seed_demo          # données de démonstration (≈ 20 s)
 python manage.py runserver
 ```
+Ouvrez http://127.0.0.1:8000. Les e-mails de reçu s'affichent dans le terminal du serveur (mode console).
 
-Ouvrez http://127.0.0.1:8000/
+- `python manage.py seed_demo --reset` vide la base puis recrée la démo.
+- `python manage.py test` lance les 36 tests (inscription, achat, paiement, tickets, reçu, retraits, cartes, permissions).
 
-> Les migrations ne sont pas livrées : générez-les avec `makemigrations` lors du premier lancement.
+## Comptes de démonstration
 
-## 3. Comptes de démonstration
-
-Mot de passe commun : **`demo12345`**
+Mot de passe de tous les comptes `@demo.nt` : **`NovaTickets2026!`**
 
 | Rôle | E-mail | Pays |
 |---|---|---|
-| Organisateur | orga.vibes@novatickets.demo | Bénin |
-| Organisateur | orga.lagune@novatickets.demo | Côte d'Ivoire |
-| Organisateur | orga.sahel@novatickets.demo | Burkina Faso |
-| Spectateur | aicha.mensah@novatickets.demo | Bénin |
-| Spectateur | koffi.hounkpe@novatickets.demo | Bénin |
-| Spectateur | fatou.diallo@novatickets.demo | Sénégal |
-| Spectateur | yao.kouame@novatickets.demo | Côte d'Ivoire |
-| Spectateur | mariam.traore@novatickets.demo | Mali |
+| Organisateur | orga.cotonou@demo.nt (Cotonou Live Productions) | Bénin |
+| Organisateur | orga.abidjan@demo.nt (Lagune Events) | Côte d'Ivoire |
+| Organisateur | orga.dakar@demo.nt (Teranga Culture) | Sénégal |
+| Spectateur | spectateur1@demo.nt … spectateur5@demo.nt | Bénin (1-3), Côte d'Ivoire (4), Sénégal (5) |
+| Admin Django (`/admin/`) | admin@novatickets.bj / `Admin2026!` | — |
 
-`python manage.py seed_demo --reset` repart de zéro.
+Le seed crée 8 événements (dont 1 brouillon et 2 passés), des commandes payées, des tickets (dont un cadeau pour un ami et un déjà utilisé), 3 retraits et 3 cartes de visite (2 payées, 1 à payer).
 
-## 4. Tester le parcours complet
+## Parcours à tester
 
-1. Inscrivez-vous en spectateur : choisissez le pays, saisissez le numéro mobile.
-2. Ouvrez un événement publié, cliquez « Acheter des billets », cochez « Réserver pour un ami » si besoin.
-3. Choisissez un moyen de paiement. Le mode `simulation` valide immédiatement.
-4. Le reçu s'affiche dans le terminal (backend console) et les billets apparaissent dans « Mes tickets ».
-5. Connectez-vous en organisateur (orga.vibes) : créez un événement, ajoutez des lignes de tickets, publiez, consultez les stats et demandez un retrait.
-6. Cartes de visite : créez une carte, puis payez 100 FCFA pour la générer et la télécharger en PDF.
+1. **Inscription** : `/compte/inscription/` → pays (drapeau + indicatif dynamique), téléphone mobile obligatoire, validé selon le pays.
+2. **Achat** : spectateur → événement → « Acheter » → paiement (mobile money selon le pays) → ticket + PDF + reçu e-mail (dans le terminal).
+3. **Pour un ami** : case « Réserver pour un ami » à l'achat (spectateur ou organisateur) ; le ticket est au nom de l'ami et lui est envoyé par e-mail.
+4. **Organisateur** : tableau de bord, création d'événement (types de tickets dynamiques), bouton « Publier », retrait des gains (`/paiement/retraits/`).
+5. **Règle** : un organisateur ne peut pas acheter pour son propre événement, mais peut pour ceux des autres.
+6. **Carte de visite** : `/cartes/` → modèle, formulaire, aperçu en direct, paiement de 100 FCFA → PDF et PNG HD (aucune génération sans paiement validé).
+7. **Contrôle à l'entrée** : le QR code ouvre `/billets/verifier/<jeton>/` ; l'organisateur de l'événement y valide l'entrée.
 
-## 5. Règles métier clés
+## Logo
 
-- **Commission** : `NOVATICKETS_COMMISSION_PERCENT` (5 % par défaut). Net organisateur = prix − commission, calculé et stocké sur chaque billet.
-- **Achat** : un organisateur ne peut pas acheter pour ses propres événements (contrôle côté serveur).
-- **Stock** : réservé dès la création de la commande ; un paiement échoué ne le libère pas.
-- **Reçu** : envoyé une seule fois à la validation du paiement, via `confirmer_paiement()` (idempotent).
-- **Carte de visite** : aucune génération sans paiement validé.
-- **Téléphone** : obligatoire, longueur vérifiée selon le pays, indicatif affiché dynamiquement.
+Remplacez `static/img/logo.png` (logo complet, ~980×240) et `static/img/logo-mark.png` (pastille « N » carrée, ~220×220, utilisée au centre des QR codes) par vos fichiers : navbar, authentification, tickets, PDF et e-mails les reprennent automatiquement. Les fichiers fournis sont des **logos provisoires** (`scripts/make_placeholder_logo.py`).
 
-## 6. Brancher une vraie passerelle de paiement
+## Paiement
 
-Dans `apps/payments/providers.py` :
-1. Créez une classe qui hérite de `ProviderBase` et implémente `initier()` (création de la transaction chez l'agrégateur, par ex. FedaPay ou KkiaPay) et `verifier()`.
-2. Ajoutez-la à `PROVIDERS`, puis aux pays dans `MOYENS_PAR_PAYS`.
-3. Créez une route webhook qui vérifie la signature puis appelle `confirmer_paiement(paiement)`.
-4. Réglez `NOVATICKETS_PAYMENT_PROVIDER` sur votre passerelle et retirez « simulation » du parcours production.
+- `PAYMENT_PROVIDER=simulation` (défaut) : aucune transaction réelle. Un numéro se terminant par **00** simule un refus.
+- Vraie passerelle (CinetPay, FedaPay, KKiaPay, Stripe…) : créez une sous-classe de `PaymentProvider` dans `payments/providers.py` (`charge`, `payout`), ajoutez-la à `PROVIDERS`, puis `PAYMENT_PROVIDER=<code>`. Si la passerelle confirme par webhook, `charge` renvoie `pending` et le webhook appelle `payments.services.complete_payment(payment)`.
+- Moyens par pays : `payments/methods.py` (Bénin : MTN MoMo, Moov Money, Celtiis Cash ; + carte bancaire).
+- Commission : `PLATFORM_COMMISSION_PERCENT` (défaut 5 %). Solde organisateur = ventes − commission − retraits.
+- Autres variables : `BUSINESS_CARD_PRICE` (100), `MIN_WITHDRAWAL` (500).
 
-Les appels `ProviderMobileMoney` sont aujourd'hui simulés : chaque point d'appel réseau est marqué `TODO production`.
+## E-mails
 
-## 7. E-mails
+Le reçu part **automatiquement** dès qu'un paiement passe à « validé » (signal `payment_succeeded`, exécuté après validation de la transaction ; un échec d'e-mail n'annule jamais l'achat). Il reprend votre maquette : logo centré + date, logos plateforme/événement, « Merci pour votre achat ! », événement, infos du spectateur, encadré du ticket, signature de l'organisateur avec tampon « vérifié par », « Powered by » et petit QR code. Les tickets PDF sont joints.
 
-- Développement : `DJANGO_EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend` (le reçu s'affiche dans le terminal).
-- Production : SMTP ou un service transactionnel (Brevo, Mailgun…) via `EMAIL_BACKEND` et `DEFAULT_FROM_EMAIL`.
+- Développement : `EMAIL_MODE=console` (défaut) ou `file` (dossier `sent_emails/`).
+- Production : `EMAIL_MODE=smtp` + `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `DEFAULT_FROM_EMAIL`, et `SITE_URL` (URL publique encodée dans les QR codes).
 
-## 8. Logo
+## Production
 
-Remplacez `static/img/logo.png` par votre fichier (même nom). Il apparaît dans la navbar, les pages d'authentification, les tickets, les e-mails et les PDF. Le fichier fourni est un emplacement provisoire.
+`DJANGO_DEBUG=0`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_ORIGINS`, PostgreSQL si besoin, `python manage.py collectstatic`, et servir `/media/` via votre serveur web.
 
-## 9. Tests
+## Structure
 
-```bash
-python manage.py test tests
+```
+config/     réglages, urls
+core/       accueil, pays/téléphones, permissions, seed_demo, filtres de gabarit
+accounts/   utilisateur (spectateur / organisateur), inscription, profil
+events/     événements, types de tickets, espace organisateur
+tickets/    commandes, tickets, PDF « boarding pass », QR, e-mail de reçu
+payments/   paiements, couche provider, retraits
+cards/      cartes de visite (6 modèles, aperçu en direct, PDF/PNG)
+templates/ static/   gabarits, CSS Tailwind compilé, JS, polices, drapeaux
 ```
 
-## 10. Limites connues avant la mise en production
-
-- **OTP** : le modèle exige déjà le téléphone, mais la vérification SMS n'est pas encore branchée.
-- **Tailwind** est chargé via CDN pour le développement ; en production, compilez-le avec la CLI Tailwind.
-- **Migrations** : à générer avec `makemigrations` avant le premier `migrate`.
-- **Retraits** : enregistrés « en cours ». Le versement effectif passe par votre opérateur (à brancher via le provider).
-- **Cartes de visite** : livrées en PDF recto/verso (pas d'export image PNG dans cette version).
+Modifier le design : `npm install && npm run build:css` (Node requis uniquement pour recompiler Tailwind).

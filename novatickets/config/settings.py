@@ -1,25 +1,18 @@
-"""Configuration Django de la plateforme de billetterie NovaTickets."""
-from pathlib import Path
+"""Réglages Django de NovaTickets."""
 import os
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- Chargement optionnel du fichier .env -----------------------------------
-try:
-    from dotenv import load_dotenv
 
-    load_dotenv(BASE_DIR / ".env")
-except ImportError:  # python-dotenv est optionnel
-    pass
+def env(name, default=None):
+    return os.environ.get(name, default)
 
 
-def env_bool(name, default=False):
-    return os.getenv(name, str(default)).strip().lower() in {"1", "true", "yes", "oui"}
-
-
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-novatickets-secret-a-changer")
-DEBUG = env_bool("DJANGO_DEBUG", True)
-ALLOWED_HOSTS = ["*"] if DEBUG else os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
+SECRET_KEY = env("DJANGO_SECRET_KEY", "dev-only-change-me-in-production")
+DEBUG = env("DJANGO_DEBUG", "1") == "1"
+ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS", "*").split(",")
+CSRF_TRUSTED_ORIGINS = [o for o in env("DJANGO_CSRF_ORIGINS", "").split(",") if o]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -28,14 +21,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.humanize",
-    # Apps NovaTickets
-    "apps.core",
-    "apps.accounts",
-    "apps.events",
-    "apps.tickets",
-    "apps.payments",
-    "apps.cards",
+    "core",
+    "accounts",
+    "events",
+    "tickets",
+    "payments",
+    "cards",
 ]
 
 MIDDLEWARE = [
@@ -61,14 +52,13 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "apps.core.context_processors.novatickets",
+                "core.context_processors.platform",
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
-ASGI_APPLICATION = "config.asgi.application"
 
 DATABASES = {
     "default": {
@@ -78,52 +68,60 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = "accounts.User"
+AUTHENTICATION_BACKENDS = ["accounts.backends.EmailBackend"]
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "core:dashboard"
+LOGOUT_REDIRECT_URL = "core:home"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LANGUAGE_CODE = "fr-fr"
+LANGUAGE_CODE = "fr"
 TIME_ZONE = "Africa/Porto-Novo"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
-LOGIN_URL = "accounts:login"
-LOGIN_REDIRECT_URL = "core:redirection_tableau_de_bord"
-LOGOUT_REDIRECT_URL = "core:accueil"
+# --- E-mails ---------------------------------------------------------------
+# Développement : "console" (affiche dans le terminal) ou "file" (dossier sent_emails/).
+# Production : "smtp" avec les variables EMAIL_* ci-dessous.
+EMAIL_MODE = env("EMAIL_MODE", "console")
+if EMAIL_MODE == "smtp":
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = env("EMAIL_HOST", "localhost")
+    EMAIL_PORT = int(env("EMAIL_PORT", "587"))
+    EMAIL_HOST_USER = env("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
+    EMAIL_USE_TLS = env("EMAIL_USE_TLS", "1") == "1"
+elif EMAIL_MODE == "file":
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+    EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "NovaTickets <no-reply@novatickets.local>")
+SITE_URL = env("SITE_URL", "http://127.0.0.1:8000")
 
-# --- E-mails ----------------------------------------------------------------
-# En developpement : les e-mails sont ecrits dans la console ET dans /sent_emails
-EMAIL_BACKEND = os.getenv(
-    "DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
-EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "NovaTickets <recus@novatickets.africa>")
+# --- Plateforme --------------------------------------------------------------
+PLATFORM_NAME = "NovaTickets"
+CURRENCY = "FCFA"
+# Commission prélevée sur chaque ticket vendu (en %). Configurable par variable d'environnement.
+PLATFORM_COMMISSION_PERCENT = float(env("PLATFORM_COMMISSION_PERCENT", "5"))
+BUSINESS_CARD_PRICE = int(env("BUSINESS_CARD_PRICE", "100"))
+MIN_WITHDRAWAL = int(env("MIN_WITHDRAWAL", "500"))
+MAX_TICKETS_PER_ORDER = 10
 
-# --- Reglages metier NovaTickets -------------------------------------------
-NOVATICKETS = {
-    "NOM": "NovaTickets",
-    "BASELINE": "La billetterie evenementielle de l'Afrique de l'Ouest",
-    "DEVISE": "FCFA",
-    # Commission prelevee par la plateforme sur chaque ticket vendu.
-    "COMMISSION_POURCENT": float(os.getenv("NOVATICKETS_COMMISSION_PERCENT", "5")),
-    # Tarif unique de generation d'une carte de visite.
-    "PRIX_CARTE_VISITE": int(os.getenv("NOVATICKETS_CARD_PRICE", "100")),
-    # Provider de paiement actif : "simulation" en developpement.
-    "PROVIDER_PAIEMENT": os.getenv("NOVATICKETS_PAYMENT_PROVIDER", "simulation"),
-    "SUPPORT_EMAIL": "support@novatickets.africa",
-    "BASE_URL": os.getenv("NOVATICKETS_BASE_URL", "http://localhost:8000"),
-}
-
-MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+# --- Paiement ----------------------------------------------------------------
+# "simulation" : aucune vraie transaction (voir README). Pour une vraie passerelle,
+# créez une classe dans payments/providers.py et enregistrez-la dans PROVIDERS.
+PAYMENT_PROVIDER = env("PAYMENT_PROVIDER", "simulation")

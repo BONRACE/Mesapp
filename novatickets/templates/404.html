@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Page introuvable — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container py-24 text-center">
+  <p class="text-6xl font-extrabold text-brand-600">404</p>
+  <h1 class="mt-4 text-2xl font-bold">Page introuvable</h1>
+  <p class="mx-auto mt-2 max-w-md text-slate-500">Cette page n'existe pas ou n'est plus disponible.</p>
+  <a href="{% url 'core:home' %}" class="nt-btn-primary mt-8">Retour à l'accueil</a>
+</section>
+{% endblock %}

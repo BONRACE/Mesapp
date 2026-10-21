@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Événements — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container py-10">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-extrabold sm:text-3xl">Événements</h1>
+      <p class="mt-1 text-slate-500">{{ events|length }} événement{{ events|length|pluralize }} à venir</p>
+    </div>
+    <form method="get" class="flex w-full gap-2 sm:max-w-md">
+      <input type="search" name="q" value="{{ q }}" placeholder="Nom, ville, lieu…" class="nt-input" aria-label="Rechercher">
+      <button class="nt-btn-primary shrink-0">Rechercher</button>
+    </form>
+  </div>
+  {% if events %}
+    <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {% for event in events %}{% include "events/_card.html" %}{% endfor %}
+    </div>
+  {% else %}
+    <div class="nt-card mt-8 p-12 text-center text-slate-500">
+      Aucun événement ne correspond{% if q %} à « {{ q }} »{% endif %}.
+      {% if q %}<a href="{% url 'events:list' %}" class="font-semibold text-brand-700 hover:underline">Voir tous les événements</a>{% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

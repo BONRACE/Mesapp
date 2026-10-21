@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load nt %}
+{% block title %}Mes paiements — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container py-10">
+  <h1 class="text-2xl font-extrabold">Mes paiements</h1>
+  <div class="nt-card mt-6 overflow-x-auto">
+    <table class="nt-table">
+      <thead><tr><th>Référence</th><th>Objet</th><th>Moyen</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td class="font-mono text-xs">{{ p.reference }}</td>
+          <td>{{ p.label }}</td>
+          <td>{{ p.method|default:"—" }}</td>
+          <td class="whitespace-nowrap font-semibold">{{ p.amount|fcfa }}</td>
+          <td>{% if p.status == 'succeeded' %}<span class="nt-badge-green">Validé</span>{% elif p.status == 'pending' %}<span class="nt-badge-amber">En attente</span>{% elif p.status == 'refunded' %}<span class="nt-badge-gray">Remboursé</span>{% else %}<span class="nt-badge-red">Échoué</span>{% endif %}</td>
+          <td class="whitespace-nowrap text-slate-500">{{ p.created_at|date:"j M Y H:i" }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="6" class="py-10 text-center text-slate-500">Aucun paiement.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

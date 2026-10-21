@@ -1,47 +1,111 @@
-{% load static %}<!doctype html>
+{% load static nt %}<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block titre %}{{ NT.NOM }}{% endblock %} · NovaTickets</title>
-  <link rel="icon" href="{% static 'img/logo.png' %}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-      colors: { nova: { 50:'#ecfdf5', 100:'#d1fae5', 500:'#10b981', 600:'#059669', 700:'#047857', 900:'#064e3b' } } } } }
-  </script>
-  <style>
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.75rem 1.25rem; font-weight:600; transition:background-color .15s, box-shadow .15s; }
-    .card { border-radius:1.25rem; background:#fff; box-shadow:0 1px 2px rgba(15,23,42,.05), 0 8px 24px -12px rgba(15,23,42,.12); }
-    body { font-feature-settings: "cv11", "ss01"; }
-  </style>
+  <title>{% block title %}NovaTickets — Billetterie en ligne{% endblock %}</title>
+  <meta name="description" content="NovaTickets : achetez et vendez vos tickets d'événements au Bénin et en Afrique de l'Ouest, payez en FCFA par mobile money.">
+  <link rel="icon" href="{% static 'img/logo-mark.png' %}">
+  <link rel="stylesheet" href="{% static 'vendor/flag-icons/css/flag-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block head %}{% endblock %}
 </head>
-<body class="min-h-screen bg-white font-sans text-slate-900 antialiased">
-  {% include "partials/navbar.html" %}
+<body class="flex min-h-screen flex-col bg-white">
+  <header class="sticky top-0 z-30 border-b border-brand-100 bg-white/90 backdrop-blur no-print">
+    <div class="nt-container flex h-16 items-center justify-between gap-3">
+      <a href="{% url 'core:home' %}" class="flex items-center" aria-label="NovaTickets — accueil">
+        <img src="{% static 'img/logo.png' %}" alt="NovaTickets" class="h-9 w-auto sm:h-10">
+      </a>
+
+      <nav class="hidden items-center gap-1 md:flex" aria-label="Navigation principale">
+        <a href="{% url 'events:list' %}" class="nt-nav-link {% active 'events:list' %}">Événements</a>
+        {% if user.is_authenticated %}
+          {% if user.is_organisateur %}
+            <a href="{% url 'events:dashboard' %}" class="nt-nav-link {% active 'events:dashboard' 'events:manage' 'events:create' 'events:edit' %}">Espace organisateur</a>
+            <a href="{% url 'payments:withdrawals' %}" class="nt-nav-link {% active 'payments:withdrawals' %}">Retraits</a>
+          {% endif %}
+          <a href="{% url 'tickets:dashboard' %}" class="nt-nav-link {% active 'tickets:dashboard' 'tickets:order_detail' 'tickets:detail' %}">Mes billets</a>
+          <a href="{% url 'cards:list' %}" class="nt-nav-link {% active 'cards:list' 'cards:detail' 'cards:create' 'cards:edit' %}">Cartes de visite</a>
+        {% endif %}
+      </nav>
+
+      <div class="hidden items-center gap-2 md:flex">
+        {% if user.is_authenticated %}
+          <a href="{% url 'accounts:profile' %}" class="flex items-center gap-2 rounded-full border border-brand-100 py-1 pl-1 pr-3 text-sm font-medium text-slate-700 hover:bg-brand-50">
+            {% if user.photo %}<img src="{{ user.photo.url }}" alt="" class="h-7 w-7 rounded-full object-cover">
+            {% else %}<span class="grid h-7 w-7 place-items-center rounded-full bg-brand-600 text-xs font-bold text-white">{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</span>{% endif %}
+            {{ user.first_name|default:user.email }}
+          </a>
+          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="nt-btn-outline px-3.5 py-2">Déconnexion</button></form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="nt-btn-outline">Connexion</a>
+          <a href="{% url 'accounts:register_choice' %}" class="nt-btn-primary">Créer un compte</a>
+        {% endif %}
+      </div>
+
+      <button type="button" id="nav-toggle" class="grid h-10 w-10 place-items-center rounded-xl border border-brand-100 text-slate-700 md:hidden" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobile-menu">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+
+    <div id="mobile-menu" class="hidden border-t border-brand-100 bg-white md:hidden">
+      <div class="nt-container flex flex-col gap-1 py-3">
+        <a href="{% url 'events:list' %}" class="nt-nav-link">Événements</a>
+        {% if user.is_authenticated %}
+          {% if user.is_organisateur %}
+            <a href="{% url 'events:dashboard' %}" class="nt-nav-link">Espace organisateur</a>
+            <a href="{% url 'payments:withdrawals' %}" class="nt-nav-link">Retraits</a>
+          {% endif %}
+          <a href="{% url 'tickets:dashboard' %}" class="nt-nav-link">Mes billets</a>
+          <a href="{% url 'cards:list' %}" class="nt-nav-link">Cartes de visite</a>
+          <a href="{% url 'payments:history' %}" class="nt-nav-link">Mes paiements</a>
+          <a href="{% url 'accounts:profile' %}" class="nt-nav-link">Mon profil</a>
+          <form method="post" action="{% url 'accounts:logout' %}" class="pt-2">{% csrf_token %}<button class="nt-btn-outline w-full">Déconnexion</button></form>
+        {% else %}
+          <div class="grid grid-cols-2 gap-2 pt-2">
+            <a href="{% url 'accounts:login' %}" class="nt-btn-outline">Connexion</a>
+            <a href="{% url 'accounts:register_choice' %}" class="nt-btn-primary">Créer un compte</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </header>
 
   {% if messages %}
-  <div class="mx-auto mt-4 max-w-6xl space-y-2 px-4">
-    {% for message in messages %}
-    <div role="status" class="rounded-xl px-4 py-3 text-sm font-medium
-      {% if message.tags == 'error' %}bg-rose-50 text-rose-700 ring-1 ring-rose-200
-      {% elif message.tags == 'success' %}bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200
-      {% else %}bg-slate-50 text-slate-700 ring-1 ring-slate-200{% endif %}">
-      {{ message }}
-    </div>
+  <div class="nt-container mt-4 space-y-2 no-print" role="status">
+    {% for m in messages %}
+      <div class="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm {% if m.tags == 'error' %}border-red-200 bg-red-50 text-red-800{% elif m.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800{% else %}border-brand-200 bg-brand-50 text-brand-900{% endif %}">
+        <span class="font-medium">{{ m }}</span>
+      </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  <main class="min-h-[70vh]">{% block contenu %}{% endblock %}</main>
+  <main class="flex-1">{% block content %}{% endblock %}</main>
 
-  <footer class="mt-24 border-t border-slate-100 bg-slate-50">
-    <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-      <p>© {% now "Y" %} NovaTickets · Billetterie d'Afrique de l'Ouest</p>
-      <p>Paiements en FCFA · Mobile money · <a href="mailto:{{ NT.SUPPORT_EMAIL }}" class="text-nova-700 hover:underline">{{ NT.SUPPORT_EMAIL }}</a></p>
+  <footer class="mt-16 border-t border-brand-100 bg-brand-50/50 no-print">
+    <div class="nt-container grid gap-8 py-10 sm:grid-cols-3">
+      <div>
+        <img src="{% static 'img/logo.png' %}" alt="NovaTickets" class="h-9 w-auto">
+        <p class="mt-3 max-w-xs text-sm text-slate-500">La billetterie en ligne pensée pour le Bénin et l'Afrique de l'Ouest. Paiement en FCFA par mobile money.</p>
+      </div>
+      <div class="text-sm">
+        <p class="font-semibold text-slate-900">Explorer</p>
+        <ul class="mt-3 space-y-2 text-slate-600">
+          <li><a class="hover:text-brand-700" href="{% url 'events:list' %}">Tous les événements</a></li>
+          <li><a class="hover:text-brand-700" href="{% url 'accounts:register' 'organisateur' %}">Vendre des tickets</a></li>
+          <li><a class="hover:text-brand-700" href="{% url 'cards:create' %}">Créer une carte de visite</a></li>
+        </ul>
+      </div>
+      <div class="text-sm">
+        <p class="font-semibold text-slate-900">Paiements acceptés</p>
+        <p class="mt-3 text-slate-600">MTN MoMo · Moov Money · Celtiis Cash · Orange Money · Wave · carte bancaire</p>
+      </div>
     </div>
+    <div class="border-t border-brand-100 py-4 text-center text-xs text-slate-500">© {% now "Y" %} NovaTickets — Tous droits réservés.</div>
   </footer>
+
+  <script src="{% static 'js/app.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

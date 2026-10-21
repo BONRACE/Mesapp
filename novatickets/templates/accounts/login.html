@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Connexion — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container grid min-h-[70vh] place-items-center py-12">
+  <div class="w-full max-w-md">
+    <div class="mb-6 text-center">
+      <img src="{% static 'img/logo.png' %}" alt="NovaTickets" class="mx-auto h-12 w-auto">
+      <h1 class="mt-5 text-2xl font-extrabold">Content de vous revoir</h1>
+      <p class="mt-1 text-sm text-slate-500">Connectez-vous pour accéder à vos billets.</p>
+    </div>
+    <form method="post" class="nt-card space-y-4 p-6" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% if form.non_field_errors %}<div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors.0 }}</div>{% endif %}
+      {% include "accounts/_field.html" with field=form.username %}
+      {% include "accounts/_field.html" with field=form.password %}
+      <button class="nt-btn-primary w-full">Se connecter</button>
+    </form>
+    <p class="mt-5 text-center text-sm text-slate-500">Pas encore de compte ? <a href="{% url 'accounts:register_choice' %}" class="font-semibold text-brand-700 hover:underline">Créer un compte</a></p>
+  </div>
+</section>
+{% endblock %}

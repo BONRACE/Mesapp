@@ -1,0 +1,17 @@
+{% load nt %}
+<a href="{{ event.get_absolute_url }}" class="group nt-card flex flex-col overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lift">
+  <div class="relative aspect-[16/10] overflow-hidden bg-brand-50">
+    <img src="{{ event.visual.url }}" alt="Visuel de {{ event.name }}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+    <span class="absolute left-3 top-3 rounded-lg bg-white/95 px-2.5 py-1 text-xs font-bold text-brand-800 shadow">{{ event.start_date|date:"j M Y" }}</span>
+  </div>
+  <div class="flex flex-1 flex-col p-4">
+    <h3 class="line-clamp-2 text-base font-bold text-slate-900">{{ event.name }}</h3>
+    <p class="mt-1 text-sm text-slate-500">{% if event.venue %}{{ event.venue }}{% endif %}{% if event.city %}{% if event.venue %}, {% endif %}{{ event.city }}{% endif %}</p>
+    <div class="mt-auto flex items-center justify-between pt-4">
+      <span class="text-sm font-semibold text-brand-700">
+        {% if event.min_price is None %}—{% elif event.min_price == 0 %}Gratuit{% else %}Dès {{ event.min_price|fcfa }}{% endif %}
+      </span>
+      <span class="text-xs font-medium text-slate-500">{{ event.start_time|time:"H:i" }}</span>
+    </div>
+  </div>
+</a>

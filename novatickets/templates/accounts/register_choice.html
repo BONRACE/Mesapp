@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Créer un compte — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container py-12">
+  <div class="mb-8 text-center">
+    <img src="{% static 'img/logo.png' %}" alt="NovaTickets" class="mx-auto h-12 w-auto">
+    <h1 class="mt-5 text-2xl font-extrabold sm:text-3xl">Quel type de compte souhaitez-vous ?</h1>
+    <p class="mt-1 text-slate-500">Vous pourrez, dans les deux cas, réserver des tickets pour vos amis.</p>
+  </div>
+  <div class="mx-auto grid max-w-3xl gap-5 sm:grid-cols-2">
+    <a href="{% url 'accounts:register' 'spectateur' %}" class="nt-card group p-7 transition hover:-translate-y-0.5 hover:shadow-lift">
+      <span class="grid h-12 w-12 place-items-center rounded-xl bg-brand-100 text-2xl">🎟️</span>
+      <h2 class="mt-4 text-xl font-bold">Spectateur</h2>
+      <p class="mt-2 text-sm text-slate-600">Je veux acheter des tickets, les retrouver en PDF et les offrir à mes proches.</p>
+      <span class="mt-5 inline-block text-sm font-semibold text-brand-700 group-hover:underline">Créer mon compte spectateur →</span>
+    </a>
+    <a href="{% url 'accounts:register' 'organisateur' %}" class="nt-card group p-7 transition hover:-translate-y-0.5 hover:shadow-lift">
+      <span class="grid h-12 w-12 place-items-center rounded-xl bg-brand-100 text-2xl">🎤</span>
+      <h2 class="mt-4 text-xl font-bold">Organisateur</h2>
+      <p class="mt-2 text-sm text-slate-600">Je veux publier des événements, vendre des tickets et retirer mes gains.</p>
+      <span class="mt-5 inline-block text-sm font-semibold text-brand-700 group-hover:underline">Créer mon compte organisateur →</span>
+    </a>
+  </div>
+  <p class="mt-8 text-center text-sm text-slate-500">Déjà inscrit ? <a href="{% url 'accounts:login' %}" class="font-semibold text-brand-700 hover:underline">Se connecter</a></p>
+</section>
+{% endblock %}

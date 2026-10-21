@@ -1,0 +1,19 @@
+{% load nt %}{% if gift_from %}{{ gift_from }} vous offre un ticket !{% else %}Merci pour votre achat !{% endif %}
+
+{{ event.name }}
+{{ event.start_date|date:"l j F Y" }} à {{ event.start_time|time:"H:i" }}{% if event.venue %} — {{ event.venue }}{% endif %}
+
+Spectateur : {{ who.first_name }} {{ who.last_name }}
+E-mail : {{ who.email }}
+Téléphone : {{ who.phone }}
+
+Type de ticket : {{ order.ticket_type.name }}
+Référence : {{ order.reference }}
+Prix unitaire : {{ order.unit_price|fcfa }}
+Quantité : {{ order.quantity }}
+Statut du paiement : {{ payment.get_status_display }}
+Total : {{ order.total|fcfa }}
+
+Vos tickets (PDF) sont en pièce jointe. Retrouvez-les aussi dans votre espace : {{ site_url }}/billets/
+
+Vérifié par {{ platform }} — organisé par {{ organizer.display_org }}.

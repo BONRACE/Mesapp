@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Modifier{% else %}Nouvel événement{% endif %} — NovaTickets{% endblock %}
+{% block content %}
+<section class="nt-container py-10">
+  <div class="mx-auto max-w-3xl">
+    <h1 class="text-2xl font-extrabold">{% if editing %}Modifier « {{ event.name }} »{% else %}Créer un événement{% endif %}</h1>
+    <p class="mt-1 text-sm text-slate-500">L'événement reste en brouillon jusqu'à ce que vous cliquiez sur « Publier ».</p>
+
+    <form method="post" enctype="multipart/form-data" class="mt-6 space-y-6" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors.0 }}</div>{% endif %}
+
+      <div class="nt-card space-y-4 p-6">
+        <h2 class="text-lg font-bold">Informations</h2>
+        {% include "accounts/_field.html" with field=form.name %}
+        {% include "accounts/_field.html" with field=form.description %}
+        <div class="grid gap-4 sm:grid-cols-2">
+          {% include "accounts/_field.html" with field=form.venue %}
+          {% include "accounts/_field.html" with field=form.city %}
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          {% include "accounts/_field.html" with field=form.visual %}
+          {% include "accounts/_field.html" with field=form.logo %}
+        </div>
+      </div>
+
+      <div class="nt-card space-y-4 p-6">
+        <h2 class="text-lg font-bold">Dates</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          {% include "accounts/_field.html" with field=form.start_date %}
+          {% include "accounts/_field.html" with field=form.end_date %}
+          {% include "accounts/_field.html" with field=form.start_time %}
+          {% include "accounts/_field.html" with field=form.sales_deadline %}
+        </div>
+      </div>
+
+      <div class="nt-card p-6" data-formset data-prefix="types">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold">Types de tickets</h2>
+          <button type="button" class="nt-btn-soft px-3 py-1.5" data-add-row>+ Ajouter un type</button>
+        </div>
+        <p class="nt-help">Prix en FCFA (0 = gratuit) et stock disponible pour chaque type.</p>
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<div class="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ formset.non_form_errors.0 }}</div>{% endif %}
+        <div class="mt-4 space-y-3" data-rows>
+          {% for f in formset %}
+          <div class="rounded-xl border border-brand-100 bg-brand-50/40 p-4" data-row>
+            {% for h in f.hidden_fields %}{{ h }}{% endfor %}
+            <div class="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
+              <div><label class="nt-label">Type</label>{{ f.name }}{% for e in f.name.errors %}<p class="nt-error">{{ e }}</p>{% endfor %}</div>
+              <div><label class="nt-label">Prix (FCFA)</label>{{ f.price }}{% for e in f.price.errors %}<p class="nt-error">{{ e }}</p>{% endfor %}</div>
+              <div><label class="nt-label">Stock</label>{{ f.stock }}{% for e in f.stock.errors %}<p class="nt-error">{{ e }}</p>{% endfor %}</div>
+              <div class="hidden">{{ f.DELETE }}</div>
+              <button type="button" class="nt-btn-danger px-3 py-2.5" data-remove-row aria-label="Supprimer ce type">Supprimer</button>
+            </div>
+            {% if f.instance.sold %}<p class="nt-help">{{ f.instance.sold }} déjà vendu{{ f.instance.sold|pluralize }}.</p>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <template data-empty-row>
+          <div class="rounded-xl border border-brand-100 bg-brand-50/40 p-4" data-row>
+            {% for h in formset.empty_form.hidden_fields %}{{ h }}{% endfor %}
+            <div class="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
+              <div><label class="nt-label">Type</label>{{ formset.empty_form.name }}</div>
+              <div><label class="nt-label">Prix (FCFA)</label>{{ formset.empty_form.price }}</div>
+              <div><label class="nt-label">Stock</label>{{ formset.empty_form.stock }}</div>
+              <div class="hidden">{{ formset.empty_form.DELETE }}</div>
+              <button type="button" class="nt-btn-danger px-3 py-2.5" data-remove-row aria-label="Supprimer ce type">Supprimer</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button class="nt-btn-primary">{% if editing %}Enregistrer{% else %}Créer l'événement{% endif %}</button>
+        <a href="{% url 'events:dashboard' %}" class="nt-btn-outline">Annuler</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
