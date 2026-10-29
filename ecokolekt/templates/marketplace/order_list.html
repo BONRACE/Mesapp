@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Commandes{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Commandes</h1>
+
+<div class="mt-8 grid gap-6 lg:grid-cols-2">
+  <section class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100">
+    <h2 class="mb-4 text-lg font-bold text-slate-900">Mes achats</h2>
+    <ul class="divide-y divide-slate-100">
+      {% for order in purchases %}
+      <li class="flex items-center justify-between gap-4 py-4">
+        <div>
+          <p class="font-semibold text-slate-900">{{ order.listing.title }}</p>
+          <p class="text-sm text-slate-500">{{ order.quantity_kg }} kg · {{ order.subtotal_xof }} XOF</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="rounded-full px-3 py-1 text-xs font-semibold
+            {% if order.status == 'paid' %}bg-emerald-50 text-emerald-700{% elif order.status == 'cancelled' %}bg-slate-100 text-slate-500{% else %}bg-amber-50 text-amber-700{% endif %}">{{ order.get_status_display }}</span>
+          {% if order.status == 'pending_payment' %}
+          <form method="post" action="{% url 'marketplace:order_cancel' order.pk %}">
+            {% csrf_token %}
+            <button class="text-sm font-semibold text-red-600 hover:text-red-700">Annuler</button>
+          </form>
+          {% endif %}
+        </div>
+      </li>
+      {% empty %}
+      <li class="py-10 text-center text-sm text-slate-500">Aucun achat.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100">
+    <h2 class="mb-4 text-lg font-bold text-slate-900">Mes ventes payées</h2>
+    <ul class="divide-y divide-slate-100">
+      {% for order in sales %}
+      <li class="flex items-center justify-between py-4">
+        <div>
+          <p class="font-semibold text-slate-900">{{ order.listing.title }}</p>
+          <p class="text-sm text-slate-500">{{ order.quantity_kg }} kg · acheteur : {{ order.buyer.display_name }}</p>
+        </div>
+        <div class="text-right">
+          <p class="font-semibold text-emerald-700">{{ order.seller_payout_xof }} XOF</p>
+          <p class="text-xs text-slate-400">commission : {{ order.commission_xof }} XOF</p>
+        </div>
+      </li>
+      {% empty %}
+      <li class="py-10 text-center text-sm text-slate-500">Aucune vente payée.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

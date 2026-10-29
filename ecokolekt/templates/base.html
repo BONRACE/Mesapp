@@ -1,0 +1,81 @@
+{% load static %}<!doctype html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}EcoKolekt{% endblock %} · EcoKolekt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest: { 50: '#EEF6F1', 100: '#D5EADF', 500: '#1B6B4B', 600: '#0B4A32', 700: '#093D2A' },
+            gold:   { 300: '#EBCF8A', 400: '#E2BC5A', 500: '#D4A62F', 600: '#B8891C' },
+          },
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+          boxShadow: { card: '0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.12)' },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-feature-settings: 'cv11', 'ss01'; }
+    .grain { background-image: radial-gradient(rgba(255,255,255,.08) 1px, transparent 1px); background-size: 18px 18px; }
+  </style>
+</head>
+<body class="h-full bg-stone-50 font-sans text-slate-800 antialiased">
+
+<header class="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur">
+  <nav class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <a href="{% url 'core:landing' %}" class="flex items-center gap-2.5">
+      <span class="grid h-9 w-9 place-items-center rounded-xl bg-forest-600 text-gold-400 font-extrabold">EK</span>
+      <span class="text-lg font-extrabold tracking-tight text-forest-700">EcoKolekt</span>
+    </a>
+
+    {% if user.is_authenticated and user.is_onboarded %}
+    <div class="hidden items-center gap-1 md:flex">
+      <a href="{% url 'core:dashboard' %}" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Tableau de bord</a>
+      {% if user.role == 'producer' %}
+        <a href="{% url 'operations:site_list' %}" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Mes sites</a>
+        <a href="{% url 'operations:pickup_create' %}" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Demander un enlèvement</a>
+      {% elif user.role == 'collector' %}
+        <a href="{% url 'operations:available_pickups' %}" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Collectes &amp; tournées</a>
+      {% elif user.role == 'recycler' %}
+        <a href="{% url 'marketplace:mine' %}" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Mes offres</a>
+      {% endif %}
+      <a href="{% url 'traceability:list' %}" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Traçabilité</a>
+      <a href="{% url 'marketplace:list' %}" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Marché</a>
+      <a href="{% url 'marketplace:orders' %}" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Commandes</a>
+    </div>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Quitter</button>
+    </form>
+    {% elif not user.is_authenticated %}
+      <a href="{% url 'accounts:login' %}" class="rounded-xl bg-forest-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-forest-700">Se connecter</a>
+    {% endif %}
+  </nav>
+</header>
+
+<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+  {% if messages %}
+  <div class="mb-6 space-y-2">
+    {% for message in messages %}
+    <div class="rounded-xl px-4 py-3 text-sm font-medium {% if message.tags == 'error' %}bg-red-50 text-red-700 ring-1 ring-red-200{% else %}bg-forest-50 text-forest-700 ring-1 ring-forest-100{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="mt-16 border-t border-slate-200 py-8 text-center text-xs text-slate-500">
+  EcoKolekt · Gestion et valorisation des déchets · Cotonou, Bénin
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

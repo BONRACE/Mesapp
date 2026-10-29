@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Traçabilité{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Traçabilité</h1>
+<div class="mt-1 flex flex-wrap items-center justify-between gap-4">
+  <p class="text-slate-600">Lots dont vous êtes producteur ou détenteur actuel.</p>
+  <button id="open-scanner" type="button" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Scanner un QR</button>
+</div>
+<div id="scanner-box" class="mt-6 hidden overflow-hidden rounded-2xl bg-black shadow-card">
+  <video id="scanner-video" class="mx-auto max-h-80 w-full object-cover" playsinline muted></video>
+  <p id="scanner-status" class="p-3 text-center text-sm text-white/80">Pointez la caméra vers le QR du lot.</p>
+</div>
+
+<div class="mt-8 overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-slate-100">
+  <table class="min-w-full divide-y divide-slate-100 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <tr>
+        <th class="px-6 py-3">Code</th><th class="px-6 py-3">Matière</th>
+        <th class="px-6 py-3">Poids</th><th class="px-6 py-3">Statut</th><th class="px-6 py-3"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for batch in batches %}
+      <tr class="hover:bg-slate-50/70">
+        <td class="px-6 py-4 font-mono font-semibold text-forest-700">{{ batch.code }}</td>
+        <td class="px-6 py-4">{{ batch.category }}</td>
+        <td class="px-6 py-4">{{ batch.weight_kg }} kg</td>
+        <td class="px-6 py-4"><span class="rounded-full bg-forest-50 px-2.5 py-1 text-xs font-semibold text-forest-700">{{ batch.get_status_display }}</span></td>
+        <td class="px-6 py-4 text-right"><a href="{% url 'traceability:detail' batch.pk %}" class="font-semibold text-forest-600 hover:text-forest-700">Ouvrir</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">Aucun lot pour le moment.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Lecture QR native (BarcodeDetector) : disponible sur Chrome / Android. Sinon, le lien reste utilisable.
+  (function () {
+    var button = document.getElementById('open-scanner');
+    var box = document.getElementById('scanner-box');
+    var video = document.getElementById('scanner-video');
+    var status = document.getElementById('scanner-status');
+    if (!button || !('BarcodeDetector' in window)) { if (button) button.disabled = true; return; }
+    var detector = new BarcodeDetector({ formats: ['qr_code'] });
+    button.addEventListener('click', async function () {
+      box.classList.remove('hidden');
+      try {
+        video.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        await video.play();
+      } catch (e) { status.textContent = "Caméra indisponible. Ouvrez le QR avec l'appareil photo."; return; }
+      (function loop() {
+        detector.detect(video).then(function (codes) {
+          if (codes.length && codes[0].rawValue) { window.location = codes[0].rawValue; return; }
+          requestAnimationFrame(loop);
+        }).catch(function () { requestAnimationFrame(loop); });
+      })();
+    });
+  })();
+</script>
+{% endblock %}

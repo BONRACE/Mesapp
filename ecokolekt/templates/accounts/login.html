@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<div class="mx-auto grid max-w-5xl items-center gap-10 lg:grid-cols-2">
+  <div class="hidden lg:block">
+    <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-slate-900">Connectez-vous en 30 secondes.</h1>
+    <p class="mt-4 text-slate-600">Pas de mot de passe à retenir. Un code à 6 chiffres est envoyé par SMS sur votre téléphone.</p>
+    <ul class="mt-8 space-y-3 text-sm text-slate-600">
+      <li class="flex items-center gap-3"><span class="grid h-7 w-7 place-items-center rounded-full bg-forest-50 text-forest-600">✓</span> Numéro vérifié à chaque connexion</li>
+      <li class="flex items-center gap-3"><span class="grid h-7 w-7 place-items-center rounded-full bg-forest-50 text-forest-600">✓</span> Accès adapté à votre rôle</li>
+      <li class="flex items-center gap-3"><span class="grid h-7 w-7 place-items-center rounded-full bg-forest-50 text-forest-600">✓</span> Aucune donnée inutile collectée</li>
+    </ul>
+  </div>
+
+  <div class="rounded-3xl bg-white p-8 shadow-card ring-1 ring-slate-100 sm:p-10">
+    <h2 class="text-2xl font-extrabold text-slate-900">Votre numéro</h2>
+    <p class="mt-1 text-sm text-slate-500">Nous vous enverrons un code de vérification.</p>
+    <form method="post" class="mt-8 space-y-6">
+      {% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      <button type="submit" class="w-full rounded-xl bg-forest-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-forest-700">
+        Recevoir mon code
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

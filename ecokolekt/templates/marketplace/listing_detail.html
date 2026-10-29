@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ listing.title }}{% endblock %}
+{% block content %}
+<div class="grid gap-8 lg:grid-cols-3">
+  <article class="rounded-3xl bg-white p-8 shadow-card ring-1 ring-slate-100 lg:col-span-2">
+    <span class="rounded-full bg-forest-50 px-2.5 py-1 text-xs font-semibold text-forest-700">{{ listing.category }}</span>
+    <h1 class="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">{{ listing.title }}</h1>
+    <p class="mt-2 text-sm text-slate-500">Vendu par {{ listing.seller.organization|default:listing.seller.display_name }}{% if listing.site %} · {{ listing.site.name }}{% endif %}</p>
+    <p class="mt-6 leading-relaxed text-slate-700">{{ listing.description|default:"Aucune description." }}</p>
+
+    {% if listing.batch %}
+    <div class="mt-8 flex items-center justify-between rounded-2xl bg-forest-50 p-5">
+      <div>
+        <p class="text-sm font-semibold text-forest-700">Origine tracée</p>
+        <p class="font-mono text-sm text-forest-800">{{ listing.batch.code }}</p>
+      </div>
+      <a href="{% url 'traceability:detail' listing.batch.pk %}" class="text-sm font-semibold text-forest-700 hover:underline">Voir la chaîne →</a>
+    </div>
+    {% endif %}
+  </article>
+
+  <aside class="space-y-4">
+    <div class="rounded-3xl bg-slate-900 p-8 text-white shadow-card">
+      <p class="text-sm text-white/60">Prix</p>
+      <p class="mt-1 text-4xl font-extrabold">{{ listing.price_per_kg_xof }} <span class="text-base font-semibold text-white/60">XOF / kg</span></p>
+      <p class="mt-2 text-sm text-white/60">{{ listing.available_kg }} kg disponibles</p>
+
+      {% if listing.status == 'active' and user.is_onboarded and user.role != 'producer' and user != listing.seller %}
+      <form method="post" action="{% url 'marketplace:order' listing.pk %}" class="mt-6 space-y-4">
+        {% csrf_token %}
+        <label class="block text-sm font-semibold text-white/80">Quantité (kg)
+          <input type="number" name="quantity_kg" step="0.01" min="0.01" max="{{ listing.available_kg }}" required
+                 class="mt-1.5 block w-full rounded-xl border-white/20 bg-white/10 text-white placeholder-white/40">
+        </label>
+        <button class="w-full rounded-xl bg-gold-500 px-4 py-3 text-sm font-bold text-forest-700 hover:bg-gold-400">Commander</button>
+        <p class="text-xs text-white/50">Le stock est réservé à la commande. Le paiement en ligne sera ajouté prochainement.</p>
+      </form>
+      {% elif listing.status != 'active' %}
+      <p class="mt-6 rounded-xl bg-white/10 p-4 text-sm">Cette offre n'est plus disponible.</p>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

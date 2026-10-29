@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Collectes & tournées{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Collectes &amp; tournées</h1>
+<p class="mt-1 text-slate-600">Acceptez des enlèvements proches, puis laissez EcoKolekt ordonner votre trajet.</p>
+
+{% if not depot %}
+<div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+  <p class="font-semibold text-slate-900">Ajoutez d'abord un point de collecte</p>
+  <p class="mt-1 text-sm text-slate-500">Il servira de point de départ à vos tournées.</p>
+  <a href="{% url 'operations:site_create' %}" class="mt-5 inline-flex rounded-xl bg-forest-600 px-5 py-2.5 text-sm font-semibold text-white">Créer un point de collecte</a>
+</div>
+{% else %}
+
+<form method="get" class="mt-8 grid gap-4 rounded-2xl bg-white p-5 shadow-card ring-1 ring-slate-100 sm:grid-cols-4">
+  <label class="block text-sm font-semibold text-slate-700">Point de départ
+    <select name="depot" class="mt-1.5 block w-full rounded-xl border-slate-300">
+      {% for d in depots %}<option value="{{ d.pk }}" {% if d.pk == depot.pk %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="block text-sm font-semibold text-slate-700">Jour
+    <input type="date" name="day" value="{{ day }}" class="mt-1.5 block w-full rounded-xl border-slate-300">
+  </label>
+  <label class="block text-sm font-semibold text-slate-700">Rayon (km)
+    <input type="number" name="radius_km" min="1" max="100" value="{{ radius_km }}" class="mt-1.5 block w-full rounded-xl border-slate-300">
+  </label>
+  <div class="flex items-end">
+    <button class="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Rechercher</button>
+  </div>
+</form>
+
+<div class="mt-8 grid gap-6 lg:grid-cols-2">
+  <section class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100">
+    <h2 class="mb-4 text-lg font-bold text-slate-900">À proximité · {{ nearby|length }}</h2>
+    <ul class="divide-y divide-slate-100">
+      {% for pickup in nearby %}
+      <li class="flex items-center justify-between gap-4 py-4">
+        <div>
+          <p class="font-semibold text-slate-900">{{ pickup.category }} · {{ pickup.estimated_kg }} kg</p>
+          <p class="text-sm text-slate-500">{{ pickup.site.name }} · à {{ pickup.distance_km|floatformat:1 }} km</p>
+        </div>
+        <form method="post" action="{% url 'operations:accept_pickup' pickup.pk %}">
+          {% csrf_token %}
+          <button class="rounded-lg bg-forest-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-forest-700">Accepter</button>
+        </form>
+      </li>
+      {% empty %}
+      <li class="py-10 text-center text-sm text-slate-500">Aucun enlèvement dans ce rayon pour cette date.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100">
+    <h2 class="mb-4 text-lg font-bold text-slate-900">À planifier · {{ to_plan|length }}</h2>
+    <form method="post" action="{% url 'operations:plan_route' %}" class="space-y-6">
+      {% csrf_token %}
+      {% include "partials/form_fields.html" with form=plan_form %}
+      <ul class="divide-y divide-slate-100 rounded-xl border border-slate-100">
+        {% for pickup in to_plan %}
+        <li>
+          <label class="flex cursor-pointer items-center gap-3 px-4 py-3">
+            <input type="checkbox" name="pickups" value="{{ pickup.pk }}" class="rounded border-slate-300 text-forest-600 focus:ring-forest-600">
+            <span class="text-sm"><span class="font-semibold text-slate-900">{{ pickup.site.name }}</span> · {{ pickup.estimated_kg }} kg</span>
+          </label>
+        </li>
+        {% empty %}
+        <li class="px-4 py-8 text-center text-sm text-slate-500">Acceptez d'abord des enlèvements.</li>
+        {% endfor %}
+      </ul>
+      <button class="w-full rounded-xl bg-forest-600 px-5 py-3 text-sm font-bold text-white hover:bg-forest-700">Optimiser la tournée</button>
+    </form>
+  </section>
+</div>
+{% endif %}
+{% endblock %}

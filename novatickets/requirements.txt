@@ -1,6 +1,0 @@
-Django==5.2.18
-phonenumbers==9.0.41
-pillow==12.3.0
-pycountry==26.2.16
-qrcode==8.2
-reportlab==5.0.1

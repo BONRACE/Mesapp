@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Tournée {{ route.planned_for|date:"d/m" }}{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="text-sm font-semibold text-gold-600">Tournée · {{ route.get_status_display }}</p>
+    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">{{ route.planned_for|date:"l d F Y" }}</h1>
+    <p class="mt-1 text-slate-600">{{ stops|length }} arrêt(s) · {{ route.total_distance_m|floatformat:0 }} m estimés</p>
+  </div>
+  <form method="post" action="{% url 'operations:route_replan' route.pk %}">
+    {% csrf_token %}
+    <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">↻ Recalculer l'itinéraire</button>
+  </form>
+</div>
+
+<ol class="mt-8 space-y-4">
+  <li class="flex items-center gap-4 rounded-2xl bg-slate-900 p-5 text-white">
+    <span class="grid h-10 w-10 place-items-center rounded-full bg-gold-500 font-bold text-forest-700">D</span>
+    <div class="flex-1">
+      <p class="font-semibold">Départ · point de collecte</p>
+      <p class="text-sm text-white/60">{{ route.origin_latitude|floatformat:5 }}, {{ route.origin_longitude|floatformat:5 }}</p>
+    </div>
+  </li>
+
+  {% for stop in stops %}
+  <li class="rounded-2xl bg-white p-5 shadow-card ring-1 ring-slate-100">
+    <div class="flex flex-wrap items-center gap-4">
+      <span class="grid h-10 w-10 place-items-center rounded-full bg-forest-50 font-bold text-forest-700">{{ stop.stop_order }}</span>
+      <div class="min-w-0 flex-1">
+        <p class="font-semibold text-slate-900">{{ stop.site.name }}</p>
+        <p class="text-sm text-slate-500">{{ stop.category }} · {{ stop.estimated_kg }} kg estimés · {{ stop.site.address|default:"Adresse non renseignée" }}</p>
+      </div>
+      <a href="https://www.google.com/maps/dir/?api=1&destination={{ stop.site.latitude }},{{ stop.site.longitude }}"
+         target="_blank" rel="noopener" class="text-sm font-semibold text-forest-600 hover:text-forest-700">Itinéraire →</a>
+      <span class="rounded-full px-3 py-1 text-xs font-semibold
+        {% if stop.status == 'collected' %}bg-emerald-50 text-emerald-700{% else %}bg-sky-50 text-sky-700{% endif %}">{{ stop.get_status_display }}</span>
+    </div>
+
+    {% if stop.status == 'scheduled' %}
+    <form method="post" action="{% url 'operations:stop_collected' stop.pk %}" class="mt-4 flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4">
+      {% csrf_token %}
+      <label class="text-sm font-semibold text-slate-700">Poids réel (kg)
+        <input type="number" step="0.01" min="0.01" name="actual_kg" required class="mt-1.5 block w-40 rounded-xl border-slate-300">
+      </label>
+      <button class="rounded-xl bg-forest-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-forest-700">Valider la collecte &amp; générer le QR</button>
+    </form>
+    {% elif stop.batch %}
+    <a href="{% url 'traceability:detail' stop.batch.pk %}" class="mt-4 inline-block text-sm font-semibold text-forest-600">Lot {{ stop.batch.code }} · voir la traçabilité →</a>
+    {% endif %}
+  </li>
+  {% empty %}
+  <li class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">Aucun arrêt dans cette tournée.</li>
+  {% endfor %}
+</ol>
+{% endblock %}

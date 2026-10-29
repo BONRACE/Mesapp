@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Vérification{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md">
+  <div class="rounded-3xl bg-white p-8 shadow-card ring-1 ring-slate-100 sm:p-10">
+    <h1 class="text-2xl font-extrabold text-slate-900">Entrez votre code</h1>
+    <p class="mt-1 text-sm text-slate-500">Code envoyé au <span class="font-semibold text-slate-700">{{ phone }}</span>.</p>
+
+    <form method="post" class="mt-8 space-y-6">
+      {% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      <button type="submit" class="w-full rounded-xl bg-forest-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-forest-700">Valider</button>
+    </form>
+
+    <form method="post" action="{% url 'accounts:resend' %}" class="mt-6 text-center">
+      {% csrf_token %}
+      <button class="text-sm font-semibold text-forest-600 hover:text-forest-700">Je n'ai pas reçu de code · renvoyer</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

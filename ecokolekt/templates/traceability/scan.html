@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Provenance {{ batch.code }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <div class="overflow-hidden rounded-3xl bg-forest-600 p-8 text-white shadow-card">
+    <p class="text-sm font-semibold text-gold-300">Provenance vérifiée</p>
+    <h1 class="mt-1 font-mono text-3xl font-extrabold">{{ batch.code }}</h1>
+    <p class="mt-2 text-white/80">{{ batch.category }} · {{ batch.weight_kg }} kg · {{ batch.get_status_display }}</p>
+    <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold ring-1 ring-white/20">
+      {% if chain_ok %}✓ Historique intègre{% else %}✕ Historique altéré{% endif %}
+    </p>
+  </div>
+
+  <ol class="relative mt-10 space-y-6 border-l-2 border-forest-100 pl-8">
+    {% for event in events %}
+    <li class="relative">
+      <span class="absolute -left-[41px] top-1.5 h-4 w-4 rounded-full border-4 border-white bg-gold-500 shadow"></span>
+      <p class="font-semibold text-slate-900">{{ event.get_event_type_display }}</p>
+      <p class="text-sm text-slate-500">{{ event.occurred_at|date:"d M Y, H:i" }} · {{ event.actor.get_role_display|default:"Système" }}</p>
+      {% if event.note %}<p class="mt-1 text-sm text-slate-600">{{ event.note }}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+
+  {% if form.fields.event_type.choices %}
+  <form method="post" class="mt-10 space-y-5 rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100" id="scan-form">
+    {% csrf_token %}
+    <h2 class="font-bold text-slate-900">Enregistrer une étape à ce lot</h2>
+    {% include "partials/form_fields.html" %}
+    <button class="w-full rounded-xl bg-forest-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-forest-700">Ajouter à la chaîne</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Géolocalisation facultative : renseigne les champs cachés latitude / longitude.
+  (function () {
+    var form = document.getElementById('scan-form');
+    if (!form || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      form.querySelector('[name=latitude]').value = pos.coords.latitude;
+      form.querySelector('[name=longitude]').value = pos.coords.longitude;
+    }, function () {}, { enableHighAccuracy: true, timeout: 8000 });
+  })();
+</script>
+{% endblock %}

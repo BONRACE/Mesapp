@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Nouveau site{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Nouveau site</h1>
+  <p class="mt-1 text-slate-600">Renseignez les coordonnées GPS : elles alimentent le moteur de routage.</p>
+  <form method="post" class="mt-8 space-y-6 rounded-3xl bg-white p-8 shadow-card ring-1 ring-slate-100">
+    {% csrf_token %}
+    {% include "partials/form_fields.html" %}
+    <button class="w-full rounded-xl bg-forest-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-forest-700">Enregistrer le site</button>
+  </form>
+</div>
+{% endblock %}

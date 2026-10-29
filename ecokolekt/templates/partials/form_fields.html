@@ -1,0 +1,14 @@
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+{% for error in form.non_field_errors %}
+  <p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ error }}</p>
+{% endfor %}
+<div class="space-y-5">
+  {% for field in form.visible_fields %}
+  <div>
+    <label for="{{ field.id_for_label }}" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}<p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>{% endif %}
+    {% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+  </div>
+  {% endfor %}
+</div>

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Valorisez vos déchets{% endblock %}
+{% block content %}
+<section class="relative -mx-4 overflow-hidden rounded-3xl bg-forest-600 px-6 py-20 text-white sm:-mx-6 sm:px-12 lg:py-28">
+  <div class="grain absolute inset-0 opacity-70"></div>
+  <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-gold-500/20 blur-3xl"></div>
+  <div class="pointer-events-none absolute -bottom-32 left-10 h-80 w-80 rounded-full bg-forest-500/40 blur-3xl"></div>
+
+  <div class="relative max-w-3xl">
+    <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-gold-300 ring-1 ring-white/15">
+      <span class="h-1.5 w-1.5 rounded-full bg-gold-400"></span> Économie circulaire · Bénin
+    </span>
+    <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
+      De la poubelle à la <span class="text-gold-400">matière première</span>.
+    </h1>
+    <p class="mt-6 max-w-2xl text-lg text-white/80">
+      EcoKolekt relie producteurs, collecteurs et centres de recyclage : enlèvements planifiés,
+      tournées optimisées, traçabilité par QR code et marché de matières recyclées.
+    </p>
+    <div class="mt-10 flex flex-wrap gap-3">
+      <a href="{% url 'accounts:login' %}" class="rounded-xl bg-gold-500 px-6 py-3.5 text-sm font-bold text-forest-700 shadow-lg shadow-black/20 transition hover:bg-gold-400">
+        Commencer avec mon numéro
+      </a>
+      <a href="#fonctionnement" class="rounded-xl px-6 py-3.5 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/10">
+        Comment ça marche
+      </a>
+    </div>
+  </div>
+
+  <dl class="relative mt-16 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="rounded-2xl bg-white/10 p-6 ring-1 ring-white/15 backdrop-blur">
+      <dt class="text-sm text-white/70">Kg collectés</dt>
+      <dd class="mt-1 text-3xl font-extrabold">{{ stats.kg_collected|floatformat:0 }}</dd>
+    </div>
+    <div class="rounded-2xl bg-white/10 p-6 ring-1 ring-white/15 backdrop-blur">
+      <dt class="text-sm text-white/70">Lots tracés</dt>
+      <dd class="mt-1 text-3xl font-extrabold">{{ stats.batches }}</dd>
+    </div>
+    <div class="rounded-2xl bg-white/10 p-6 ring-1 ring-white/15 backdrop-blur">
+      <dt class="text-sm text-white/70">Offres en vente</dt>
+      <dd class="mt-1 text-3xl font-extrabold">{{ stats.listings }}</dd>
+    </div>
+  </dl>
+</section>
+
+<section id="fonctionnement" class="mt-20">
+  <h2 class="text-center text-3xl font-extrabold tracking-tight text-slate-900">Un seul outil, trois métiers</h2>
+  <div class="mt-10 grid gap-6 md:grid-cols-3">
+    <article class="rounded-2xl bg-white p-7 shadow-card ring-1 ring-slate-100">
+      <div class="mb-5 grid h-11 w-11 place-items-center rounded-xl bg-forest-50 text-forest-600 font-bold">01</div>
+      <h3 class="text-lg font-bold text-slate-900">Producteurs</h3>
+      <p class="mt-2 text-sm leading-relaxed text-slate-600">Déclarez vos sites, demandez un enlèvement sur une fenêtre horaire et suivez chaque kilo.</p>
+    </article>
+    <article class="rounded-2xl bg-white p-7 shadow-card ring-1 ring-slate-100">
+      <div class="mb-5 grid h-11 w-11 place-items-center rounded-xl bg-gold-300/30 text-gold-600 font-bold">02</div>
+      <h3 class="text-lg font-bold text-slate-900">Collecteurs</h3>
+      <p class="mt-2 text-sm leading-relaxed text-slate-600">Acceptez les enlèvements proches et laissez le moteur ordonner votre tournée au plus court.</p>
+    </article>
+    <article class="rounded-2xl bg-white p-7 shadow-card ring-1 ring-slate-100">
+      <div class="mb-5 grid h-11 w-11 place-items-center rounded-xl bg-forest-50 text-forest-600 font-bold">03</div>
+      <h3 class="text-lg font-bold text-slate-900">Recycleurs</h3>
+      <p class="mt-2 text-sm leading-relaxed text-slate-600">Réceptionnez les lots, valorisez-les et vendez les matières recyclées sur le marché B2B.</p>
+    </article>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Mes offres{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Mes offres</h1>
+  <a href="{% url 'marketplace:create' %}" class="rounded-xl bg-forest-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-forest-700">+ Nouvelle offre</a>
+</div>
+
+<div class="mt-8 divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-slate-100">
+  {% for listing in listings %}
+  <div class="flex flex-wrap items-center justify-between gap-4 p-6">
+    <div>
+      <p class="font-semibold text-slate-900">{{ listing.title }}</p>
+      <p class="text-sm text-slate-500">{{ listing.category }} · {{ listing.available_kg }} kg · {{ listing.price_per_kg_xof }} XOF/kg</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{{ listing.get_status_display }}</span>
+      {% if listing.status != 'sold_out' %}
+      <form method="post" action="{% url 'marketplace:toggle' listing.pk %}">
+        {% csrf_token %}
+        <button class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          {% if listing.status == 'active' %}Mettre en pause{% else %}Réactiver{% endif %}
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="p-12 text-center text-sm text-slate-500">Vous n'avez publié aucune offre.</div>
+  {% endfor %}
+</div>
+{% endblock %}

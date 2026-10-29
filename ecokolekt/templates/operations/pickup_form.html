@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Demander un enlèvement{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Demander un enlèvement</h1>
+  <p class="mt-1 text-slate-600">Indiquez le site, la nature des déchets et une fenêtre de passage. Un collecteur proche prendra la demande.</p>
+  {% if not form.fields.site.queryset.exists %}
+  <div class="mt-6 rounded-2xl bg-amber-50 p-5 text-sm text-amber-800 ring-1 ring-amber-200">
+    Créez d'abord un site de production pour pouvoir demander un enlèvement.
+    <a href="{% url 'operations:site_create' %}" class="font-semibold underline">Ajouter un site</a>
+  </div>
+  {% endif %}
+  <form method="post" class="mt-8 space-y-6 rounded-3xl bg-white p-8 shadow-card ring-1 ring-slate-100">
+    {% csrf_token %}
+    {% include "partials/form_fields.html" %}
+    <button class="w-full rounded-xl bg-forest-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-forest-700">Envoyer la demande</button>
+  </form>
+</div>
+{% endblock %}

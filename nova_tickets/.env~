@@ -1,0 +1,28 @@
+# ---------- Sécurité ----------
+# True en développement, False en production
+DEBUG=True
+SECRET_KEY=3=mj+5z90bic-%v)dct+ink_)(4wc6*zon$ulkok7w_ho-vzlm
+ALLOWED_HOSTS=localhost,127.0.0.1
+COOKIE_SECURE=True
+
+# ---------- Adresse du site ----------
+SITE_URL=http://127.0.0.1:8000
+
+# ---------- Plateforme ----------
+PLATFORM_NAME=NovaTickets
+# Commission prélevée sur chaque ticket vendu : 0.05 = 5 %
+PLATFORM_COMMISSION_RATE=0.05
+TIME_ZONE=Africa/Porto-Novo
+
+# ---------- E-mails : le reçu part TOUT SEUL après chaque paiement ----------
+#   2. Créez un mot de passe d'application : https://myaccount.google.com/apppasswords
+EMAIL_HOST_USER=bonracedolivierk@gmail.com
+EMAIL_HOST_PASSWORD=lunl hefg ulgz bkil 
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+
+# ---------- Carte de visite ----------
+# Prix (FCFA) pour générer une carte de visite
+BUSINESS_CARD_PRICE=100

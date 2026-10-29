@@ -141,7 +141,13 @@ EMAIL_HOST_PASSWORD = clean_password(env("EMAIL_HOST_PASSWORD").strip(), EMAIL_H
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
 EMAIL_TIMEOUT = int(env("EMAIL_TIMEOUT", "15"))  # secondes : évite de bloquer la page si le serveur ne répond pas
-EMAIL_BACKEND = pick_backend(env("EMAIL_BACKEND"), EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, env_bool("EMAIL_FORCE_CONSOLE", False))
+
+# Correction : Forcer explicitement le backend SMTP si les identifiants sont configurés
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    EMAIL_BACKEND = pick_backend(env("EMAIL_BACKEND"), EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, env_bool("EMAIL_FORCE_CONSOLE", False))
+
 DEFAULT_FROM_EMAIL = default_sender(env("DEFAULT_FROM_EMAIL"), PLATFORM_NAME, EMAIL_HOST_USER)
 
 # ------------------------------------------------------------------ Plateforme

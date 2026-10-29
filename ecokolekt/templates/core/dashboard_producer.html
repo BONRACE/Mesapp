@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="text-sm font-semibold text-gold-600">Producteur</p>
+    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Bonjour {{ user.display_name }}</h1>
+  </div>
+  <a href="{% url 'operations:pickup_create' %}" class="rounded-xl bg-forest-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-forest-700">+ Demander un enlèvement</a>
+</div>
+
+<div class="mt-8 grid gap-5 sm:grid-cols-3">
+  <div class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100">
+    <p class="text-sm text-slate-500">Déchets collectés</p>
+    <p class="mt-2 text-3xl font-extrabold text-forest-600">{{ kg_collected|floatformat:1 }} <span class="text-base font-semibold text-slate-400">kg</span></p>
+  </div>
+  <div class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100">
+    <p class="text-sm text-slate-500">Enlèvements en cours</p>
+    <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ pending_count }}</p>
+  </div>
+  <div class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100">
+    <p class="text-sm text-slate-500">Lots tracés</p>
+    <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ batches|length }}</p>
+  </div>
+</div>
+
+<div class="mt-8 grid gap-6 lg:grid-cols-5">
+  <section class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100 lg:col-span-3">
+    <h2 class="mb-4 text-lg font-bold text-slate-900">Mes demandes récentes</h2>
+    <ul class="divide-y divide-slate-100">
+      {% for pickup in pickups %}
+      <li class="flex items-center justify-between gap-4 py-4">
+        <div>
+          <p class="font-semibold text-slate-900">{{ pickup.category }} · {{ pickup.estimated_kg }} kg</p>
+          <p class="text-sm text-slate-500">{{ pickup.site.name }} · {{ pickup.window_start|date:"d M Y, H:i" }}</p>
+        </div>
+        <span class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold
+          {% if pickup.status == 'pending' %}bg-amber-50 text-amber-700
+          {% elif pickup.status == 'scheduled' %}bg-sky-50 text-sky-700
+          {% elif pickup.status == 'collected' %}bg-emerald-50 text-emerald-700
+          {% else %}bg-slate-100 text-slate-600{% endif %}">{{ pickup.get_status_display }}</span>
+      </li>
+      {% empty %}
+      <li class="py-10 text-center text-sm text-slate-500">Aucune demande pour le moment.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-slate-100 lg:col-span-2">
+    <h2 class="mb-4 text-lg font-bold text-slate-900">Traçabilité</h2>
+    <ul class="space-y-3">
+      {% for batch in batches %}
+      <li>
+        <a href="{% url 'traceability:detail' batch.pk %}" class="flex items-center justify-between rounded-xl border border-slate-100 p-4 transition hover:border-forest-100 hover:bg-forest-50/40">
+          <div>
+            <p class="font-mono text-sm font-semibold text-forest-700">{{ batch.code }}</p>
+            <p class="text-xs text-slate-500">{{ batch.category }} · {{ batch.weight_kg }} kg</p>
+          </div>
+          <span class="text-xs font-medium text-slate-500">{{ batch.get_status_display }}</span>
+        </a>
+      </li>
+      {% empty %}
+      <li class="py-10 text-center text-sm text-slate-500">Vos lots apparaîtront ici après la collecte.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

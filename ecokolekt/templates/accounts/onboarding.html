@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Bienvenue{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <p class="text-sm font-semibold text-gold-600">Étape finale</p>
+  <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">Créons votre profil</h1>
+  <p class="mt-2 text-slate-600">Votre rôle détermine les outils qui vous sont proposés. Vous pourrez compléter ces informations plus tard.</p>
+
+  <form method="post" class="mt-8 space-y-6 rounded-3xl bg-white p-8 shadow-card ring-1 ring-slate-100 sm:p-10">
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{{ error }}</p>{% endfor %}
+
+    <fieldset>
+      <legend class="mb-3 text-sm font-semibold text-slate-700">{{ form.role.label }}</legend>
+      <div class="grid gap-3 sm:grid-cols-3">
+        {% for radio in form.role %}
+        <label for="{{ radio.id_for_label }}" class="cursor-pointer rounded-2xl border border-slate-200 p-4 text-sm font-medium text-slate-700 transition has-[:checked]:border-forest-600 has-[:checked]:bg-forest-50 has-[:checked]:text-forest-700">
+          {{ radio.tag }} <span class="ml-1">{{ radio.choice_label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      {% for error in form.role.errors %}<p class="mt-2 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </fieldset>
+
+    {% for field in form.visible_fields %}
+      {% if field.name != "role" %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+    {% endfor %}
+
+    <button type="submit" class="w-full rounded-xl bg-forest-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-forest-700">Accéder à mon espace</button>
+  </form>
+</div>
+{% endblock %}
