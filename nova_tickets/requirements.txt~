@@ -1,0 +1,7 @@
+Django>=5.0,<6
+Pillow
+qrcode[pil]
+reportlab
+pycountry
+phonenumbers
+python-dotenv

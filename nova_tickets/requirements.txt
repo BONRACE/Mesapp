@@ -5,3 +5,6 @@ reportlab
 pycountry
 phonenumbers
 python-dotenv
+gunicorn
+whitenoise
+psycopg2-binary
