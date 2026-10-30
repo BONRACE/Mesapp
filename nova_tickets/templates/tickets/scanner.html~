@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner - NovaTickets</title>
+    <!-- Inclusion de la librairie de scan QR code -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f1f5f9; color: #0f172a; text-align: center; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; }
+        .result-box { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: bold; }
+        .btn-back { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #1d4e89; color: #fff; text-decoration: none; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📷 Scanner un Billet ou une Carte</h2>
+        <p style="font-size: 13px; color: #64748b;">Pointez la caméra vers le QR code pour valider l'accès.</p>
+        
+        <!-- Zone d'affichage de la caméra -->
+        <div id="reader"></div>
+
+        <div id="result" class="result-box" style="display:none;"></div>
+
+        <a href="{% url 'events:index' %}" class="btn-back">⬅ Retour à l'accueil</a>
+    </div>
+
+    <script>
+        function onScanSuccess(decodedText, decodedResult) {
+            // Empêcher les scans multiples en boucle
+            html5QrCode.stop().then(() => {
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('result').style.background = '#ecfdf5';
+                document.getElementById('result').style.color = '#059669';
+                document.getElementById('result').innerHTML = "✔ QR Code détecté ! Redirection...";
+                
+                // Rediriger vers l'URL lue dans le QR code (ex: /tickets/verify/uuid-ici/)
+                window.location.href = decodedText;
+            }).catch(err => {
+                console.error("Erreur lors de l'arrêt du scanner", err);
+            });
+        }
+
+        function onScanFailure(error) {
+            // Géré silencieusement pour éviter de polluer la console pendant la recherche du QR code
+        }
+
+        // Initialisation du scanner sur la caméra arrière du téléphone (environment) ou webcam PC
+        let html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            {
+                fps: 10,    // Images par seconde
+                qrbox: { width: 250, height: 250 } // Taille de la zone de visée
+            },
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            alert("Impossible d'accéder à la caméra. Vérifiez les permissions de votre navigateur.");
+        });
+    </script>
+</body>
+</html>

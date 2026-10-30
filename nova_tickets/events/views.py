@@ -8,6 +8,11 @@ from django.views.decorators.http import require_POST
 from .forms import EventForm, TicketFormSet
 from .models import Event
 
+@login_required
+def scanner_view(request):
+    """Affiche la page avec la caméra pour scanner les QR codes."""
+    return render(request, 'tickets/scanner.html')
+
 
 def organizer_required(view):
     @login_required
