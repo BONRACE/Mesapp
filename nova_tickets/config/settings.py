@@ -39,7 +39,7 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
     print("⚠️ ATTENTION : Vous utilisez la SECRET_KEY par défaut. Pensez à ajouter SECRET_KEY dans le Dashboard Render.")
 
 # En développement on accepte tout (pratique pour tester depuis un smartphone sur le même Wi-Fi).
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "*" if DEBUG else "localhost,127.0.0.1")
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
 
 if not DEBUG:
