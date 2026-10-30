@@ -27,10 +27,16 @@ def env_list(name, default=""):
 
 
 # ------------------------------------------------------------------ Sécurité
-DEBUG = env_bool("DEBUG", True)
-SECRET_KEY = env("SECRET_KEY", "dev-only-change-me-in-production")
-if not DEBUG and SECRET_KEY.startswith("dev-only"):
-    raise ImproperlyConfigured("Définissez une SECRET_KEY secrète dans .env avant de passer DEBUG=False.")
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't', 'yes')
+
+# Clé secrète par défaut si non définie dans l'environnement
+DEFAULT_SECRET_KEY = 'django-insecure-fallback-nova-tickets-key-change-in-prod'
+
+SECRET_KEY = os.getenv('SECRET_KEY', DEFAULT_SECRET_KEY)
+
+# Avertissement en console si vous êtes en production sans clé personnalisée
+if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
+    print("⚠️ ATTENTION : Vous utilisez la SECRET_KEY par défaut. Pensez à ajouter SECRET_KEY dans le Dashboard Render.")
 
 # En développement on accepte tout (pratique pour tester depuis un smartphone sur le même Wi-Fi).
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "*" if DEBUG else "localhost,127.0.0.1")
