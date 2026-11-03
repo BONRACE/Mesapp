@@ -1,0 +1,20 @@
+{{ platform }} — Plateforme de Billetterie
+Date : {{ date_label }} · Réf. {{ reference }}
+
+{{ thanks }}
+{% if event %}
+Nom de l'événement : {{ event.name }}
+{{ event.when }} — {{ event.where }}
+{% endif %}
+Informations du spectateur
+{% for label, value in spectator %}{{ label }} : {{ value }}
+{% endfor %}
+{{ details_title }}
+{% for label, value in details %}{{ label }} : {{ value }}
+{% endfor %}Statut du paiement : {{ status }}
+Montant total : {{ total_label }}
+{% if signature %}
+Signature de l'organisateur : {{ signature }}{% if organizer %} ({{ organizer }}){% endif %} — vérifié par {{ platform }}
+{% endif %}
+Vos documents PDF sont joints à ce message.
+Powered by {{ platform }}

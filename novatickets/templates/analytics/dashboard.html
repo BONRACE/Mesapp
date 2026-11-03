@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Analytiques{% endblock %}
+{% block content %}
+<style>
+  .an-head { display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .live { display: inline-flex; gap: .45rem; align-items: center; color: var(--muted); font-size: .85rem; }
+  .live i { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(22,163,74,.5); animation: pulse 2s infinite; }
+  .live.off i { background: #9ca3af; animation: none; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(22,163,74,0); } 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); } }
+  .charts { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1.2rem; margin-top: 1.2rem; }
+  @media (max-width: 960px) { .charts { grid-template-columns: minmax(0, 1fr); } }
+  .chart-card h3 { margin: 0; font-size: 1rem; }
+  .chart-card .sub { color: var(--muted); font-size: .83rem; margin: .1rem 0 .8rem; }
+  .chart-box { position: relative; height: 260px; }
+  .seg { display: inline-flex; background: var(--green-50); border: 1px solid var(--green-100); border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { border: 0; background: none; padding: .3rem .8rem; border-radius: 7px; font: inherit; font-size: .82rem; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .seg button.on { background: #fff; color: var(--green-700); box-shadow: 0 1px 3px rgba(20,83,45,.15); }
+  .fillrow { display: grid; grid-template-columns: minmax(120px, 1.2fr) 2fr auto; gap: .8rem; align-items: center; padding: .55rem 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+  .fillrow:last-child { border-bottom: 0; }
+  .fillrow .nm { font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+  .kpis.six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kpis.six .label { overflow-wrap: anywhere; }
+  @media (max-width: 520px) { .kpis.six { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; } .kpis.six .value { font-size: 1.2rem; } }
+  .fillrow .num { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  details.tbl { margin-top: .6rem; font-size: .85rem; }
+  details.tbl summary { cursor: pointer; color: var(--green-700); font-weight: 600; }
+  details.tbl .table-wrap { max-height: 220px; overflow: auto; margin-top: .4rem; }
+  .pill { display: inline-block; padding: .1rem .55rem; border-radius: 99px; font-size: .75rem; font-weight: 600; }
+  .pill.valid { background: var(--green-100); color: var(--green-700); } .pill.duplicate, .pill.wrong_event { background: #fef3c7; color: #92400e; } .pill.invalid { background: #fee2e2; color: #991b1b; }
+  .lists { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.2rem; margin-top: 1.2rem; }
+  @media (max-width: 960px) { .lists { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<section class="section"><div class="container">
+  <div class="an-head">
+    <div><h1 style="margin:0">Analytiques</h1><span class="muted">Ventes, revenus, remplissage et affluence en direct</span></div>
+    <div class="row">
+      <span class="live" id="live"><i></i><span id="live-txt">Connexion…</span></span>
+      <form method="get"><select name="event" onchange="this.form.submit()" aria-label="Événement">
+        <option value="">Tous mes événements</option>
+        {% for e in events %}<option value="{{ e.pk }}" {% if event and event.pk == e.pk %}selected{% endif %}>{{ e.name }}</option>{% endfor %}
+      </select></form>
+    </div>
+  </div>
+
+  <div class="kpis six">
+    <div class="kpi main"><div class="label">Revenus nets</div><div class="value" id="k-net">—</div></div>
+    <div class="kpi"><div class="label">Billets vendus</div><div class="value" id="k-tickets">—</div></div>
+    <div class="kpi"><div class="label">Taux de remplissage</div><div class="value" id="k-fill">—</div></div>
+    <div class="kpi"><div class="label">Présents (scannés)</div><div class="value" id="k-checked">—</div></div>
+    <div class="kpi"><div class="label">Taux de présence</div><div class="value" id="k-att">—</div></div>
+    <div class="kpi"><div class="label">Panier moyen</div><div class="value" id="k-avg">—</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="card chart-card">
+      <div class="row between">
+        <div><h3>Ventes sur 30 jours</h3><div class="sub" id="sales-sub">Billets vendus par jour</div></div>
+        <div class="seg" role="group" aria-label="Mesure"><button class="on" data-m="tickets" type="button">Billets</button><button data-m="revenue" type="button">Revenus nets</button></div>
+      </div>
+      <div class="chart-box"><canvas id="ch-sales" role="img" aria-label="Ventes par jour"></canvas></div>
+      <details class="tbl"><summary>Voir en tableau</summary><div class="table-wrap"><table class="t" id="tb-sales"></table></div></details>
+    </div>
+
+    <div class="card chart-card">
+      <h3>Remplissage par type de ticket</h3><div class="sub">Billets vendus / stock</div>
+      <div id="fill"></div>
+    </div>
+  </div>
+
+  <div class="card chart-card" style="margin-top:1.2rem">
+    <div class="row between">
+      <div><h3>Affluence des scans</h3><div class="sub" id="scan-sub">Entrées validées par heure</div></div>
+      <div class="row" id="scan-pills"></div>
+    </div>
+    <div class="chart-box" style="height:220px"><canvas id="ch-scans" role="img" aria-label="Entrées par heure"></canvas></div>
+    <div class="muted small" id="scan-empty" style="display:none">Aucun scan pour le moment : l'affluence apparaîtra dès l'ouverture des portes.</div>
+    <details class="tbl"><summary>Voir en tableau</summary><div class="table-wrap"><table class="t" id="tb-scans"></table></div></details>
+  </div>
+
+  <div class="lists">
+    <div class="card"><h3>Dernières ventes</h3><div class="table-wrap"><table class="t"><tbody id="l-sales"></tbody></table></div></div>
+    <div class="card"><h3>Derniers scans</h3><div class="table-wrap"><table class="t"><tbody id="l-scans"></tbody></table></div></div>
+  </div>
+</div></section>
+
+<script src="{% static 'js/vendor/chart.umd.js' %}"></script>
+<script>
+(() => {
+  const URL = "{% url 'analytics:data' %}{% if event %}?event={{ event.pk }}{% endif %}";
+  const REFRESH_MS = 10000;
+  const css = getComputedStyle(document.documentElement);
+  const GREEN = css.getPropertyValue("--green").trim() || "#16a34a";
+  const INK = "#5b6b61", GRID = "#e4ebe6";
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => Math.round(n).toLocaleString("fr-FR");
+  const money = (n) => fmt(n) + " FCFA";
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let metric = "tickets", data = null, salesChart = null, scansChart = null;
+
+  // Colonnes fines (24 px max), bout arrondi 4 px, grille recessive : réglages communs aux deux graphiques.
+  const baseOptions = (yTick) => ({
+    responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+    plugins: { legend: { display: false }, tooltip: { displayColors: false, padding: 10, titleFont: { weight: "600" } } },
+    scales: {
+      x: { grid: { display: false }, border: { color: GRID }, ticks: { color: INK, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+      y: { beginAtZero: true, border: { display: false }, grid: { color: GRID, lineWidth: 1 }, ticks: { color: INK, precision: 0, callback: yTick } },
+    },
+  });
+  const dataset = (values) => ({ data: values, backgroundColor: GREEN, hoverBackgroundColor: "#15803d", maxBarThickness: 24,
+    borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: "bottom" });
+
+  function drawSales() {
+    const labels = data.daily.map((d) => d.label), vals = data.daily.map((d) => d[metric]);
+    const isRev = metric === "revenue";
+    $("sales-sub").textContent = isRev ? "Revenus nets par jour (après commission)" : "Billets vendus par jour";
+    if (!salesChart) {
+      const opts = baseOptions((v) => (isRev ? (v >= 1000 ? v / 1000 + " k" : v) : v));
+      salesChart = new Chart($("ch-sales"), { type: "bar", data: { labels, datasets: [dataset(vals)] }, options: opts });
+    }
+    salesChart.options.scales.y.ticks.callback = (v) => (isRev && v >= 1000 ? v / 1000 + " k" : v);
+    salesChart.options.plugins.tooltip.callbacks = { label: (c) => (isRev ? money(c.parsed.y) : c.parsed.y + (c.parsed.y > 1 ? " billets" : " billet")) };
+    salesChart.data.labels = labels; salesChart.data.datasets[0].data = vals; salesChart.update();
+    $("tb-sales").innerHTML = "<thead><tr><th>Jour</th><th>Billets</th><th>Revenus nets</th></tr></thead><tbody>" +
+      data.daily.map((d) => `<tr><td>${d.label}</td><td>${d.tickets}</td><td>${money(d.revenue)}</td></tr>`).join("") + "</tbody>";
+  }
+
+  function drawScans() {
+    const s = data.scans, hasData = s.hourly.length > 0;
+    $("scan-empty").style.display = hasData ? "none" : "block";
+    $("ch-scans").parentElement.style.display = hasData ? "block" : "none";
+    $("scan-pills").innerHTML = `<span class="pill valid">${s.valid} validées</span><span class="pill duplicate">${s.duplicate} doublons</span><span class="pill invalid">${s.refused} refusées</span>`;
+    $("scan-sub").textContent = s.peak && s.peak.count ? `Pic d'affluence : ${s.peak.label} (${s.peak.count} entrées)` : "Entrées validées par heure";
+    if (!hasData) return;
+    const labels = s.hourly.map((h) => h.label), vals = s.hourly.map((h) => h.count);
+    if (!scansChart) {
+      const opts = baseOptions();
+      opts.plugins.tooltip.callbacks = { label: (c) => c.parsed.y + (c.parsed.y > 1 ? " entrées" : " entrée") };
+      scansChart = new Chart($("ch-scans"), { type: "bar", data: { labels, datasets: [dataset(vals)] }, options: opts });
+    }
+    scansChart.data.labels = labels; scansChart.data.datasets[0].data = vals; scansChart.update();
+    $("tb-scans").innerHTML = "<thead><tr><th>Heure</th><th>Entrées</th></tr></thead><tbody>" + s.hourly.map((h) => `<tr><td>${h.label}</td><td>${h.count}</td></tr>`).join("") + "</tbody>";
+  }
+
+  function render(d) {
+    data = d; const k = d.kpi;
+    $("k-net").textContent = money(k.net); $("k-tickets").textContent = fmt(k.tickets);
+    $("k-fill").textContent = k.fill_rate + " %"; $("k-checked").textContent = fmt(k.checked_in);
+    $("k-att").textContent = k.attendance_rate + " %"; $("k-avg").textContent = money(k.avg_order);
+    drawSales(); drawScans();
+    $("fill").innerHTML = d.by_type.length ? d.by_type.map((t) => `
+      <div class="fillrow"><span class="nm" title="${esc(t.event ? t.event + " — " + t.name : t.name)}">${esc(t.name)}${t.event ? `<br><span class="muted small" style="font-weight:400">${esc(t.event)}</span>` : ""}</span>
+        <div class="bar" role="img" aria-label="${t.fill} % rempli"><i style="width:${Math.min(t.fill, 100)}%"></i></div>
+        <span class="num">${t.sold}/${t.stock} · ${t.fill} %</span></div>`).join("") : '<p class="muted">Aucun type de ticket.</p>';
+    $("l-sales").innerHTML = d.recent_sales.length ? d.recent_sales.map((s) => `<tr><td class="muted">${s.when}</td><td>${esc(s.buyer)}<br><span class="muted small">${esc(s.what)} · ${esc(s.event)}</span></td><td style="text-align:right"><strong>${money(s.net)}</strong></td></tr>`).join("") : '<tr><td class="muted">Aucune vente.</td></tr>';
+    $("l-scans").innerHTML = d.recent_scans.length ? d.recent_scans.map((s) => `<tr><td class="muted">${s.when}</td><td>${esc(s.who)}</td><td style="text-align:right"><span class="pill ${s.result}">${esc(s.label)}</span></td></tr>`).join("") : '<tr><td class="muted">Aucun scan.</td></tr>';
+    $("live").classList.remove("off"); $("live-txt").textContent = "En direct · mis à jour à " + d.updated_at;
+  }
+
+  async function refresh() {
+    try { const r = await fetch(URL, { headers: { Accept: "application/json" } }); if (!r.ok) throw 0; render(await r.json()); }
+    catch (e) { $("live").classList.add("off"); $("live-txt").textContent = "Connexion perdue — nouvelle tentative…"; }
+  }
+
+  document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll(".seg button").forEach((x) => x.classList.toggle("on", x === b));
+    metric = b.dataset.m; if (data) drawSales();
+  }));
+
+  refresh();
+  let timer = setInterval(refresh, REFRESH_MS);
+  document.addEventListener("visibilitychange", () => {          // pas de requêtes inutiles onglet en arrière-plan
+    clearInterval(timer);
+    if (!document.hidden) { refresh(); timer = setInterval(refresh, REFRESH_MS); }
+  });
+})();
+</script>
+{% endblock %}

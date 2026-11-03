@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load nova %}
+{% block title %}Contrôle d'entrée{% endblock %}
+{% block content %}
+<section class="section"><div class="container">
+  <h1>Contrôle d'entrée</h1>
+  <p class="muted mb">Choisissez l'événement à contrôler. La caméra de votre téléphone lit les QR codes des billets.</p>
+  {% if events %}
+  <div class="grid grid-3">
+    {% for e, st in events %}
+    <a class="card" href="{% url 'scanner:scan' e.pk %}" style="color:inherit;text-decoration:none">
+      <span class="muted small">{{ e.start_date|date:"d/m/Y" }} · {{ e.location }}</span>
+      <h3>{{ e.name }}</h3>
+      <div class="bar mt"><i style="width:{{ st.checked_in|percent:st.total }}%"></i></div>
+      <p class="small muted" style="margin-top:.4rem">{{ st.checked_in }} entrées sur {{ st.total }} billets vendus</p>
+      <span class="btn btn-block mt">Scanner</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty"><h3>Aucun événement publié</h3><p>Publiez un événement pour pouvoir contrôler ses billets.</p></div>
+  {% endif %}
+</div></section>
+{% endblock %}
