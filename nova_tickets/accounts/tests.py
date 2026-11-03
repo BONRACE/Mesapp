@@ -115,13 +115,17 @@ class FooterVisibilityTests(TestCase):
         for name in ("accounts:login", "accounts:password_reset"):
             self.assertNotContains(self.client.get(reverse(name)), 'class="footer"')
 
-    def test_footer_on_home_for_visitor_not_for_spectator(self):
-        self.assertContains(self.client.get("/"), 'class="footer"')
+    def test_footer_on_other_pages_for_visitor_not_for_spectator(self):
+        self.assertContains(self.client.get(reverse("core:terms")), 'class="footer"')
         u = User.objects.create_user(email="s@x.test", username="spec1", password="pw123456!", role="spectateur")
         self.client.force_login(u)
-        self.assertNotContains(self.client.get("/"), 'class="footer"')
+        self.assertNotContains(self.client.get(reverse("core:terms")), 'class="footer"')
 
     def test_footer_hidden_for_organizer(self):
         u = User.objects.create_user(email="o@x.test", username="orga1", password="pw123456!", role="organisateur")
         self.client.force_login(u)
+        self.assertNotContains(self.client.get("/"), 'class="footer"')
+
+    def test_footer_hidden_on_home_even_for_visitor(self):
+        self.client.logout()
         self.assertNotContains(self.client.get("/"), 'class="footer"')

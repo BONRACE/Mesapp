@@ -817,10 +817,10 @@ class BottomNavAndLegalTests(ModulesBase):
                      "2,5 % du prix de chaque billet", "Responsabilité de la plateforme", "Protection des données personnelles",
                      "250", "9 750"):
             self.assertIn(text, html)
-        self.assertContains(self.client.get(reverse("core:home")), reverse("core:terms"))      # lien dans le pied de page
+        self.assertContains(self.client.get(reverse("core:terms")), reverse("core:terms"))      # lien dans le pied de page
 
     def test_commission_text_matches_setting(self):
-        self.assertContains(self.client.get(reverse("core:home")), "Commission plateforme : 2,5 %")
+        self.assertContains(self.client.get(reverse("core:terms")), "Commission plateforme : 2,5 %")
 
 
 class EnvLoaderTests(TestCase):
