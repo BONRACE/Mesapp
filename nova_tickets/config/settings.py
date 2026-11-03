@@ -1,3 +1,4 @@
+import os
 import logging
 import sys
 from decimal import Decimal
@@ -82,6 +83,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "core.storage.VersionedStaticStorage"},  # ajoute ?v=<mtime> : plus de CSS périmé en cache
