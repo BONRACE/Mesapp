@@ -90,7 +90,7 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",  # Corrigé ici pour éviter l'erreur de manifest sur les fichiers .map
     },
 }
 MEDIA_URL = "media/"
