@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_env(BASE_DIR / ".env")        # variables d'environnement : voir .env.example
 
 SECRET_KEY = env("SECRET_KEY", "dev-insecure-change-me-novatickets")
-DEBUG = env_bool("DEBUG", True)
+DEBUG = env_bool("DEBUG", False)
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "*")
 
 INSTALLED_APPS = [
