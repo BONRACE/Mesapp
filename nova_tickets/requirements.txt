@@ -1,7 +1,10 @@
-Django>=5.1
-Pillow>=10.0
-qrcode>=7.4
-reportlab>=4.0
-pycountry>=24.6
-phonenumbers>=8.13
-gunicorn
+asgiref==3.13.0
+charset-normalizer==3.5.2
+Django==6.1.2
+phonenumbers==9.0.42
+pillow==13.0.0
+pycountry==26.2.16
+qrcode==8.2
+reportlab==5.1.0
+sqlparse==0.6.1
+whitenoise==6.12.0
