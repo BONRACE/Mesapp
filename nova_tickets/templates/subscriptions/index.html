@@ -1,0 +1,55 @@
+{% extends "base.html" %}{% load nova %}
+{% block title %}Abonnement organisateur<script>
+  (() => {
+    const radios = document.querySelectorAll('input[name=method]'), phone = document.getElementById('sub-phone-box'), note = document.getElementById('sub-sim-note');
+    const sync = () => { const r = document.querySelector('input[name=method]:checked'); const momo = r && r.dataset.kind === 'momo';
+      phone.style.display = momo ? '' : 'none'; note.style.display = r && !momo ? '' : 'none'; };
+    radios.forEach(r => r.addEventListener('change', sync)); sync();
+  })();
+</script>
+{% endblock %}
+{% block content %}
+<section class="section"><div class="container" style="max-width:640px">
+  <h1>Abonnement organisateur</h1>
+  <div class="card mt">
+    {% if until %}
+      <p><span class="badge">Abonnement actif</span></p>
+      <p>Valable jusqu'au <strong>{{ until|date:"d/m/Y à H:i" }}</strong>. Vous pouvez renouveler dès maintenant : la nouvelle période s'ajoute à la fin de celle en cours.</p>
+    {% else %}
+      <p><span class="badge" style="background:#fef3c7;color:#92400e">Aucun abonnement actif</span></p>
+      <p class="muted">{% if required %}Un abonnement actif est nécessaire pour créer et publier des événements.{% else %}Abonnez-vous pour profiter de la plateforme sans interruption.{% endif %}</p>
+    {% endif %}
+    <p style="font-size:1.6rem;font-weight:800;color:var(--green-900);margin:.4rem 0">{{ price|money }} <span class="muted small" style="font-weight:500">/ {{ days }} jours</span></p>
+
+    <form method="post" action="{% url 'subscriptions:pay' %}">{% csrf_token %}
+      <h3>Moyens de paiement</h3>
+      <p class="muted small">Disponibles pour votre pays : <span class="fi fi-{{ user.country|lower }}"></span> {{ user.country|country_name }}.</p>
+      {% for label, methods in groups %}
+      <div class="pm-group"><div class="pm-title">{{ label }}</div>
+        <div class="providers" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+          {% for m in methods %}<label class="method" style="margin:0"><input type="radio" name="method" value="{{ m.key }}" data-kind="{{ m.kind }}" {% if forloop.parentloop.first and forloop.first %}checked{% endif %}>{{ m.label }}</label>{% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+      <div class="field mt" id="sub-phone-box"><label for="sub-phone">Numéro Mobile Money à débiter</label><input id="sub-phone" type="tel" name="phone" value="{{ user.phone }}" placeholder="01 97 00 00 01"><div class="help">Pour MTN MoMo / Moov Money, une demande de validation (code secret) est envoyée à ce numéro.</div></div>
+      <div class="notice mb" id="sub-sim-note" style="display:none">Simulation : aucune donnée bancaire n'est demandée ni enregistrée dans cette version de démonstration.</div>
+      <button class="btn btn-block" type="submit">{% if until %}Renouveler{% else %}S'abonner{% endif %} — {{ price|money }}</button>
+      <p class="muted small center mt">Un reçu PDF vous est envoyé par e-mail après le paiement.</p>
+    </form>
+  </div>
+  {% if history %}
+  <h3 class="mt2">Historique</h3>
+  <div class="card"><table class="table"><thead><tr><th>Début</th><th>Fin</th><th>Montant</th></tr></thead><tbody>
+    {% for h in history %}<tr><td>{{ h.starts_at|date:"d/m/Y" }}</td><td>{{ h.ends_at|date:"d/m/Y" }}</td><td>{{ h.price|money }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% endif %}
+</div></section>
+<script>
+  (() => {
+    const radios = document.querySelectorAll('input[name=method]'), phone = document.getElementById('sub-phone-box'), note = document.getElementById('sub-sim-note');
+    const sync = () => { const r = document.querySelector('input[name=method]:checked'); const momo = r && r.dataset.kind === 'momo';
+      phone.style.display = momo ? '' : 'none'; note.style.display = r && !momo ? '' : 'none'; };
+    radios.forEach(r => r.addEventListener('change', sync)); sync();
+  })();
+</script>
+{% endblock %}

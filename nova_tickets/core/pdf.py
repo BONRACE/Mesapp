@@ -171,8 +171,12 @@ def render_receipt(data):
         c.setStrokeColor(line)
         c.roundRect(left, y - 19 * mm, right - left, 19 * mm, 3 * mm, fill=0, stroke=1)
         c.setFillColor(navy)
-        c.setFont("Times-BoldItalic", 17)
-        c.drawString(left + 6 * mm, y - 9.5 * mm, data["signature"][:48])
+        if data.get("signature_image"):                   # signature manuscrite (dessinée ou importée)
+            c.drawImage(ImageReader(io.BytesIO(data["signature_image"])), left + 6 * mm, y - 17 * mm, 60 * mm, 15 * mm,
+                        preserveAspectRatio=True, anchor="w", mask="auto")
+        else:
+            c.setFont("Times-BoldItalic", 17)
+            c.drawString(left + 6 * mm, y - 9.5 * mm, data["signature"][:48])
         c.saveState()                                     # tampon « vérifié par »
         c.translate(right - 22 * mm, y - 9.5 * mm)
         c.rotate(4)

@@ -1,0 +1,71 @@
+{% load static nova %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ PLATFORM_NAME }}{% endblock %} — {{ PLATFORM_NAME }}</title>
+  <link rel="icon" href="{% static 'img/logo.png' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+  <symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><line x1="14" y1="5" x2="14" y2="19" stroke-dasharray="2 2"/></symbol>
+  <symbol id="ic-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><line x1="13" y1="10" x2="19" y2="10"/><line x1="13" y1="14" x2="18" y2="14"/></symbol>
+  <symbol id="ic-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="ic-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+  <symbol id="ic-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></symbol>
+  <symbol id="ic-userplus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></symbol>
+  <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
+  <symbol id="ic-chart" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></symbol>
+  <symbol id="ic-scan" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/><line x1="7" y1="12" x2="17" y2="12"/></symbol>
+  <symbol id="ic-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+</defs></svg>
+
+
+
+{# Barre de navigation collée en haut au défilement, sous le logo, sur toute la largeur #}
+{% url 'core:home' as u_home %}{% url 'orders:my_space' as u_tickets %}{% url 'cards:edit' as u_card %}{% url 'accounts:profile' as u_profile %}
+{% url 'accounts:login' as u_login %}{% url 'accounts:register' as u_register %}
+<nav class="bottombar" aria-label="Navigation principale">
+  <div class="bb-inner">
+    <a class="bb-brand" href="{{ u_home }}" aria-label="{{ PLATFORM_NAME }} — accueil"><img src="{% static 'img/logo-horizontal.png' %}" alt="{{ PLATFORM_NAME }}" height="42" style="height:42px;width:auto"></a>
+    <ul class="bb-links">
+      <li><a class="bb-item{% if request.path == u_home %} active{% endif %}" href="{{ u_home }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-calendar"/></svg><span>Événements</span></a></li>
+      {% if user.is_authenticated %}
+        {% if user.is_organizer %}
+          {% url 'events:orga_dashboard' as u_orga %}{% url 'analytics:dashboard' as u_stats %}{% url 'scanner:index' as u_scan %}{% url 'subscriptions:index' as u_abo %}
+          <li><a class="bb-item{% if request.path|startswith:u_orga and not request.path|startswith:u_stats and not request.path|startswith:u_scan and not request.path|startswith:u_abo %} active{% endif %}" href="{{ u_orga }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-grid"/></svg><span>Organisateur</span></a></li>
+          <li><a class="bb-item{% if request.path|startswith:u_stats %} active{% endif %}" href="{{ u_stats }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-chart"/></svg><span>Analytiques</span></a></li>
+          <li><a class="bb-item{% if request.path|startswith:u_scan %} active{% endif %}" href="{{ u_scan }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-scan"/></svg><span>Scanner</span></a></li>
+          <li><a class="bb-item{% if request.path|startswith:u_abo %} active{% endif %}" href="{{ u_abo }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-star"/></svg><span>Abonnement</span></a></li>
+        {% endif %}
+        <li><a class="bb-item{% if request.path|startswith:u_tickets %} active{% endif %}" href="{{ u_tickets }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-ticket"/></svg><span>Mes billets</span></a></li>
+        <li><a class="bb-item{% if request.path|startswith:u_card %} active{% endif %}" href="{{ u_card }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-card"/></svg><span>Ma carte</span></a></li>
+        <li><a class="bb-item{% if request.path|startswith:u_profile %} active{% endif %}" href="{{ u_profile }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-user"/></svg><span>Profil</span></a></li>
+        <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="bb-item" type="submit"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-logout"/></svg><span>Déconnexion</span></button></form></li>
+      {% else %}
+        <li><a class="bb-item{% if request.path|startswith:u_login %} active{% endif %}" href="{{ u_login }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-login"/></svg><span>Connexion</span></a></li>
+        <li><a class="bb-item bb-cta{% if request.path|startswith:u_register %} active{% endif %}" href="{{ u_register }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-userplus"/></svg><span>Créer un compte</span></a></li>
+      {% endif %}
+    </ul>
+  </div>
+</nav>
+
+{% if messages %}
+<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>
+{% endif %}
+
+<main>{% block content %}{% endblock %}</main>
+
+{# Pied de page masqué pour tout compte connecté (spectateur, organisateur) et sur les pages de connexion / réinitialisation (block footer vide) #}
+{% block footer %}{% if not user.is_authenticated %}<footer class="footer">
+  <div class="container">
+    <div class="row"><img src="{% static 'img/logo-horizontal.png' %}" alt="{{ PLATFORM_NAME }}" height="34" style="height:34px;width:auto"><span>La billetterie en ligne pour l'Afrique de l'Ouest.</span></div>
+    <span>Commission plateforme : {{ COMMISSION }} % par billet vendu · <a href="{% url 'core:terms' %}">Conditions d'utilisation</a></span>
+  </div>
+</footer>{% endif %}{% endblock %}
+
+<script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

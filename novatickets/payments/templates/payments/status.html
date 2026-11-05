@@ -1,0 +1,66 @@
+{% extends "payments/base.html" %}
+{% block title %}Paiement {{ tx.reference }}{% endblock %}
+{% block head %}{% if refresh_seconds %}<meta http-equiv="refresh" content="{{ refresh_seconds }}">{% endif %}{% endblock %}
+{% block content %}
+
+{% if tx.is_pending %}
+  <div class="state wait"><div class="spinner"></div></div>
+  <h1>En attente de votre validation</h1>
+  <p class="center">Une demande de paiement de <strong>{{ tx.amount|floatformat:"0g" }} FCFA</strong> a été envoyée au
+     <strong>{{ tx.masked_phone }}</strong> ({{ tx.get_provider_display }}).<br>
+     Composez votre code secret sur le téléphone pour confirmer. Cette page se met à jour automatiquement.</p>
+  {% if simulation %}
+  <form method="post" action="{% url 'payments:simulate' tx.pk %}" class="dev">
+    {% csrf_token %}
+    <small>Mode simulation (développement) :</small>
+    <button name="outcome" value="approve" class="btn small">Simuler « approuvé »</button>
+    <button name="outcome" value="decline" class="btn small ghost">Simuler « refusé »</button>
+  </form>
+  {% endif %}
+
+{% elif tx.is_success %}
+  <div class="state ok">✓</div>
+  <h1>Paiement réussi</h1>
+  {% if tx.order and tx.order.status == "refund" %}
+    <div class="alert err">Votre paiement a bien été reçu, mais les billets sont épuisés. Vous serez remboursé : contactez le support avec la référence {{ tx.reference }}.</div>
+  {% else %}<p class="center muted">Merci ! Voici votre quittance.</p>{% endif %}
+  <section class="receipt">
+    <header><strong>NovaTickets</strong><span>Quittance de paiement</span></header>
+    <dl>
+      <dt>Référence</dt><dd>{{ tx.reference }}</dd>
+      <dt>Date</dt><dd>{{ tx.paid_at|date:"d/m/Y à H:i" }}</dd>
+      <dt>Payeur</dt><dd>{{ tx.user_email }}</dd>
+      <dt>Numéro débité</dt><dd>{{ tx.masked_phone }}</dd>
+      <dt>Moyen de paiement</dt><dd>{{ tx.get_provider_display }}</dd>
+      {% if tx.gateway_reference %}<dt>Réf. opérateur</dt><dd>{{ tx.gateway_reference }}</dd>{% endif %}
+      <dt>Statut</dt><dd><span class="badge">Payé</span></dd>
+      <dt class="total">Montant payé</dt><dd class="total">{{ tx.amount|floatformat:"0g" }} FCFA</dd>
+    </dl>
+  </section>
+  <p class="center">
+    <a class="btn ghost" href="{% url 'payments:receipt_pdf' tx.pk %}">Télécharger le reçu (PDF)</a>
+    {% if tx.order and tx.order.status == "paid" %}<a class="btn" href="{% url 'orders:confirmation' tx.order.reference %}">Voir mes billets</a>
+    {% elif tx.business_card %}<a class="btn" href="{% url 'cards:edit' %}">Retour à ma carte</a>
+    {% elif tx.subscription %}<a class="btn" href="{% url 'subscriptions:index' %}">Voir mon abonnement</a>{% endif %}
+  </p>
+  {% if tx.business_card %}
+  <p class="center">
+    <a class="btn" href="{% url 'cards:pdf' %}">⬇ Télécharger ma carte (PDF)</a>
+    <button class="btn ghost" type="button" data-print-pdf="{% url 'cards:pdf' %}">🖨 Imprimer ma carte</button>
+  </p>
+  {% load static %}<script src="{% static 'js/card-print.js' %}"></script>
+  {% endif %}
+
+{% else %}
+  <div class="state ko">✕</div>
+  <h1>Paiement non abouti</h1>
+  <p class="center">Le paiement de <strong>{{ tx.amount|floatformat:"0g" }} FCFA</strong> (réf. {{ tx.reference }}) n'a pas été validé.<br>
+     <span class="muted">{{ tx.failure_reason }}</span></p>
+  <p class="center">Aucun montant n'a été débité.
+    {% if tx.order %}<a class="btn" href="{% url 'orders:pay' tx.order.reference %}">Réessayer</a>
+    {% elif tx.business_card %}<a class="btn" href="{% url 'cards:edit' %}">Réessayer</a>
+    {% elif tx.subscription %}<a class="btn" href="{% url 'subscriptions:index' %}">Réessayer</a>
+    {% else %}<a class="btn" href="{% url 'payments:initiate' %}?amount={{ tx.amount|floatformat:"0u" }}">Réessayer</a>{% endif %}</p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load static nova %}
+{% block title %}Scanner — {{ event.name }}{% endblock %}
+{% block content %}
+<style>
+  .scan-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.2rem; align-items: start; }
+  @media (max-width: 860px) { .scan-grid { grid-template-columns: 1fr; } }
+  #reader { width: 100%; min-height: 280px; border-radius: 16px; overflow: hidden; background: #0f1f14; }
+  #reader video { border-radius: 16px; }
+  .verdict { border-radius: 16px; padding: 1.2rem; text-align: center; border: 2px solid var(--line); background: #fcfffd; min-height: 150px; display: grid; place-content: center; gap: .3rem; }
+  .verdict .big { font-size: 1.6rem; font-weight: 800; }
+  .verdict.valid { background: #dcfce7; border-color: var(--green); color: var(--green-900); }
+  .verdict.duplicate, .verdict.wrong_event { background: #fef3c7; border-color: #f59e0b; color: #78350f; }
+  .verdict.invalid { background: #fee2e2; border-color: #ef4444; color: #7f1d1d; }
+  .verdict .who { display: flex; align-items: center; gap: .7rem; justify-content: center; margin-top: .4rem; }
+  .hist { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow: auto; }
+  .hist li { display: flex; gap: .6rem; align-items: center; padding: .5rem 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .dot.valid { background: var(--green); } .dot.duplicate, .dot.wrong_event { background: #f59e0b; } .dot.invalid { background: #ef4444; }
+</style>
+
+<section class="section"><div class="container">
+  <a class="muted small" href="{% url 'scanner:index' %}">← Événements</a>
+  <div class="row between mb mt">
+    <div><h1 style="margin:0;font-size:1.8rem">{{ event.name }}</h1><span class="muted">{{ event.start_date|date:"d/m/Y" }} · {{ event.location }}</span></div>
+    <div class="kpi" style="min-width:210px"><div class="label">Entrées</div><div class="value"><span id="st-in">{{ stats.checked_in }}</span> / <span id="st-total">{{ stats.total }}</span></div></div>
+  </div>
+
+  <div class="scan-grid">
+    <div class="card">
+      <div id="reader"></div>
+      <div id="cam-msg" class="notice warn mt" style="display:none"></div>
+      <div class="row mt">
+        <button id="btn-start" class="btn" type="button">Démarrer la caméra</button>
+        <button id="btn-switch" class="btn btn-outline" type="button" style="display:none">Changer de caméra</button>
+        <button id="btn-stop" class="btn btn-outline" type="button" style="display:none">Arrêter</button>
+      </div>
+      <form id="manual" class="row mt" autocomplete="off">
+        <input id="manual-code" type="text" class="grow" placeholder="Saisir la référence (TK-XXXXXXXXXX)" style="min-width:200px">
+        <button class="btn btn-outline" type="submit">Valider</button>
+      </form>
+    </div>
+
+    <div>
+      <div id="verdict" class="verdict"><span class="muted">En attente d'un billet…</span></div>
+      <div class="card mt">
+        <h3>Derniers contrôles</h3>
+        <ul id="hist" class="hist">
+          {% for s in recent %}
+          <li><span class="dot {{ s.result }}"></span><strong>{{ s.scanned_at|date:"H:i" }}</strong>
+            <span class="grow">{% if s.ticket %}{{ s.ticket.order.buyer.ticket_name }}{% else %}{{ s.code|default:"—"|truncatechars:24 }}{% endif %}</span>
+            <span class="muted small">{{ s.get_result_display }}</span></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<script src="{% static 'js/vendor/html5-qrcode.min.js' %}"></script>
+<script>
+(() => {
+  const API = "{% url 'scanner:api' event.pk %}";
+  const CSRF = "{{ csrf_token }}";
+  const $ = (id) => document.getElementById(id);
+  const verdict = $("verdict"), hist = $("hist");
+  const LABEL = { valid: "Entrée validée", duplicate: "Déjà utilisé", wrong_event: "Autre événement", invalid: "Billet invalide" };
+  let scanner = null, cameras = [], camIndex = 0, running = false, lastCode = "", lastAt = 0, busy = false;
+
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function feedback(result) {            // bip + vibration : utile quand on regarde l'entrée, pas l'écran
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = result === "valid" ? 880 : 220; g.gain.value = 0.08;
+      o.start(); o.stop(ctx.currentTime + (result === "valid" ? 0.15 : 0.4));
+    } catch (e) {}
+    if (navigator.vibrate) navigator.vibrate(result === "valid" ? 80 : [120, 60, 120]);
+  }
+
+  function show(data) {
+    verdict.className = "verdict " + data.result;
+    const t = data.ticket;
+    const extra = data.message.replace(/\.$/, "") === LABEL[data.result] ? "" : `<div>${esc(data.message)}</div>`;
+    verdict.innerHTML = `<div class="big">${LABEL[data.result]}</div>${extra}` + (t ? `
+      <div class="who">${t.photo ? `<img src="${esc(t.photo)}" alt="" class="avatar">` : `<div class="avatar">${esc(t.initials)}</div>`}
+      <div style="text-align:left"><strong>${esc(t.holder)}</strong><br><span class="small">${esc(t.type)} · ${esc(t.reference)}</span></div></div>` : "");
+    $("st-in").textContent = data.stats.checked_in; $("st-total").textContent = data.stats.total;
+    const li = document.createElement("li");
+    const now = new Date().toTimeString().slice(0, 5);
+    li.innerHTML = `<span class="dot ${data.result}"></span><strong>${now}</strong><span class="grow">${esc(t ? t.holder : "—")}</span><span class="muted small">${LABEL[data.result]}</span>`;
+    hist.prepend(li);
+    feedback(data.result);
+  }
+
+  async function submit(code, source) {
+    if (busy) return; busy = true;
+    try {
+      const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF }, body: JSON.stringify({ code, source }) });
+      if (!r.ok) throw new Error(r.status);
+      show(await r.json());
+    } catch (e) {
+      verdict.className = "verdict invalid";
+      verdict.innerHTML = `<div class="big">Erreur réseau</div><div>Le billet n'a PAS été validé. Réessayez.</div>`;
+    } finally { busy = false; }
+  }
+
+  function onScan(text) {                // anti-rebond : le même QR reste dans le champ de la caméra
+    const now = Date.now();
+    if (text === lastCode && now - lastAt < 3500) return;
+    lastCode = text; lastAt = now;
+    submit(text, "camera");
+  }
+
+  function msg(text) { const m = $("cam-msg"); m.textContent = text; m.style.display = text ? "block" : "none"; }
+
+  async function start() {
+    msg("");
+    if (!window.isSecureContext) { msg("La caméra exige HTTPS (ou localhost). Utilisez la saisie manuelle en attendant."); return; }
+    try {
+      if (!cameras.length) cameras = await Html5Qrcode.getCameras();
+      if (!cameras.length) throw new Error("none");
+      scanner = scanner || new Html5Qrcode("reader");
+      // caméra arrière par défaut ; "Changer de caméra" parcourt la liste
+      const cfg = { fps: 10, qrbox: (w, h) => { const s = Math.floor(Math.min(w, h) * 0.7); return { width: s, height: s }; } };
+      const source = cameras.length > 1 && camIndex > 0 ? cameras[camIndex].id : { facingMode: "environment" };
+      await scanner.start(source, cfg, onScan, () => {});
+      running = true;
+      $("btn-start").style.display = "none"; $("btn-stop").style.display = ""; $("btn-switch").style.display = cameras.length > 1 ? "" : "none";
+    } catch (e) {
+      msg("Impossible d'accéder à la caméra. Autorisez-la dans le navigateur, ou utilisez la saisie manuelle.");
+    }
+  }
+  async function stop() {
+    if (scanner && running) { await scanner.stop(); running = false; }
+    $("btn-start").style.display = ""; $("btn-stop").style.display = "none"; $("btn-switch").style.display = "none";
+  }
+
+  $("btn-start").addEventListener("click", start);
+  $("btn-stop").addEventListener("click", stop);
+  $("btn-switch").addEventListener("click", async () => { camIndex = (camIndex + 1) % cameras.length; await stop(); await start(); });
+  $("manual").addEventListener("submit", (e) => { e.preventDefault(); const v = $("manual-code").value.trim(); if (v) { submit(v, "manual"); $("manual-code").value = ""; } });
+})();
+</script>
+{% endblock %}

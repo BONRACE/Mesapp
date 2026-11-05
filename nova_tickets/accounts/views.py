@@ -51,4 +51,28 @@ def profile(request):
         form.save()
         messages.success(request, "Profil mis à jour.")
         return redirect("accounts:profile")
-    return render(request, "accounts/profile.html", {"form": form})
+    from .services import blockers
+    return render(request, "accounts/profile.html", {"form": form, "delete_blockers": blockers(request.user)})
+
+
+@login_required
+def delete_account_view(request):
+    """Confirmation (mot de passe + mot « SUPPRIMER ») puis anonymisation définitive du compte."""
+    from django.contrib.auth import logout
+
+    from .services import CONFIRM_WORD, blockers, delete_account
+
+    reasons = blockers(request.user)
+    if request.method == "POST":
+        if reasons:
+            messages.error(request, "Suppression impossible pour le moment.")
+        elif not request.user.check_password(request.POST.get("password", "")):
+            messages.error(request, "Mot de passe incorrect.")
+        elif request.POST.get("confirm", "").strip().upper() != CONFIRM_WORD:
+            messages.error(request, f"Tapez {CONFIRM_WORD} pour confirmer.")
+        else:
+            delete_account(request.user)
+            logout(request)
+            messages.success(request, "Votre compte a été supprimé. Merci d'avoir utilisé NovaTickets.")
+            return redirect("core:home")
+    return render(request, "accounts/delete.html", {"reasons": reasons, "word": CONFIRM_WORD})

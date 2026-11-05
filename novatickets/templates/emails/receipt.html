@@ -1,0 +1,97 @@
+{% load i18n %}<!doctype html>
+<html lang="fr">
+<body style="margin:0;padding:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;padding:24px 0;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;border:1px solid #dbe3ee;">
+
+  <!-- En-tête : logo, « Plateforme de Billetterie », date -->
+  <tr><td align="center" style="padding:28px 24px 14px;">
+    <img src="cid:logo" alt="{{ platform }}" width="220" style="display:block;margin:0 auto 8px;height:auto;">
+    <div style="font-size:15px;color:#475569;">Plateforme de Billetterie</div>
+    <div style="font-size:12px;color:#64748b;margin-top:4px;">Date : {{ date_label }} · Réf. {{ reference }}</div>
+  </td></tr>
+  <tr><td style="padding:0 28px;"><div style="border-top:1px solid #e2e8f0;"></div></td></tr>
+
+  {% if has_event_logo %}
+  <!-- Logos plateforme + événement -->
+  <tr><td align="center" style="padding:22px 24px 0;">
+    <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+      <td style="padding:0 14px;"><img src="cid:mark" alt="{{ platform }}" width="64" height="64" style="display:block;"></td>
+      <td style="font-size:22px;font-weight:bold;color:#f28c28;">+</td>
+      <td style="padding:0 14px;"><img src="cid:eventlogo" alt="{{ event.name }}" width="64" height="64" style="display:block;border-radius:8px;"></td>
+    </tr></table>
+  </td></tr>
+  {% endif %}
+
+  <!-- Remerciement + événement -->
+  <tr><td style="padding:24px 32px 0;">
+    <h1 style="margin:0;font-size:24px;color:#111827;">{{ thanks }}</h1>
+    {% if event %}
+    <div style="margin-top:16px;font-size:12px;font-weight:bold;color:#64748b;">Nom de l'événement</div>
+    <div style="margin-top:4px;font-size:20px;font-weight:bold;color:#12497f;">{{ event.name }}</div>
+    <div style="margin-top:4px;font-size:13px;color:#64748b;">{{ event.when }} · {{ event.where }}</div>
+    {% endif %}
+  </td></tr>
+
+  <!-- Informations du spectateur -->
+  <tr><td style="padding:26px 32px 0;">
+    <div style="font-size:16px;font-weight:bold;color:#12497f;border-bottom:2px solid #f28c28;display:inline-block;padding-bottom:3px;">Informations du spectateur</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;font-size:14px;">
+      {% for label, value in spectator %}
+      <tr><td style="padding:4px 0;color:#64748b;width:120px;">{{ label }} :</td><td style="padding:4px 0;font-weight:bold;">{{ value }}</td></tr>
+      {% endfor %}
+    </table>
+  </td></tr>
+
+  <!-- Détails du ticket -->
+  <tr><td style="padding:26px 32px 0;">
+    <div style="font-size:16px;font-weight:bold;color:#12497f;border-bottom:2px solid #f28c28;display:inline-block;padding-bottom:3px;">{{ details_title }}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;border:1px solid #cbd5e1;border-radius:10px;background:#f1f5f9;font-size:14px;">
+      {% for label, value in details %}
+      <tr><td style="padding:7px 16px;color:#64748b;">{{ label }} :</td><td align="right" style="padding:7px 16px;font-weight:bold;">{{ value }}</td></tr>
+      {% endfor %}
+      <tr><td style="padding:7px 16px;color:#64748b;">Statut du paiement :</td><td align="right" style="padding:7px 16px;"><span style="background:#12497f;color:#fff;border-radius:99px;padding:3px 12px;font-size:12px;font-weight:bold;">{{ status }}</span></td></tr>
+      <tr><td style="padding:12px 16px;border-top:1px solid #cbd5e1;font-weight:bold;font-size:16px;">Montant total :</td><td align="right" style="padding:12px 16px;border-top:1px solid #cbd5e1;font-weight:bold;font-size:19px;color:#12497f;">{{ total_label }}</td></tr>
+    </table>
+    {% if event %}<p style="margin:14px 0 0;font-size:13px;color:#64748b;">Vos billets sont joints à cet e-mail au format PDF. Présentez le QR code à l'entrée de l'événement.</p>
+    {% else %}<p style="margin:14px 0 0;font-size:13px;color:#64748b;">Votre reçu est joint à cet e-mail au format PDF.</p>{% endif %}
+  </td></tr>
+
+  {% if signature %}
+  <!-- Signature de l'organisateur -->
+  <tr><td style="padding:24px 32px 0;">
+    <div style="font-size:14px;font-weight:bold;">Signature de l'organisateur :</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;border:1px solid #cbd5e1;border-radius:10px;">
+      <tr>
+        <td style="padding:14px 18px;">
+          {% if has_sign_image %}<img src="cid:signature" alt="Signature" height="56" style="display:block;height:56px;width:auto;max-width:260px;">
+          {% else %}<div style="font-family:'Brush Script MT','Segoe Script','Snell Roundhand',cursive;font-style:italic;font-size:24px;color:#12497f;">{{ signature }}</div>{% endif %}
+          {% if organizer %}<div style="font-size:12px;color:#64748b;margin-top:4px;">{{ organizer }}</div>{% endif %}
+        </td>
+        <td align="right" style="padding:14px 18px;">
+          <table role="presentation" cellpadding="0" cellspacing="0"><tr><td align="center" style="border:2px solid #f28c28;border-radius:6px;padding:6px 12px;color:#f28c28;font-size:10px;font-weight:bold;letter-spacing:.05em;line-height:1.35;">VÉRIFIÉ PAR<br><span style="font-size:13px;">{{ platform|upper }}</span></td></tr></table>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+  {% endif %}
+
+  <!-- Pied de page -->
+  <tr><td style="padding:28px 32px 28px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e2e8f0;"><tr>
+      <td style="padding-top:16px;font-size:12px;color:#64748b;">Powered by <strong style="color:#12497f;">{{ platform }}</strong><br>La billetterie en ligne pour l'Afrique de l'Ouest.</td>
+      <td align="right" style="padding-top:16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+          {% for key, url in socials %}<td style="padding-left:8px;"><a href="{{ url }}"><img src="cid:social_{{ key }}" alt="{{ key }}" width="26" height="26" style="display:block;border:0;"></a></td>{% endfor %}
+          {% if has_qr %}<td style="padding-left:14px;"><img src="cid:qr" alt="QR code" width="64" height="64" style="display:block;"></td>{% endif %}
+        </tr></table>
+      </td>
+    </tr></table>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

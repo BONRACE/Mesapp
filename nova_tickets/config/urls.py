@@ -13,5 +13,6 @@ urlpatterns = [
     path("organisateur/scanner/", include("scanner.urls")),
     path("organisateur/analytiques/", include("analytics.urls")),
     path("organisateur/moyens-retrait/", include("payouts.urls")),
+    path("organisateur/abonnement/", include("subscriptions.urls")),
     path("carte/", include("cards.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

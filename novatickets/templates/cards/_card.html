@@ -1,0 +1,75 @@
+<article class="vcard t-{{ card.theme|default:'green' }} l-{{ card.layout|default:'classic' }}" id="card-preview" data-side="front">
+<div class="std">
+  <div class="top">
+    <div class="ph">{% if card.photo %}<img src="{{ card.photo.url }}" alt="">{% else %}{{ card.initials }}{% endif %}</div>
+    <div>
+      <h2>{{ card.full_name }}</h2>
+      {% if card.job_title %}<div class="role">{{ card.job_title }}</div>{% endif %}
+      {% if card.company %}<div class="co">{{ card.company }}</div>{% endif %}
+    </div>
+  </div>
+  {% if card.bio %}<p class="bio">{{ card.bio }}</p>{% endif %}
+  <ul>
+    {% if card.phone %}<li>📞 {{ card.phone }}</li>{% endif %}
+    {% if card.email %}<li>✉️ {{ card.email }}</li>{% endif %}
+    {% if card.website %}<li>🌐 {{ card.website }}</li>{% endif %}
+    {% if card.linkedin %}<li>💼 LinkedIn</li>{% endif %}
+    {% if card.city %}<li>📍 {{ card.city }}</li>{% endif %}
+  </ul>
+  <div class="brand-tag">Carte NovaTickets</div>
+</div>
+
+{# Mises en page « Pagne » : recto (bande de motif, nom) + verso (contacts, QR). Masquées sauf si le style les demande. #}
+<div class="wx">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><polyline points="22,6 12,13 2,6"/></symbol>
+    <symbol id="i-web" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></symbol>
+  </defs></svg>
+  <div class="faces">
+    <div class="face front">
+      <div class="band"></div><div class="edge"></div><div class="teeth"></div>
+      <div class="info">
+        <div class="ph2">{% if card.photo %}<img src="{{ card.photo.url }}" alt="">{% else %}{{ card.initials }}{% endif %}</div>
+        <h2>{{ card.full_name }}</h2>
+        <div class="dash"><i></i><i></i></div>
+        {% if card.job_title %}<div class="rolec role">{{ card.job_title }}</div>{% endif %}
+        {% if card.company %}<div class="co">{{ card.company }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="face back">
+      <div class="strip"></div><div class="edge-h"></div><div class="teeth-h"></div>
+      <div class="body">
+        <div class="who">
+          <h2>{{ card.full_name }}</h2>
+          {% if card.job_title %}<div class="rolec">{{ card.job_title }}</div>{% else %}<div class="rolec">&nbsp;</div>{% endif %}
+          <ul>
+            {% if card.phone %}<li><svg class="i"><use href="#i-phone"/></svg>{{ card.phone }}</li>{% endif %}
+            {% if card.email %}<li><svg class="i"><use href="#i-mail"/></svg>{{ card.email }}</li>{% endif %}
+            {% if card.website %}<li><svg class="i"><use href="#i-web"/></svg>{{ card.website|cut:"https://"|cut:"http://" }}</li>{% endif %}
+            {% if card.linkedin %}<li><svg class="i"><use href="#i-in"/></svg>LinkedIn</li>{% endif %}
+            {% if card.city %}<li><svg class="i"><use href="#i-pin"/></svg>{{ card.city }}</li>{% endif %}
+          </ul>
+        </div>
+        <div class="qrcol">
+          <div class="qrbox">{% if card.is_active %}<img src="{% url 'cards:qr' card.slug %}{% if ticket %}?billet={{ ticket.reference }}{% endif %}" alt="QR code de la carte">{% else %}<small>QR code disponible après activation</small>{% endif %}</div>
+          <div class="scan">Scannez-moi</div>
+          <div class="dash"><i></i><i></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="flipbtn" type="button" aria-label="Retourner la carte">↻ Verso</button>
+</div>
+</article>
+<script>
+  // Retourner la carte (bouton ou clic sur la carte) — styles « Pagne recto/verso ».
+  (() => {
+    const a = document.getElementById("card-preview"), b = a && a.querySelector(".flipbtn"); if (!b) return;
+    const set = s => { a.dataset.side = s; b.textContent = s === "back" ? "↻ Recto" : "↻ Verso"; };
+    b.addEventListener("click", e => { e.stopPropagation(); set(a.dataset.side === "back" ? "front" : "back"); });
+    a.querySelector(".faces").addEventListener("click", () => { if (a.classList.contains("l-wax")) b.click(); });
+  })();
+</script>

@@ -665,6 +665,7 @@ class ReceiptFormatTests(ModulesBase):
         from orders.services import create_order, pay_order
 
         self.orga.signature = "Adama Touré – Directeur"
+        self.orga.signature_mode = "manager"
         self.orga.save()
         order = create_order(self.fan, self.tt, 2)
         pay_order(order, "mtn_bj", "+2290197000003")
@@ -808,6 +809,12 @@ class BottomNavAndLegalTests(ModulesBase):
         orga = self.client.get(reverse("core:home")).content.decode()
         for label in ("Organisateur", "Analytiques", "Scanner"):
             self.assertIn(label, orga)
+
+    def test_terms_cover_event_types_and_prohibitions(self):
+        html = self.client.get(reverse("core:terms")).content.decode()
+        for text in ("Concerts et spectacles", "Formations et ateliers", "Tous autres types d'événements", "SACEM", "BUBEDRA",
+                     "Responsabilité exclusive de l'Organisateur", "incitant à la haine", "escroquerie", 'id="evenements"', 'href="#evenements"'):
+            self.assertIn(text, html)
 
     def test_terms_page_covers_required_sections(self):
         r = self.client.get(reverse("core:terms"))

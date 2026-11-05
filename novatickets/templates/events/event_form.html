@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="section"><div class="mid">
+  <h1>{{ title }}</h1>
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="card mb">
+      <h3>Informations générales</h3>
+      {% include "includes/field.html" with f=form.name %}
+      <div class="form-grid">
+        {% include "includes/field.html" with f=form.visual %}
+        {% include "includes/field.html" with f=form.logo %}
+      </div>
+      {% include "includes/field.html" with f=form.description %}
+      {% include "includes/field.html" with f=form.location %}
+    </div>
+
+    <div class="card mb">
+      <h3>Dates & horaires</h3>
+      <div class="form-grid">
+        {% include "includes/field.html" with f=form.start_date %}
+        {% include "includes/field.html" with f=form.end_date %}
+        {% include "includes/field.html" with f=form.start_time %}
+        {% include "includes/field.html" with f=form.purchase_deadline %}
+      </div>
+    </div>
+
+    <div class="card mb">
+      <div class="row between"><h3>Types de tickets</h3><button type="button" class="btn btn-outline btn-sm" id="tt-add">+ Ajouter un type</button></div>
+      <p class="muted small">Prix en {{ CURRENCY }}. Une commission de {{ COMMISSION }} % est prélevée sur chaque billet vendu.</p>
+      {{ formset.non_form_errors }}
+      <div id="tt-formset" data-prefix="tt">
+        {{ formset.management_form }}
+        <div id="tt-rows">
+          {% for f in formset %}
+          <div class="tt-row">
+            {% for h in f.hidden_fields %}{{ h }}{% endfor %}
+            <div><label>Type</label>{{ f.name }}{{ f.name.errors }}</div>
+            <div><label>Prix</label>{{ f.price }}{{ f.price.errors }}</div>
+            <div><label>Stock</label>{{ f.stock }}{{ f.stock.errors }}</div>
+            <div class="del">{% if f.instance.pk %}<span style="display:none">{{ f.DELETE }}</span>{% endif %}<button type="button" class="btn btn-danger btn-sm tt-remove">Retirer</button></div>
+          </div>
+          {% endfor %}
+        </div>
+        <template id="tt-empty">
+          <div class="tt-row">
+            {% for h in formset.empty_form.hidden_fields %}{{ h }}{% endfor %}
+            <div><label>Type</label>{{ formset.empty_form.name }}</div>
+            <div><label>Prix</label>{{ formset.empty_form.price }}</div>
+            <div><label>Stock</label>{{ formset.empty_form.stock }}</div>
+            <div class="del"><button type="button" class="btn btn-danger btn-sm tt-remove">Retirer</button></div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <div class="row"><button class="btn" type="submit">Enregistrer</button><a class="btn btn-outline" href="{% url 'events:orga_dashboard' %}">Annuler</a></div>
+  </form>
+</div></section>
+{% endblock %}

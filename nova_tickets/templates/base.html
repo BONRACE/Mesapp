@@ -19,6 +19,7 @@
   <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
   <symbol id="ic-chart" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></symbol>
   <symbol id="ic-scan" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/><line x1="7" y1="12" x2="17" y2="12"/></symbol>
+  <symbol id="ic-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
 </defs></svg>
 
 
@@ -33,10 +34,11 @@
       <li><a class="bb-item{% if request.path == u_home %} active{% endif %}" href="{{ u_home }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-calendar"/></svg><span>Événements</span></a></li>
       {% if user.is_authenticated %}
         {% if user.is_organizer %}
-          {% url 'events:orga_dashboard' as u_orga %}{% url 'analytics:dashboard' as u_stats %}{% url 'scanner:index' as u_scan %}
-          <li><a class="bb-item{% if request.path|startswith:u_orga %} active{% endif %}" href="{{ u_orga }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-grid"/></svg><span>Organisateur</span></a></li>
+          {% url 'events:orga_dashboard' as u_orga %}{% url 'analytics:dashboard' as u_stats %}{% url 'scanner:index' as u_scan %}{% url 'subscriptions:index' as u_abo %}
+          <li><a class="bb-item{% if request.path|startswith:u_orga and not request.path|startswith:u_stats and not request.path|startswith:u_scan and not request.path|startswith:u_abo %} active{% endif %}" href="{{ u_orga }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-grid"/></svg><span>Organisateur</span></a></li>
           <li><a class="bb-item{% if request.path|startswith:u_stats %} active{% endif %}" href="{{ u_stats }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-chart"/></svg><span>Analytiques</span></a></li>
           <li><a class="bb-item{% if request.path|startswith:u_scan %} active{% endif %}" href="{{ u_scan }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-scan"/></svg><span>Scanner</span></a></li>
+          <li><a class="bb-item{% if request.path|startswith:u_abo %} active{% endif %}" href="{{ u_abo }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-star"/></svg><span>Abonnement</span></a></li>
         {% endif %}
         <li><a class="bb-item{% if request.path|startswith:u_tickets %} active{% endif %}" href="{{ u_tickets }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-ticket"/></svg><span>Mes billets</span></a></li>
         <li><a class="bb-item{% if request.path|startswith:u_card %} active{% endif %}" href="{{ u_card }}"><svg class="ic" width="22" height="22" aria-hidden="true" focusable="false"><use href="#ic-card"/></svg><span>Ma carte</span></a></li>

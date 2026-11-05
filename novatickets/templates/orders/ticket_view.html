@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static nova %}
+{% block title %}Billet {{ ticket.reference }}{% endblock %}
+{% block content %}
+<section class="section"><div class="container">
+  <div class="row between mb no-print" style="max-width:860px;margin-inline:auto">
+    <a class="muted small" href="{% url 'orders:my_space' %}">← Mes billets</a>
+    <div class="row"><button class="btn btn-outline btn-sm" onclick="window.print()">Imprimer</button><a class="btn btn-sm" href="{% url 'orders:ticket_pdf' ticket.reference %}">Télécharger le PDF</a></div>
+  </div>
+
+  {% with event=ticket.event holder=ticket.holder %}
+  <article class="pass{% if ticket.is_used %} used{% endif %}">
+    <div class="pass-head">
+      <div class="logo"><img src="{% static 'img/logo.png' %}" alt=""></div>
+      <div><div class="t">{{ PLATFORM_NAME|upper }}</div><div class="s">BOARDING PASS · BILLET D'ENTRÉE</div></div>
+      {% if event.logo_or_none %}<div class="logo org"><img src="{{ event.logo_or_none.url }}" alt=""></div>{% endif %}
+    </div>
+    <div class="pass-main">
+      <div class="pass-photo">{% if holder.photo %}<img src="{{ holder.photo.url }}" alt="">{% else %}{{ holder.initials }}{% endif %}</div>
+      <div>
+        <h2>{{ event.name }}</h2>
+        <dl>
+          <div class="w"><dt>Nom & prénoms</dt><dd>{{ holder.ticket_name }}</dd></div>
+          <div><dt>Sexe</dt><dd>{{ holder.get_sexe_display|default:"—" }}</dd></div>
+          <div><dt>Type de ticket</dt><dd>{{ ticket.order.ticket_type.name }}</dd></div>
+          <div><dt>Date</dt><dd>{{ event.start_date|date:"d/m/Y" }}</dd></div>
+          <div><dt>Heure</dt><dd>{{ event.start_time|time:"H:i" }}</dd></div>
+          <div class="w"><dt>Lieu</dt><dd>{{ event.location }}</dd></div>
+        </dl>
+      </div>
+    </div>
+    <div class="pass-stub">
+      <img class="qr" src="{% url 'orders:ticket_qr' ticket.reference %}" alt="QR code du billet">
+      <strong>{{ ticket.reference }}</strong>
+      <span class="muted small">{% if ticket.is_used %}Billet déjà utilisé{% else %}Présentez ce QR code à l'entrée{% endif %}</span>
+    </div>
+  </article>
+  {% endwith %}
+
+  <div class="card mt2 no-print" style="max-width:860px;margin-inline:auto">
+    {% if card and card.is_active and card.show_on_ticket %}
+      <div class="row">
+        <img src="{% url 'cards:qr' card.slug %}?billet={{ ticket.reference }}" alt="QR de ma carte" width="96" height="96" style="border-radius:12px;border:1px solid var(--line)">
+        <div class="grow">
+          <h3 style="margin:0">Ma carte de visite</h3>
+          <p class="muted small" style="margin:.2rem 0 .6rem">Partagez vos coordonnées avec les autres participants : ils les enregistrent en un clic.</p>
+          <div class="row">
+            <a class="btn btn-sm" href="{{ card.get_absolute_url }}?billet={{ ticket.reference }}">Ouvrir ma carte</a>
+            <button class="btn btn-outline btn-sm" type="button" id="share-card" data-url="{{ card.public_url }}?billet={{ ticket.reference }}">Partager</button>
+            <a class="btn btn-outline btn-sm" href="{% url 'cards:vcard' card.slug %}">Contact (.vcf)</a>
+          </div>
+        </div>
+      </div>
+      <script>
+        document.getElementById("share-card").addEventListener("click", async (e) => {
+          const url = e.currentTarget.dataset.url;
+          if (navigator.share) { try { await navigator.share({ title: "Ma carte de visite", url }); return; } catch (err) {} }
+          try { await navigator.clipboard.writeText(url); e.currentTarget.textContent = "Lien copié ✓"; } catch (err) { prompt("Copiez le lien :", url); }
+        });
+      </script>
+    {% elif card and not card.is_active %}
+      <div class="row between"><div><h3 style="margin:0">Ma carte de visite</h3><p class="muted small" style="margin:0">Votre carte est prête : activez-la pour la partager depuis ce billet.</p></div><a class="btn btn-sm" href="{% url 'cards:edit' %}">Activer ma carte</a></div>
+    {% elif not card %}
+      <div class="row between"><div><h3 style="margin:0">Partagez vos contacts</h3><p class="muted small" style="margin:0">Créez votre carte de visite numérique et échangez vos coordonnées lors de l'événement.</p></div><a class="btn btn-sm" href="{% url 'cards:edit' %}">Créer ma carte</a></div>
+    {% endif %}
+  </div>
+</div></section>
+{% endblock %}

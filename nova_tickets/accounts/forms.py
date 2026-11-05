@@ -141,14 +141,37 @@ class ProfileForm(PhoneMixin, forms.ModelForm):
         if user.is_organizer:
             self.fields["org_name"] = forms.CharField(label="Nom de l'organisation", max_length=150, initial=user.org_name)
             self.fields["org_logo"] = forms.ImageField(label="Logo de l'organisation", required=False)
+            self.fields["signature_mode"] = forms.ChoiceField(
+                label="Signature sur les reçus et billets", choices=User.SignatureMode.choices, widget=forms.RadioSelect,
+                initial=user.signature_mode)
             self.fields["signature"] = forms.CharField(
-                label="Signature sur les reçus (nom et fonction)", max_length=120, required=False, initial=user.signature,
-                help_text="Ex : Adama Touré – Directeur. Laissez vide pour utiliser votre nom.")
+                label="Nom et fonction du manager", max_length=120, required=False, initial=user.signature,
+                help_text="Ex : Adama Touré – Directeur. Utilisé avec « Signature avec le nom du manager ».")
+            self.fields["signature_image"] = forms.ImageField(label="Importer une signature (image)", required=False)
+            self.fields["signature_drawn"] = forms.CharField(required=False, widget=forms.HiddenInput)
         self.fields["last_name"].required = True
         self.fields["first_name"].required = True
         self.fields["sexe"].required = True
         self.fields["sexe"].choices = [("", "Choisir…")] + list(User.Sexe.choices)
         self.initial["phone"] = user.local_phone
+
+    def clean(self):
+        data = super().clean()
+        if not self.instance.is_organizer:
+            return data
+        png = None
+        drawn = (data.get("signature_drawn") or "").strip()
+        if drawn:                                         # tracé à l'écran : data URL PNG envoyée par le canvas
+            png = _signature_from_bytes(self, _decode_data_url(drawn))
+        elif data.get("signature_image"):
+            png = _signature_from_bytes(self, data["signature_image"].read())
+        data["_signature_png"] = png
+        mode = data.get("signature_mode")
+        if mode == User.SignatureMode.IMAGE and not png and not self.instance.signature_image:
+            self.add_error("signature_image", "Dessinez ou importez votre signature.")
+        if mode == User.SignatureMode.MANAGER and not (data.get("signature") or "").strip():
+            self.add_error("signature", "Saisissez le nom du manager.")
+        return data
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -156,8 +179,43 @@ class ProfileForm(PhoneMixin, forms.ModelForm):
         if user.is_organizer:
             user.org_name = self.cleaned_data["org_name"]
             user.signature = self.cleaned_data.get("signature", "")
+            user.signature_mode = self.cleaned_data.get("signature_mode") or user.signature_mode
+            png = self.cleaned_data.get("_signature_png")
+            if png:
+                from django.core.files.base import ContentFile
+                if user.signature_image:
+                    user.signature_image.delete(save=False)
+                user.signature_image.save(f"signature-{user.pk}.png", ContentFile(png), save=False)
             if self.cleaned_data.get("org_logo"):
                 user.org_logo = self.cleaned_data["org_logo"]
         if commit:
             user.save()
         return user
+
+
+def _decode_data_url(value):
+    import base64
+    try:
+        return base64.b64decode(value.split(",", 1)[1], validate=False)
+    except Exception:
+        return b""
+
+
+def _signature_from_bytes(form, raw):
+    """Valide l'image (taille, format) et la normalise en PNG ≤ 600×200. None + erreur de champ si illisible."""
+    import io
+
+    from PIL import Image
+    if not raw or len(raw) > 2 * 1024 * 1024:
+        form.add_error("signature_image", "Signature illisible ou trop lourde (2 Mo maximum).")
+        return None
+    try:
+        with Image.open(io.BytesIO(raw)) as im:
+            im = im.convert("RGBA")
+            im.thumbnail((600, 200))
+            out = io.BytesIO()
+            im.save(out, "PNG", optimize=True)
+            return out.getvalue()
+    except Exception:
+        form.add_error("signature_image", "Image de signature invalide.")
+        return None

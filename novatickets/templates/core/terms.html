@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% load nova %}
+{% block title %}Conditions Générales d'Utilisation{% endblock %}
+{% block content %}
+<section class="section"><div class="mid legal">
+  <h1>Conditions Générales d'Utilisation</h1>
+  <p class="muted">et Politique d'utilisation de la plateforme {{ PLATFORM_NAME }} · Version du {{ updated }}</p>
+
+  <nav class="card toc" aria-label="Sommaire">
+    <strong>Sommaire</strong>
+    <ol>
+      <li><a href="#objet">Objet du service</a></li>
+      <li><a href="#definitions">Définitions</a></li>
+      <li><a href="#acceptation">Acceptation et modification des conditions</a></li>
+      <li><a href="#compte">Création et gestion du compte</a></li>
+      <li><a href="#organisateurs">Règles applicables aux organisateurs</a></li>
+      <li><a href="#evenements">Types d'événements autorisés et événements interdits</a></li>
+      <li><a href="#achat">Achat de billets</a></li>
+      <li><a href="#revente">Revente, cession et utilisation des billets</a></li>
+      <li><a href="#paiements">Paiements, frais de service et commission</a></li>
+      <li><a href="#remboursements">Annulation, report et remboursement</a></li>
+      <li><a href="#cartes">Cartes de visite numériques</a></li>
+      <li><a href="#interdits">Comportements interdits</a></li>
+      <li><a href="#pi">Propriété intellectuelle</a></li>
+      <li><a href="#responsabilite">Responsabilité de la plateforme</a></li>
+      <li><a href="#donnees">Protection des données personnelles</a></li>
+      <li><a href="#suspension">Suspension et fermeture du compte</a></li>
+      <li><a href="#droit">Droit applicable et règlement des litiges</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="objet">1. Objet du service</h2>
+  <p>{{ PLATFORM_NAME }} (« la Plateforme ») est un service en ligne de billetterie qui permet : aux <strong>Organisateurs</strong> de publier des événements,
+  de vendre des billets et d'en contrôler l'accès ; aux <strong>Spectateurs</strong> de découvrir des événements, d'acheter des billets en ligne, de les
+  recevoir sous forme de billet numérique (PDF et QR code) et de se présenter à l'entrée.</p>
+  <p>La Plateforme agit uniquement comme <strong>intermédiaire technique</strong> : elle n'organise pas les événements, n'est pas partie au contrat de
+  prestation conclu entre l'Organisateur et le Spectateur, et ne garantit pas leur déroulement. Le service est exploité par {{ company }} (« l'Éditeur »).</p>
+  <p>Les présentes Conditions Générales d'Utilisation (« CGU ») constituent aussi la politique d'utilisation de la Plateforme. L'utilisation du service
+  implique leur acceptation sans réserve.</p>
+
+  <h2 id="definitions">2. Définitions</h2>
+  <ul>
+    <li><strong>Utilisateur</strong> : toute personne disposant d'un compte, Spectateur ou Organisateur.</li>
+    <li><strong>Spectateur</strong> : Utilisateur qui achète ou détient un billet.</li>
+    <li><strong>Organisateur</strong> : Utilisateur qui crée un événement et vend des billets.</li>
+    <li><strong>Billet</strong> : titre d'accès numérique, nominatif, identifié par une référence et un QR code uniques.</li>
+    <li><strong>Commission</strong> : rémunération de la Plateforme, égale à {{ COMMISSION }} % du prix de chaque billet vendu.</li>
+    <li><strong>Moyen de paiement</strong> : service de paiement proposé selon le pays de l'Utilisateur (Mobile Money MTN MoMo, Moov Money, autres portefeuilles ou carte).</li>
+  </ul>
+
+  <h2 id="acceptation">3. Acceptation et modification des conditions</h2>
+  <p>En créant un compte, en cliquant sur « Créer mon compte » ou en utilisant la Plateforme, vous déclarez avoir lu et accepté les présentes CGU.
+  L'Éditeur peut les modifier à tout moment pour tenir compte de l'évolution du service ou de la loi. La date de dernière mise à jour figure en haut de
+  cette page ; en cas de changement important, les Utilisateurs sont prévenus par e-mail ou sur la Plateforme. Les modifications ne s'appliquent pas aux
+  achats déjà confirmés. Continuer à utiliser la Plateforme après leur entrée en vigueur vaut acceptation.</p>
+
+  <h2 id="compte">4. Création et gestion du compte</h2>
+  <ul>
+    <li><strong>Conditions.</strong> Il faut être une personne physique ayant la capacité de contracter, ou un mineur agissant avec l'autorisation de son représentant légal, ou une personne morale représentée par une personne habilitée (Organisateur).</li>
+    <li><strong>Informations exactes.</strong> Vous fournissez des informations vraies, complètes et à jour : nom, prénoms, sexe, pays, numéro de mobile, adresse e-mail, nom d'utilisateur, photo (Spectateur, imprimée sur le billet) ou nom de l'organisation (Organisateur). Le numéro de mobile est obligatoire.</li>
+    <li><strong>Un compte par personne.</strong> Les comptes multiples destinés à contourner une règle de la Plateforme sont interdits.</li>
+    <li><strong>Confidentialité des accès.</strong> Vous êtes responsable de la confidentialité de votre mot de passe et de toute activité réalisée depuis votre compte. En cas de perte ou de suspicion d'accès frauduleux, utilisez « Mot de passe oublié ? » et prévenez-nous sans délai.</li>
+    <li><strong>Photo et identité.</strong> La photo et le nom du compte Spectateur figurent sur ses billets ; ils doivent permettre de vous reconnaître. L'usage de la photo ou de l'identité d'un tiers est interdit.</li>
+  </ul>
+
+  <h2 id="organisateurs">5. Règles applicables aux organisateurs</h2>
+  <ul>
+    <li>L'Organisateur est seul responsable de son événement : existence, contenu, date, heure, lieu, sécurité, autorisations administratives, assurances et respect de la loi.</li>
+    <li>Les informations publiées (nom, visuel, lieu, dates, heure, date limite d'achat, types de tickets, prix en {{ CURRENCY }}, quantités) doivent être exactes et complètes. Il s'interdit toute vente de billets en nombre supérieur à la capacité réelle ou à des conditions trompeuses.</li>
+    <li>Un Organisateur <strong>ne peut pas acheter de billets pour ses propres événements</strong> (il peut en acheter pour ceux d'autres Organisateurs). La Plateforme bloque cet achat afin d'éviter les ventes fictives.</li>
+    <li>L'Organisateur contrôle l'accès à l'aide du scanner de la Plateforme ou de la page de vérification. Un billet validé une première fois est signalé comme déjà utilisé lors des contrôles suivants.</li>
+    <li>Il informe sans délai les Spectateurs et la Plateforme de toute annulation, de tout report ou de toute modification importante (voir article 10).</li>
+    <li>Il renseigne des moyens de réception de fonds qui lui appartiennent (article 9) et reste responsable de l'exactitude de ces informations.</li>
+  </ul>
+
+  <h2 id="evenements">6. Types d'événements autorisés et événements interdits</h2>
+
+  <h3>6.1 Objet et champ d'application</h3>
+  <p>La Plateforme met à la disposition des Organisateurs un service de billetterie en ligne et de contrôle d'accès numérique. Le présent article définit les catégories d'événements pouvant être publiés sur {{ PLATFORM_NAME }}, ainsi que les obligations et limites qui s'y attachent. Toute publication d'un événement vaut acceptation pleine et entière du présent article.</p>
+
+  <h3>6.2 Catégories d'événements autorisés</h3>
+  <p>Sous réserve du respect des présentes conditions, la Plateforme accepte les événements, payants ou gratuits, publics ou privés, relevant des catégories suivantes :</p>
+  <ul>
+    <li><strong>Concerts et spectacles :</strong> concerts live, festivals, performances artistiques, soirées culturelles et, plus généralement, tout spectacle vivant.</li>
+    <li><strong>Formations et ateliers, gratuits ou payants :</strong> séminaires, masterclasses, cours en ligne ou en présentiel, conférences éducatives et webinaires.</li>
+    <li><strong>Tous autres types d'événements :</strong> conférences d'affaires, rencontres sportives, événements communautaires, galas, expositions, salons professionnels, ainsi que tout événement privé ou public non interdit par l'article 6.5.</li>
+  </ul>
+  <p>La Plateforme se réserve le droit de qualifier un événement dans l'une de ces catégories et de refuser la publication d'un événement dont la nature, la description ou l'organisation ne correspondrait pas à l'objet du service ou présenterait un risque pour les Utilisateurs ou pour la Plateforme.</p>
+
+  <h3>6.3 Obligation de légalité</h3>
+  <p>Tout événement créé sur la Plateforme doit être strictement conforme aux lois et règlements en vigueur, notamment ceux du pays où il se déroule (réglementation relative aux rassemblements, à la sécurité des lieux recevant du public, à la consommation, à la fiscalité, à la protection des mineurs et à la protection des données personnelles) ainsi que, le cas échéant, ceux du pays de l'Organisateur. L'Organisateur garantit à la Plateforme que l'événement, son contenu, ses supports de communication et son déroulement respectent ces règles pendant toute la durée de la mise en vente et jusqu'à la clôture de l'événement.</p>
+
+  <h3>6.4 Responsabilité exclusive de l'Organisateur</h3>
+  <p>L'Organisateur est seul responsable de son événement et de son déroulement effectif. Il lui appartient en particulier :</p>
+  <ul>
+    <li><strong>des autorisations :</strong> obtenir, avant la mise en vente, toutes les autorisations, déclarations et licences administratives ou privées nécessaires (autorisation de la mairie ou de l'autorité compétente, accord du propriétaire ou du gestionnaire du lieu, autorisations d'occupation de l'espace public, etc.) ;</li>
+    <li><strong>de la sécurité :</strong> assurer la sécurité des personnes et des biens, respecter la jauge et les règles d'accueil du lieu, prévoir les dispositifs de secours, de gardiennage et d'évacuation adaptés, et souscrire les assurances requises, notamment en responsabilité civile ;</li>
+    <li><strong>des droits d'auteur et droits voisins :</strong> acquitter les droits dus pour toute œuvre musicale, audiovisuelle ou artistique diffusée ou interprétée lors de l'événement, et obtenir les autorisations correspondantes auprès des organismes de gestion collective compétents (SACEM, BUBEDRA ou son équivalent au Bénin, BURIDA en Côte d'Ivoire, et tout organisme équivalent selon le pays) ou des ayants droit ;</li>
+    <li><strong>du déroulement :</strong> assurer la tenue de l'événement aux date, heure, lieu et conditions annoncés, fournir les prestations promises aux détenteurs de billets, et respecter les règles d'annulation, de report et de remboursement prévues à l'article 10.</li>
+  </ul>
+  <p>La Plateforme intervient exclusivement en qualité d'intermédiaire technique de billetterie. Elle n'est ni l'organisateur, ni le co-organisateur, ni le garant de l'événement, et ne contrôle pas a priori le contenu ou la légalité de chaque événement publié. L'Organisateur garantit la Plateforme contre toute réclamation, action ou condamnation de tiers (y compris les Spectateurs, les ayants droit et les autorités) résultant de l'événement ou du non-respect du présent article, et l'indemnise des frais en résultant, y compris les frais de défense raisonnables.</p>
+
+  <h3>6.5 Événements strictement interdits</h3>
+  <p>Sont strictement interdits, quelle que soit leur catégorie ou leur caractère gratuit ou payant, les événements :</p>
+  <ul>
+    <li>incitant à la haine, à la discrimination ou à la violence, notamment à raison de l'origine, de la nationalité, de l'ethnie, de la religion, du sexe, de l'orientation sexuelle, du handicap ou de l'état de santé, ou faisant l'apologie de la violence, du terrorisme ou de crimes ;</li>
+    <li>ayant pour objet ou pour effet l'exercice d'activités illégales, notamment le trafic de stupéfiants, d'armes ou d'êtres humains, les jeux d'argent non autorisés, l'exploitation sexuelle ou tout événement portant atteinte à la dignité de la personne humaine ou à la protection des mineurs ;</li>
+    <li>à caractère frauduleux ou relevant de l'escroquerie : événements fictifs, billets vendus sans événement correspondant, usurpation du nom d'un artiste, d'un organisme ou d'un événement existant, systèmes pyramidaux ou promesses de gains trompeuses, ou toute présentation mensongère de la nature, du contenu ou des intervenants de l'événement.</li>
+  </ul>
+
+  <h3>6.6 Contrôle, retrait et sanctions</h3>
+  <p>La Plateforme peut, à tout moment et sans préavis lorsque la gravité ou l'urgence l'exige, examiner un événement, demander à l'Organisateur de justifier de ses autorisations ou de ses droits, dépublier ou supprimer un événement, suspendre les ventes, retenir les fonds correspondants le temps nécessaire à la vérification ou au remboursement des Spectateurs, suspendre ou fermer le compte de l'Organisateur (article 16) et signaler les faits aux autorités compétentes. Ces mesures sont prises sans préjudice de tous dommages et intérêts que la Plateforme serait en droit de réclamer. Tout Utilisateur peut signaler un événement qu'il estime contraire au présent article en écrivant à {{ SUPPORT_EMAIL }}.</p>
+
+  <h2 id="achat">7. Achat de billets</h2>
+  <ol>
+    <li>Le Spectateur choisit un événement, un type de ticket et une quantité, dans la limite des places disponibles et avant la date limite d'achat.</li>
+    <li>Il règle ensuite le montant total avec un moyen de paiement disponible dans son pays. La commande n'est <strong>définitive qu'à la confirmation du paiement</strong> par le prestataire de paiement : c'est à ce moment que les billets sont créés.</li>
+    <li>Le Spectateur reçoit automatiquement <strong>par e-mail un reçu de paiement</strong> et ses billets au format PDF ; il les retrouve aussi dans son espace « Mes billets ». Il doit donc fournir une adresse e-mail valide.</li>
+    <li>Les prix sont indiqués en {{ CURRENCY }}, toutes taxes comprises lorsqu'elles s'appliquent. Le prix affiché est le prix payé : la Plateforme n'ajoute aucun frais au Spectateur (article 9).</li>
+    <li>Si le stock est épuisé entre le paiement et la confirmation, la commande n'est pas honorée et le montant payé est <strong>intégralement remboursé</strong>.</li>
+    <li>Chaque billet est nominatif et porte un QR code unique. Il n'est valable que pour l'événement, la date et le type de ticket indiqués, et <strong>une seule entrée</strong>.</li>
+  </ol>
+
+  <h2 id="revente">8. Revente, cession et utilisation des billets</h2>
+  <ul>
+    <li><strong>La Plateforme n'est pas une place de revente.</strong> Elle ne propose pas de marché secondaire.</li>
+    <li>Il est <strong>interdit</strong> de revendre un billet à un prix supérieur à son prix d'achat, de le revendre de façon habituelle ou à titre professionnel (« marché noir »), de l'offrir en vente sur un site ou une page non autorisés, ou d'en tirer un profit.</li>
+    <li>Le Spectateur peut céder gratuitement, ou au prix coûtant, son billet à un proche (ami, famille), sous sa seule responsabilité : le billet restant nominatif, l'Organisateur peut exiger une pièce d'identité et refuser l'accès si le porteur ne correspond pas au nom ou à la photo du billet, sans remboursement.</li>
+    <li>Toute reproduction, copie, falsification ou modification d'un billet ou de son QR code est interdite. Un QR code est utilisable une seule fois : si le même billet est présenté plusieurs fois, seule la première entrée est acceptée ; la responsabilité de la divulgation du billet incombe à son détenteur.</li>
+    <li>Le Spectateur doit respecter le règlement du lieu et les consignes de sécurité. L'Organisateur peut refuser ou exclure une personne qui les enfreint, sans remboursement.</li>
+    <li>Un billet perdu, volé ou partagé par erreur n'est pas remboursé ; il peut être téléchargé de nouveau depuis « Mes billets ».</li>
+    <li>La Plateforme peut annuler un billet obtenu ou revendu en violation des présentes règles, sans remboursement.</li>
+  </ul>
+
+  <h2 id="paiements">9. Paiements, frais de service et commission</h2>
+  <h3>8.1 Moyens de paiement</h3>
+  <p>Les paiements sont effectués par Mobile Money (MTN MoMo, Moov Money) et, selon le pays de l'Utilisateur, par d'autres portefeuilles ou par carte. Ils sont traités par des prestataires de paiement indépendants : la Plateforme ne conserve ni code secret, ni code PIN, ni numéro de carte complet. Le Spectateur confirme le paiement sur son téléphone ; les frais éventuels de son opérateur (retrait, transfert) restent à sa charge.</p>
+  <h3>8.2 Frais de service et commission</h3>
+  <ul>
+    <li>La Plateforme perçoit une commission de <strong>{{ COMMISSION }} % du prix de chaque billet vendu</strong>.</li>
+    <li>Cette commission est <strong>prélevée sur le montant de la vente</strong> avant reversement à l'Organisateur. Elle est incluse dans le prix du billet : le Spectateur ne paie <strong>aucun frais de service supplémentaire</strong>.</li>
+    <li>Le calcul porte sur le total de la commande ; le résultat est arrondi au franc le plus proche (0,5 est arrondi au franc supérieur).</li>
+    <li><em>Exemple :</em> pour un billet de 10 000 {{ CURRENCY }}, la commission est de 250 {{ CURRENCY }} et 9 750 {{ CURRENCY }} reviennent à l'Organisateur.</li>
+    <li>Le taux applicable est celui en vigueur au moment de la vente. Toute modification est annoncée à l'avance et ne s'applique qu'aux ventes futures.</li>
+  </ul>
+  <h3>8.3 Reversement et retrait des gains</h3>
+  <ul>
+    <li>Le solde disponible de l'Organisateur correspond aux ventes confirmées, déduction faite de la commission et des retraits déjà effectués.</li>
+    <li>Il demande un retrait vers l'un de ses moyens de réception enregistrés (Mobile Money selon son pays, compte bancaire ou autre canal proposé). Le montant minimum d'un retrait est de {{ min_withdrawal|money }}.</li>
+    <li>Le compte de réception doit être au nom de l'Organisateur ou de son organisation. Un virement vers un compte erroné fourni par l'Organisateur ne peut pas être remboursé par la Plateforme.</li>
+    <li>La Plateforme peut retenir ou différer un retrait en cas de soupçon de fraude, de litige en cours ou d'événement annulé, le temps des vérifications.</li>
+  </ul>
+  <h3>8.4 Erreurs et doubles paiements</h3>
+  <p>Si un même achat est payé deux fois, ou si un paiement est débité sans qu'un billet soit délivré, le montant en trop est remboursé après vérification. Conservez la référence de la transaction et contactez le support.</p>
+
+  <h2 id="remboursements">10. Annulation, report et remboursement</h2>
+  <ul>
+    <li><strong>Événement annulé :</strong> les billets sont remboursés au prix payé. Le remboursement est géré avec l'Organisateur, qui en supporte le coût ; la commission afférente aux billets remboursés n'est pas due.</li>
+    <li><strong>Événement reporté :</strong> les billets restent valables pour la nouvelle date. Si elle ne convient pas au Spectateur, l'Organisateur peut proposer un remboursement ; à défaut, la demande est examinée au cas par cas.</li>
+    <li><strong>Autres cas :</strong> la commande étant ferme, un billet n'est ni repris ni échangé du seul fait que le Spectateur ne peut plus assister à l'événement, sauf politique contraire de l'Organisateur ou disposition légale impérative. S'agissant d'une prestation de loisirs à date déterminée, il n'existe pas de délai de rétractation, dans la mesure permise par la loi.</li>
+    <li>Les remboursements sont effectués, dans la mesure du possible, par le moyen de paiement utilisé pour l'achat.</li>
+  </ul>
+
+  <h2 id="cartes">11. Cartes de visite numériques</h2>
+  <ul>
+    <li>Tout Utilisateur peut créer une carte de visite numérique (style et couleurs au choix). La carte peut être partagée depuis le billet (lien, QR code, fichier de contact .vcf) afin d'échanger ses coordonnées professionnelles avec d'autres participants.</li>
+    <li>La carte reste un brouillon visible de vous seul tant qu'elle n'est pas activée. L'activation est un paiement unique de {{ card_price|money }} par Mobile Money{% if not card_price %} (actuellement gratuite){% endif %} ; elle ouvre le partage public, le téléchargement et l'impression de la carte au format PDF.</li>
+    <li>Une carte activée est accessible à toute personne qui détient son lien ou son QR code. Vous choisissez librement les informations que vous y mettez et pouvez les modifier à tout moment : ne publiez que ce que vous acceptez de partager.</li>
+    <li>La carte affiche, si vous le demandez via votre billet, la mention « Participant » de l'événement correspondant ; cette mention est vérifiée par la Plateforme.</li>
+    <li>Vous êtes responsable du contenu de votre carte : aucune information fausse, offensante, illicite ou concernant un tiers sans son accord.</li>
+  </ul>
+
+  <h2 id="interdits">12. Comportements interdits</h2>
+  <p>Il est notamment interdit de : fournir de fausses informations ou usurper l'identité d'autrui ; créer des événements fictifs, frauduleux ou illicites ; contourner le paiement, la commission ou les limites de stock ; utiliser des moyens de paiement qui ne vous appartiennent pas ; falsifier ou dupliquer un billet ; revendre des billets en violation de l'article 8 ; extraire de façon automatisée le contenu de la Plateforme ; chercher à accéder sans droit aux comptes ou aux données d'autres Utilisateurs ; perturber le fonctionnement du service (attaques, logiciels malveillants, surcharge) ; publier des contenus illicites, haineux, diffamatoires, à caractère pornographique ou portant atteinte aux droits d'un tiers.</p>
+
+  <h2 id="pi">13. Propriété intellectuelle</h2>
+  <p>La marque, le logo, le design, les textes et les logiciels de la Plateforme sont la propriété de l'Éditeur ou de ses concédants et sont protégés par la loi. Aucun droit n'est cédé à l'Utilisateur, hormis un droit personnel, non exclusif et révocable d'utiliser le service conformément aux CGU. Les contenus que vous publiez (visuels, logos, descriptions, photos) restent les vôtres ; vous garantissez en détenir les droits et accordez à la Plateforme une licence limitée, gratuite, pour les afficher et les reproduire (site, billets, reçus, e-mails) dans le seul but de fournir le service.</p>
+
+  <h2 id="responsabilite">14. Responsabilité de la plateforme</h2>
+  <ul>
+    <li>La Plateforme s'engage à fournir le service avec soin, mais ne garantit pas une disponibilité ininterrompue ni l'absence d'erreur ; des interruptions pour maintenance, des incidents chez les opérateurs mobiles, les prestataires de paiement, les hébergeurs ou les fournisseurs d'accès peuvent survenir.</li>
+    <li>Elle n'est <strong>pas responsable</strong> de l'organisation, du contenu, de la qualité, de la sécurité, de l'annulation ou du report d'un événement, ni des litiges entre Organisateur et Spectateur ; ceux-ci relèvent de l'Organisateur. Elle peut toutefois faciliter la communication et le remboursement.</li>
+    <li>Elle n'est pas responsable des dommages résultant d'une information inexacte fournie par un Utilisateur, d'un numéro Mobile Money erroné, de la perte, du vol ou du partage d'un identifiant ou d'un billet, ni de l'usage frauduleux d'un moyen de paiement par un tiers.</li>
+    <li>Sauf faute lourde ou dolosive, et dans la limite permise par la loi, sa responsabilité est limitée aux dommages directs et prévisibles, et ne peut excéder le montant de la commission perçue sur la transaction concernée. Elle n'est pas responsable des dommages indirects (perte de chance, manque à gagner, préjudice moral lié à un événement).</li>
+    <li>Elle n'est pas responsable en cas de force majeure (catastrophe, panne générale de réseau ou d'électricité, décision des autorités, conflit, etc.).</li>
+    <li>Rien dans les présentes CGU n'exclut une responsabilité qui ne peut être exclue par la loi.</li>
+  </ul>
+
+  <h2 id="donnees">15. Protection des données personnelles</h2>
+  <p>La Plateforme traite vos données conformément à la législation applicable en République du Bénin, notamment le <strong>Code du numérique</strong> (loi n° 2017-20 du 20 avril 2018), et aux règles de l'Autorité de protection des données personnelles (APDP).</p>
+  <h3>14.1 Responsable du traitement</h3>
+  <p>{{ company }}, joignable à <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.</p>
+  <h3>14.2 Données collectées</h3>
+  <ul>
+    <li><strong>Compte :</strong> nom, prénoms, sexe, profession, photo, pays, numéro de mobile, adresse e-mail, nom d'utilisateur, mot de passe (stocké sous forme chiffrée, jamais en clair) ; pour les Organisateurs, nom, logo et signature de l'organisation.</li>
+    <li><strong>Achats et paiements :</strong> commandes, billets, montants, moyen de paiement, numéro Mobile Money utilisé (affiché masqué), références de transaction, reçus.</li>
+    <li><strong>Contrôle d'accès :</strong> date, heure et résultat de la lecture du QR code de vos billets.</li>
+    <li><strong>Carte de visite :</strong> les informations que vous choisissez d'y inscrire.</li>
+    <li><strong>Retraits (Organisateurs) :</strong> coordonnées des comptes de réception.</li>
+    <li><strong>Données techniques :</strong> cookies de session et de sécurité, journaux de connexion et d'erreurs.</li>
+  </ul>
+  <h3>14.3 Finalités et fondements</h3>
+  <ul>
+    <li>Créer et gérer votre compte, vendre et délivrer vos billets, traiter les paiements, envoyer reçus et messages de service (<em>exécution du contrat</em>).</li>
+    <li>Permettre le contrôle d'accès aux événements et fournir des statistiques de vente et de fréquentation aux Organisateurs (<em>exécution du contrat et intérêt légitime</em>).</li>
+    <li>Prévenir la fraude, sécuriser la Plateforme et faire valoir nos droits (<em>intérêt légitime</em>).</li>
+    <li>Respecter nos obligations comptables, fiscales et de lutte contre la fraude (<em>obligation légale</em>).</li>
+    <li>Publier votre carte de visite et partager vos coordonnées (<em>votre consentement</em>, que vous pouvez retirer à tout moment en modifiant ou en désactivant la carte).</li>
+  </ul>
+  <p>Nous ne vendons pas vos données et ne les utilisons pas pour de la publicité ciblée.</p>
+  <h3>14.4 Destinataires</h3>
+  <ul>
+    <li>L'<strong>Organisateur</strong> d'un événement voit le nom, les prénoms, la photo et les billets des participants à son événement, ainsi que le résultat du contrôle d'accès, ces informations étant nécessaires à l'organisation et au contrôle. Il s'engage à ne pas les utiliser à d'autres fins.</li>
+    <li>Les <strong>prestataires de paiement</strong> et opérateurs de téléphonie mobile, pour exécuter les paiements et retraits.</li>
+    <li>Nos <strong>prestataires techniques</strong> (hébergement, envoi d'e-mails) agissant selon nos instructions.</li>
+    <li>Les <strong>autorités</strong> compétentes, lorsque la loi l'exige.</li>
+  </ul>
+  <p>Ces destinataires peuvent être situés hors du Bénin ; dans ce cas, nous veillons à ce que le transfert offre des garanties appropriées. Certaines pages chargent aussi des ressources (polices, drapeaux) depuis des services tiers, qui reçoivent alors votre adresse IP.</p>
+  <h3>14.5 Durée de conservation</h3>
+  <p>Les données du compte sont conservées tant que le compte est actif, puis supprimées ou anonymisées dans un délai raisonnable après sa fermeture. Les pièces de vente et de paiement sont conservées pendant la durée légale applicable (en principe dix ans pour les pièces comptables dans l'espace OHADA). Les journaux techniques sont conservés pour une durée limitée.</p>
+  <h3>14.6 Vos droits</h3>
+  <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, d'opposition, de limitation et, lorsque la loi le prévoit, de portabilité de vos données, ainsi que du droit de définir des directives sur leur sort après votre décès. Vous pouvez modifier la plupart des informations depuis « Profil » et « Ma carte ». Pour tout autre droit, écrivez à <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a> en joignant un justificatif d'identité ; nous répondons dans un délai raisonnable. Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir l'Autorité de protection des données personnelles (APDP) du Bénin.</p>
+  <h3>14.7 Sécurité</h3>
+  <p>Nous mettons en œuvre des mesures raisonnables : mots de passe chiffrés, accès limités, liens de réinitialisation à usage unique et d'une heure, signature des notifications de paiement, contrôle des accès aux données. Aucune méthode n'étant infaillible, nous vous informerons, ainsi que l'autorité compétente lorsque la loi l'exige, en cas de violation de données vous concernant.</p>
+  <h3>14.8 Mineurs</h3>
+  <p>Le service n'est pas destiné aux enfants sans l'accord de leur représentant légal, qui reste responsable de l'usage qu'ils en font.</p>
+
+  <h2 id="suspension">16. Suspension et fermeture du compte</h2>
+  <p>Vous pouvez cesser d'utiliser la Plateforme à tout moment et demander la fermeture de votre compte à <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a> ; les billets valides non utilisés et le solde dû à un Organisateur doivent d'abord être réglés. La Plateforme peut suspendre ou fermer un compte, retenir des fonds en cas de fraude avérée ou suspectée, et annuler des billets obtenus frauduleusement, en cas de manquement aux CGU, avec information de l'Utilisateur lorsque c'est possible.</p>
+
+  <h2 id="droit">17. Droit applicable et règlement des litiges</h2>
+  <p>Les CGU sont régies par le droit de la République du Bénin. En cas de difficulté, contactez d'abord le support : nous recherchons une solution amiable. À défaut d'accord, les tribunaux compétents de Cotonou sont seuls compétents, sous réserve des règles impératives protégeant le consommateur.</p>
+
+  <h2 id="contact">18. Contact</h2>
+  <p>Pour toute question sur les CGU, un paiement, un billet ou vos données : <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>. Merci d'indiquer votre adresse e-mail de compte et, le cas échéant, la référence de commande ou de transaction.</p>
+
+  {# À FAIRE avant la mise en service : relecture par un juriste, dénomination/forme juridique/immatriculation de l'Éditeur (LEGAL_COMPANY), déclaration APDP. #}
+</div></section>
+{% endblock %}

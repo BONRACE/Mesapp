@@ -25,6 +25,14 @@ class User(AbstractUser):
     signature = models.CharField("Signature (nom et fonction)", max_length=120, blank=True,
                                  help_text="Affichée en bas des reçus et billets. Ex : Adama Touré – Directeur")
 
+    class SignatureMode(models.TextChoices):
+        IMAGE = "image", "Signature manuscrite"
+        ORGANIZER = "organizer", "Signature avec le nom de l'organisateur"
+        MANAGER = "manager", "Signature avec le nom du manager"
+
+    signature_mode = models.CharField("Type de signature", max_length=10, choices=SignatureMode.choices, default=SignatureMode.ORGANIZER)
+    signature_image = models.ImageField("Signature manuscrite", upload_to="users/signatures/", blank=True, null=True)
+
     @property
     def is_organizer(self):
         return self.role == self.Role.ORGANISATEUR
@@ -41,7 +49,28 @@ class User(AbstractUser):
     @property
     def signature_text(self):
         """Signature textuelle de l'organisateur (ou de son manager) sur les reçus."""
-        return self.signature or self.display_name
+        if self.signature_mode == self.SignatureMode.MANAGER:
+            return self.signature or self.display_name
+        if self.signature_mode == self.SignatureMode.ORGANIZER:
+            return self.display_name
+        return self.signature or self.display_name      # mode manuscrit : texte de secours si l'image est illisible
+
+    @property
+    def signature_png(self):
+        """Signature manuscrite en PNG (bytes) si le mode « manuscrite » est choisi et l'image lisible, sinon None."""
+        if self.signature_mode != self.SignatureMode.IMAGE or not self.signature_image:
+            return None
+        try:
+            from PIL import Image
+            import io
+            with Image.open(self.signature_image.path) as im:
+                im = im.convert("RGBA")
+                im.thumbnail((600, 200))
+                out = io.BytesIO()
+                im.save(out, "PNG", optimize=True)
+                return out.getvalue()
+        except Exception:
+            return None
 
     @property
     def organizer_label(self):

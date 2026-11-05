@@ -89,7 +89,7 @@ def generate_reference():
 
 # ----------------------------------------------------------------------------- création
 
-def create_transaction(*, user_email, phone_number, amount, provider, order=None, business_card=None, country="BJ"):
+def create_transaction(*, user_email, phone_number, amount, provider, order=None, business_card=None, subscription=None, country="BJ"):
     """Crée une transaction PENDING avec une référence unique.
 
     Tunnel de commande : passer `order=` ; le montant est alors FORCÉ au total de la commande
@@ -106,7 +106,7 @@ def create_transaction(*, user_email, phone_number, amount, provider, order=None
             with transaction.atomic():
                 return Transaction.objects.create(
                     user_email=user_email.strip().lower(), phone_number=phone, amount=amount,
-                    provider=provider, reference=generate_reference(), order=order, business_card=business_card,
+                    provider=provider, reference=generate_reference(), order=order, business_card=business_card, subscription=subscription,
                 )
         except IntegrityError:
             continue
@@ -242,6 +242,10 @@ def fulfil(tx):
         from cards.services import activate_card
         activate_card(tx.business_card)
         transaction.on_commit(lambda: send_transaction_receipt(tx))
+    elif tx.subscription_id:
+        from subscriptions.services import activate
+        activate(tx.subscription)
+        transaction.on_commit(lambda: send_transaction_receipt(tx))
     else:
         transaction.on_commit(lambda: send_transaction_receipt(tx))
 
@@ -262,7 +266,8 @@ def on_payment_success(tx):
 
 def transaction_receipt_data(tx):
     """Données du reçu d'une transaction hors commande (activation de carte, paiement autonome)."""
-    label = "Activation de la carte de visite" if tx.business_card_id else "Paiement Mobile Money"
+    label = ("Activation de la carte de visite" if tx.business_card_id else "Abonnement organisateur" if tx.subscription_id
+             else "Paiement Mobile Money")
     return {
         "reference": tx.reference, "date": tx.paid_at or tx.created_at, "thanks": "Merci pour votre paiement !",
         "event": None,

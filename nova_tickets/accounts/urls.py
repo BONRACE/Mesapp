@@ -13,6 +13,7 @@ urlpatterns = [
     path("inscription/spectateur/", views.register_spectateur, name="register_spectateur"),
     path("inscription/organisateur/", views.register_organisateur, name="register_organisateur"),
     path("profil/", views.profile, name="profile"),
+    path("supprimer/", views.delete_account_view, name="delete"),
 
     # Mot de passe oublié : e-mail avec un lien à usage unique (valable 1 h) -> nouveau mot de passe.
     path("mot-de-passe/oublie/", auth_views.PasswordResetView.as_view(

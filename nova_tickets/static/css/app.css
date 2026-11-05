@@ -237,7 +237,7 @@ body { padding-top: 0; }
 .footer { margin-bottom: 0; }
 
 /* Mobile : la barre devient une barre d'onglets (icône au-dessus du libellé), qui défile s'il y a plus de 5 entrées */
-@media (max-width: 1279px) {
+@media (max-width: 1439px) {
   :root { --bar-h: 62px; }
   .bb-brand { padding-inline: .6rem .2rem; }
   .bb-brand img { height: 34px !important; }
@@ -291,3 +291,15 @@ body { padding-top: 0; }
 .btn-reg:hover { background: #047857; }
 .reg-legal { margin: .9rem 0 .4rem; text-align: center; font-size: .78rem; color: #6b7280; }
 @media (max-width: 560px) { .reg-grid { grid-template-columns: 1fr; } .reg-card { padding: 1.4rem 1.1rem 1.2rem; } }
+
+.pm-group { margin-top: .9rem; }
+.pm-title { font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem; }
+
+/* signature de l'organisateur (profil) */
+.sig-box { border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.1rem; margin: 1rem 0; }
+.sig-box legend { font-weight: 700; padding-inline: .4rem; color: var(--green-900); }
+.sig-opt { display: flex; margin: .4rem 0; }
+.sig-panel { margin-top: .8rem; padding-top: .8rem; border-top: 1px dashed var(--green-200); }
+#sig-canvas { width: 100%; max-width: 480px; height: auto; aspect-ratio: 3 / 1; border: 1.5px dashed var(--green-200); border-radius: 12px; background: #fff; touch-action: none; cursor: crosshair; display: block; }
+.sig-current { height: 40px; width: auto; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.sig-preview { font-family: "Brush Script MT", "Segoe Script", "Snell Roundhand", cursive; font-style: italic; font-size: 1.4rem; color: #12497f; }

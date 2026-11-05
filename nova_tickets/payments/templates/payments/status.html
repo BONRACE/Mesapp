@@ -40,7 +40,8 @@
   <p class="center">
     <a class="btn ghost" href="{% url 'payments:receipt_pdf' tx.pk %}">Télécharger le reçu (PDF)</a>
     {% if tx.order and tx.order.status == "paid" %}<a class="btn" href="{% url 'orders:confirmation' tx.order.reference %}">Voir mes billets</a>
-    {% elif tx.business_card %}<a class="btn" href="{% url 'cards:edit' %}">Retour à ma carte</a>{% endif %}
+    {% elif tx.business_card %}<a class="btn" href="{% url 'cards:edit' %}">Retour à ma carte</a>
+    {% elif tx.subscription %}<a class="btn" href="{% url 'subscriptions:index' %}">Voir mon abonnement</a>{% endif %}
   </p>
   {% if tx.business_card %}
   <p class="center">
@@ -58,6 +59,7 @@
   <p class="center">Aucun montant n'a été débité.
     {% if tx.order %}<a class="btn" href="{% url 'orders:pay' tx.order.reference %}">Réessayer</a>
     {% elif tx.business_card %}<a class="btn" href="{% url 'cards:edit' %}">Réessayer</a>
+    {% elif tx.subscription %}<a class="btn" href="{% url 'subscriptions:index' %}">Réessayer</a>
     {% else %}<a class="btn" href="{% url 'payments:initiate' %}?amount={{ tx.amount|floatformat:"0u" }}">Réessayer</a>{% endif %}</p>
 {% endif %}
 

@@ -10,6 +10,8 @@ from accounts.decorators import organizer_required
 from orders.models import Order, Withdrawal
 from orders.services import PurchaseError, organizer_balance, request_withdrawal
 
+from subscriptions.services import can_publish
+
 from .forms import EventForm, TicketFormSet
 from .models import Event
 
@@ -60,6 +62,9 @@ def _save_event(request, event=None):
 
 @organizer_required
 def event_create(request):
+    if not can_publish(request.user):
+        messages.error(request, "Un abonnement actif est nécessaire pour créer un événement.")
+        return redirect("subscriptions:index")
     obj, form, formset = _save_event(request)
     if obj:
         messages.success(request, "Événement créé. Publiez-le quand vous êtes prêt.")
@@ -81,6 +86,9 @@ def event_edit(request, pk):
 @require_POST
 def event_toggle(request, pk):
     event = get_object_or_404(Event, pk=pk, organizer=request.user)
+    if not event.is_published and not can_publish(request.user):
+        messages.error(request, "Un abonnement actif est nécessaire pour publier un événement.")
+        return redirect("subscriptions:index")
     if not event.is_published and not event.ticket_types.exists():
         messages.error(request, "Ajoutez au moins un type de ticket avant de publier.")
     else:

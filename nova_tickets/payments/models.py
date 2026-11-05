@@ -39,6 +39,8 @@ class Transaction(models.Model):
     order = models.ForeignKey("orders.Order", null=True, blank=True, on_delete=models.SET_NULL, related_name="transactions")
     business_card = models.ForeignKey("cards.BusinessCard", null=True, blank=True, on_delete=models.SET_NULL, related_name="transactions")
 
+    subscription = models.ForeignKey("subscriptions.Subscription", null=True, blank=True, on_delete=models.SET_NULL, related_name="transactions")
+
     class Meta:
         ordering = ["-created_at"]
 
@@ -47,7 +49,7 @@ class Transaction(models.Model):
 
     @property
     def purpose(self):
-        return "order" if self.order_id else "card" if self.business_card_id else "standalone"
+        return "order" if self.order_id else "card" if self.business_card_id else "subscription" if self.subscription_id else "standalone"
 
     @property
     def is_pending(self):

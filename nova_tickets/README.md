@@ -76,6 +76,14 @@ Tests : `python manage.py test` (120+ tests : paiements, webhook, commandes, sca
 - La **signature** se règle dans le profil organisateur (nom et fonction) ; à défaut, son nom. Les liens des icônes de réseaux : `SOCIAL_LINKS`
   dans `config/settings.py` (vide = lien vers le site).
 
+### Abonnement organisateur
+- 5 000 FCFA pour 30 jours (`SUBSCRIPTION_PRICE`, `SUBSCRIPTION_DAYS`), réservé aux organisateurs : `/organisateur/abonnement/` (onglet « Abonnement » + bouton sur le tableau de bord).
+- Section « Moyens de paiement » : tous ceux du pays de l'organisateur (`core/payments.py`), rangés par famille — Mobile Money, carte, PayPal, virement. MTN MoMo / Moov Money : push + webhook ; les autres sont simulés (`process_payment`, à brancher sur FedaPay / KkiaPay / CinetPay / Stripe). Reçu PDF par e-mail dans tous les cas. Un renouvellement s'ajoute à la fin de la période en cours.
+- `SUBSCRIPTION_REQUIRED=True` (dans `.env`) : sans abonnement actif, impossible de créer ou publier un événement. Désactivé par défaut.
+
+### Signature de l'organisateur (reçus PDF + e-mails)
+Profil organisateur → 3 choix : **signature manuscrite** (dessinée à la souris / au doigt, ou image importée), **nom de l'organisateur**, ou **nom et fonction du manager**. Les signatures existantes (texte) passent automatiquement en mode « manager ».
+
 ### 6. Moyens de retrait
 - L'organisateur enregistre jusqu'à 8 canaux (catalogue par pays dans `payouts/catalog.py`), choisit un canal par défaut et retire vers l'un d'eux.
   Les comptes sont masqués dans l'historique. Aucun virement réel n'est émis : brancher l'API de l'opérateur dans `orders/services.py::request_withdrawal`.

@@ -129,3 +129,134 @@ class FooterVisibilityTests(TestCase):
     def test_footer_hidden_on_home_even_for_visitor(self):
         self.client.logout()
         self.assertNotContains(self.client.get("/"), 'class="footer"')
+
+
+class DeleteAccountTests(TestCase):
+    def mk(self, role, n):
+        return User.objects.create_user(email=f"d{n}@x.test", username=f"d{n}", password="pw123456!", role=role,
+                                        first_name="Ada", last_name="Zinsou", phone="+22997000000")
+
+    def test_profile_shows_delete_button_for_both_roles(self):
+        for i, role in enumerate(("spectateur", "organisateur")):
+            self.client.force_login(self.mk(role, i))
+            self.assertContains(self.client.get(reverse("accounts:profile")), reverse("accounts:delete"))
+
+    def test_wrong_password_or_word_keeps_account(self):
+        u = self.mk("spectateur", 1)
+        self.client.force_login(u)
+        self.client.post(reverse("accounts:delete"), {"password": "nope", "confirm": "SUPPRIMER"})
+        self.client.post(reverse("accounts:delete"), {"password": "pw123456!", "confirm": "oui"})
+        u.refresh_from_db()
+        self.assertTrue(u.is_active)
+
+    def test_spectator_deleted_and_anonymised_keeps_orders(self):
+        u = self.mk("spectateur", 2)
+        self.client.force_login(u)
+        r = self.client.post(reverse("accounts:delete"), {"password": "pw123456!", "confirm": "supprimer"})
+        self.assertRedirects(r, reverse("core:home"), fetch_redirect_response=False)
+        u.refresh_from_db()
+        self.assertFalse(u.is_active)
+        self.assertEqual((u.phone, u.first_name), ("", "Compte"))
+        self.assertTrue(u.email.endswith("@deleted.invalid"))
+        self.assertFalse(u.has_usable_password())
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertFalse(self.client.login(username="d2", password="pw123456!"))
+
+    def test_organizer_with_balance_is_blocked(self):
+        from unittest import mock
+        u = self.mk("organisateur", 3)
+        self.client.force_login(u)
+        with mock.patch("accounts.services.organizer_balance", return_value=5000):
+            self.client.post(reverse("accounts:delete"), {"password": "pw123456!", "confirm": "SUPPRIMER"})
+            self.assertContains(self.client.get(reverse("accounts:delete")), "solde")
+        u.refresh_from_db()
+        self.assertTrue(u.is_active)
+
+    def test_organizer_deleted_unpublishes_events(self):
+        from accounts.services import delete_account
+        u = self.mk("organisateur", 4)
+        self.assertTrue(delete_account(u))
+        u.refresh_from_db()
+        self.assertFalse(u.is_active)
+
+    def test_login_required(self):
+        self.assertEqual(self.client.get(reverse("accounts:delete")).status_code, 302)
+
+
+class SignatureTests(TestCase):
+    def setUp(self):
+        import tempfile
+        from django.test import override_settings
+        self._tmp = tempfile.mkdtemp()
+        self._ov = override_settings(MEDIA_ROOT=self._tmp)
+        self._ov.enable()
+        self.u = User.objects.create_user(email="sg@x.test", username="sg", password="pw123456!", role="organisateur",
+                                          first_name="Ada", last_name="Zinsou", phone="+22997000000", sexe="F")
+        self.client.force_login(self.u)
+
+    def tearDown(self):
+        import shutil
+        self._ov.disable()
+        shutil.rmtree(self._tmp, ignore_errors=True)
+
+    def post(self, **extra):
+        data = {"last_name": "Zinsou", "first_name": "Ada", "sexe": "F", "country": "BJ", "phone": "97000000",
+                "org_name": "Org", "signature_mode": "organizer", "signature": ""}
+        data.update(extra)
+        return self.client.post(reverse("accounts:profile"), data)
+
+    def png_data_url(self):
+        import base64, io
+        from PIL import Image, ImageDraw
+        im = Image.new("RGBA", (300, 100), (255, 255, 255, 0))
+        ImageDraw.Draw(im).line([(10, 80), (150, 20), (290, 70)], fill=(18, 73, 127, 255), width=4)
+        b = io.BytesIO(); im.save(b, "PNG")
+        return "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()
+
+    def test_profile_offers_three_signature_options(self):
+        r = self.client.get(reverse("accounts:profile"))
+        for t in ("Signature manuscrite", "Signature avec le nom de l", "Signature avec le nom du manager", "sig-canvas"):
+            self.assertContains(r, t)
+
+    def test_organizer_name_mode(self):
+        self.post(signature_mode="organizer")
+        self.u.refresh_from_db()
+        self.assertEqual(self.u.signature_text, "Ada Zinsou")
+
+    def test_manager_name_mode_requires_name(self):
+        self.post(signature_mode="manager", signature="")
+        self.u.refresh_from_db()
+        self.assertNotEqual(self.u.signature_mode, "manager")
+        self.post(signature_mode="manager", signature="Koffi Mensah – Directeur")
+        self.u.refresh_from_db()
+        self.assertEqual((self.u.signature_mode, self.u.signature_text), ("manager", "Koffi Mensah – Directeur"))
+
+    def test_drawn_signature_saved_and_used_in_pdf_and_email(self):
+        self.post(signature_mode="image", signature_drawn=self.png_data_url())
+        self.u.refresh_from_db()
+        self.assertEqual(self.u.signature_mode, "image")
+        self.assertTrue(self.u.signature_png.startswith(b"\x89PNG"))
+        from core.pdf import render_receipt
+        from orders.services import build_receipt_email
+        data = {"reference": "R1", "date": __import__("django.utils.timezone", fromlist=["now"]).now(), "thanks": "Merci", "event": None,
+                "spectator": [("Email", "a@b.c")], "details_title": "D", "details": [("Objet", "x")], "status": "Payé", "total": 1000,
+                "signature": self.u.signature_text, "signature_image": self.u.signature_png, "organizer": "Org", "qr": None}
+        self.assertTrue(render_receipt(data).startswith(b"%PDF"))
+        msg = build_receipt_email(data, to="a@b.c", subject="s")
+        self.assertIn("cid:signature", msg.alternatives[0].content)
+        self.assertIn("signature", [c for c, _ in msg.inline_images])
+
+    def test_image_mode_without_image_is_rejected(self):
+        self.post(signature_mode="image")
+        self.u.refresh_from_db()
+        self.assertNotEqual(self.u.signature_mode, "image")
+
+    def test_garbage_image_rejected(self):
+        self.post(signature_mode="image", signature_drawn="data:image/png;base64,AAAA")
+        self.u.refresh_from_db()
+        self.assertFalse(self.u.signature_image)
+
+    def test_spectator_form_has_no_signature(self):
+        s = User.objects.create_user(email="sp@x.test", username="sp", password="pw123456!", role="spectateur", phone="+22997000001")
+        self.client.force_login(s)
+        self.assertNotContains(self.client.get(reverse("accounts:profile")), "sig-canvas")

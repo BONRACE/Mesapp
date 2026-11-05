@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+import environ
 import logging
 import sys
 from decimal import Decimal
@@ -8,9 +10,11 @@ from .env import env, env_bool, env_int, env_list, load_env
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_env(BASE_DIR / ".env")        # variables d'environnement : voir .env.example
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = env("SECRET_KEY", "dev-insecure-change-me-novatickets")
-DEBUG = env_bool("DEBUG", False)
+SECRET_KEY = env("SECRET_KEY", default="dev-insecure-change-me-novatickets")
+DEBUG = env_bool("DEBUG", True)
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "*")
 
 INSTALLED_APPS = [
@@ -29,11 +33,11 @@ INSTALLED_APPS = [
     "cards",
     "analytics",
     "payouts",
+    "subscriptions",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -84,14 +88,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",  # Corrigé ici pour éviter l'erreur de manifest sur les fichiers .map
-    },
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "core.storage.VersionedStaticStorage"},  # ajoute ?v=<mtime> : plus de CSS périmé en cache
 }
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -102,40 +101,51 @@ LOGIN_URL = "accounts:login"
 PASSWORD_RESET_TIMEOUT = 3600  # le lien « mot de passe oublié » expire au bout d'1 heure
 LOGOUT_REDIRECT_URL = "core:home"
 
-# --- E-mails (reçus, mot de passe oublié) : tout se règle dans le fichier .env ---
-EMAIL_BACKEND = env("EMAIL_BACKEND", "django.core.mail.backends.filebased.EmailBackend")
-EMAIL_HOST = env("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = env_int("EMAIL_PORT", 587)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
-EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)      # port 587 : STARTTLS
-EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)     # port 465 : SSL direct (ne pas activer avec EMAIL_USE_TLS)
-EMAIL_TIMEOUT = env_int("EMAIL_TIMEOUT", 10)         # secondes : un serveur mail muet ne bloque pas le site
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "NovaTickets <no-reply@novatickets.app>")
-SERVER_EMAIL = env("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
-EMAIL_FILE_PATH = BASE_DIR / "sent_emails"           # utilisé par le backend « fichier » (développement)
+# --- Configuration générale, e-mails et métadonnées ---
+SITE_URL = env("SITE_URL", default="http://127.0.0.1:8000")
 
-# Garde-fou : si le backend SMTP est choisi mais que l'identifiant/mot de passe sont encore ceux de l'exemple
-# (ou vides), on écrit les e-mails dans sent_emails/ au lieu de planter avec une erreur d'authentification.
-_EMAIL_PLACEHOLDERS = {"", "votre.adresse@gmail.com", "mot-de-passe-application-16-caracteres"}
-if EMAIL_BACKEND.endswith("smtp.EmailBackend") and (EMAIL_HOST_USER in _EMAIL_PLACEHOLDERS or EMAIL_HOST_PASSWORD in _EMAIL_PLACEHOLDERS):
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.filebased.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="NovaTickets <bonracedolivierk@gmail.com>")
+SERVER_EMAIL = env("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+
+SUPPORT_EMAIL = env("SUPPORT_EMAIL", default="contact@novatickets.app")
+LEGAL_COMPANY = env("LEGAL_COMPANY", default="NovaTickets — Cotonou, République du Bénin")
+
+MOMO_GATEWAY_MODE = env("MOMO_GATEWAY_MODE", default="simulation")
+
+# Garde-fou anti-panique SMTP
+_EMAIL_PLACEHOLDERS = {"", "bonracedolivierk@gmail.com", "46037368Bn", "remplacez-moi"}
+
+if EMAIL_BACKEND.endswith("smtp.EmailBackend") and (
+    EMAIL_HOST_USER in _EMAIL_PLACEHOLDERS or EMAIL_HOST_PASSWORD in _EMAIL_PLACEHOLDERS
+):
     logging.getLogger(__name__).warning(
-        "EMAIL_HOST_USER / EMAIL_HOST_PASSWORD non renseignés dans .env : les e-mails sont écrits dans sent_emails/ (aucun envoi réel).")
-    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-
+        "EMAIL_HOST_USER / EMAIL_HOST_PASSWORD non renseignés ou invalides dans .env : les e-mails sont écrits dans sent_emails/."
+    )
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"    
 # Plateforme
 PLATFORM_NAME = "NovaTickets"
 PLATFORM_COMMISSION_PERCENT = Decimal("2.5")  # commission : exactement 2,5 % du prix de chaque billet vendu
 CURRENCY = "FCFA"
-SITE_URL = env("SITE_URL", "http://127.0.0.1:8000")  # utilisé dans les QR codes et les liens des e-mails
-SUPPORT_EMAIL = env("SUPPORT_EMAIL", "contact@novatickets.app")  # contact affiché dans les CGU
-LEGAL_COMPANY = env("LEGAL_COMPANY", "NovaTickets — Cotonou, République du Bénin")  # éditeur affiché dans les CGU
+SUBSCRIPTION_PRICE = 5000        # abonnement organisateur (FCFA)
+SUBSCRIPTION_DAYS = 30           # durée d'une période payée
+SUBSCRIPTION_REQUIRED = env_bool("SUBSCRIPTION_REQUIRED", False)  # True : abonnement actif exigé pour créer / publier un événement
+SUPPORT_EMAIL = env("SUPPORT_EMAIL", default="contact@novatickets.app")
+LEGAL_COMPANY = env("LEGAL_COMPANY", default="NovaTickets — Cotonou, République du Bénin")
 # Pages de la plateforme sur les réseaux (icônes du reçu). Vide = lien vers le site.
 SOCIAL_LINKS = {"x": "", "facebook": "", "instagram": ""}
 MIN_WITHDRAWAL = 1000
 
 # --- Module de paiement Mobile Money (app payments) ---
-MOMO_GATEWAY_MODE = env("MOMO_GATEWAY_MODE", "simulation")  # "simulation" (aucun appel réseau) ou "live"
+MOMO_GATEWAY_MODE = env("MOMO_GATEWAY_MODE", default="simulation")
 MOMO_API_BASE_URL = env("MOMO_API_BASE_URL", "")            # URL de l'API de l'agrégateur (mode live)
 MOMO_API_KEY = env("MOMO_API_KEY", "")                      # clé API de l'agrégateur
 MOMO_WEBHOOK_SECRET = env("MOMO_WEBHOOK_SECRET", "dev-secret-a-changer")  # secret partagé du webhook (HMAC-SHA256)

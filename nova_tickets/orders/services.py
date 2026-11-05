@@ -367,7 +367,7 @@ def receipt_data(order):
                     ("Prix unitaire", f"{int(order.unit_price):,}".replace(",", " ") + f" {settings.CURRENCY}"),
                     ("Quantité", order.quantity), ("Moyen de paiement", order.payment_label or "—")],
         "status": "Payé", "total": order.total,
-        "signature": ev.organizer.signature_text, "organizer": ev.organizer.organizer_label,
+        "signature": ev.organizer.signature_text, "signature_image": ev.organizer.signature_png, "organizer": ev.organizer.organizer_label,
         "qr": qr_png(verify_url(first)) if first else None,
     }
 
@@ -429,6 +429,9 @@ def build_receipt_email(data, *, to, subject, attachments=()):
         images.append(("eventlogo", data["event"]["logo"]))
     if ctx["has_qr"]:
         images.append(("qr", data["qr"]))
+    ctx["has_sign_image"] = bool(data.get("signature_image"))
+    if ctx["has_sign_image"]:
+        images.append(("signature", data["signature_image"]))
     msg = ReceiptEmail(subject=subject, body=render_to_string("emails/receipt.txt", ctx),
                        from_email=settings.DEFAULT_FROM_EMAIL, to=[to])
     msg.attach_alternative(render_to_string("emails/receipt.html", ctx), "text/html")

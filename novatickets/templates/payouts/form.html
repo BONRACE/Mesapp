@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="section"><div class="narrow">
+  <a class="muted small" href="{% url 'payouts:list' %}">← Mes moyens de retrait</a>
+  <h1 class="mt">{{ title }}</h1>
+  <div class="card">
+    <form method="post">{% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="field"><label>Canal</label>
+        {% for radio in form.kind %}<label class="method" style="margin-bottom:.4rem">{{ radio.tag }}{{ radio.choice_label }}</label>{% endfor %}
+        {{ form.kind.errors }}</div>
+      {% include "includes/field.html" with f=form.account_holder %}
+      {% include "includes/field.html" with f=form.account_number %}
+      <div id="bank-box">{% include "includes/field.html" with f=form.bank_name %}</div>
+      {% include "includes/field.html" with f=form.label %}
+      <div class="field"><label style="display:flex;gap:.5rem;align-items:center;font-weight:500">{{ form.is_default }} {{ form.is_default.label }}</label></div>
+      <button class="btn btn-block" type="submit">Enregistrer</button>
+    </form>
+  </div>
+</div></section>
+<script>
+  // Le champ « Banque » et l'aide du numéro s'adaptent au canal choisi.
+  (() => {
+    const hints = { bank: "IBAN ou RIB", paypal: "Adresse e-mail PayPal" };
+    const num = document.querySelector("[name=account_number]"), box = document.getElementById("bank-box");
+    const update = () => {
+      const k = (document.querySelector("[name=kind]:checked") || {}).value;
+      box.style.display = k === "bank" ? "" : "none";
+      num.placeholder = hints[k] || "Numéro Mobile Money (ex. 01 97 00 00 01)";
+    };
+    document.querySelectorAll("[name=kind]").forEach(r => r.addEventListener("change", update)); update();
+  })();
+</script>
+{% endblock %}

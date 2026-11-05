@@ -1,0 +1,22 @@
+#Application
+SECRET_KEY=sVBjNE8tNN2pi-8BZTF9EHu2kB_3q62myU3x1Ft6Lv6FNR3lFmmwAdtw2ZxPwD2C1QY
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost
+SITE_URL=http://127.0.0.1:8000
+
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=bonracedolivierk@gmail.com
+EMAIL_HOST_PASSWORD=gubtwdzpwundhpus
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_TIMEOUT=10
+DEFAULT_FROM_EMAIL=bonracedolivierk@gmail.com
+
+SUPPORT_EMAIL=contact@novatickets.app
+LEGAL_COMPANY=NovaTickets — Cotonou, République du Bénin
+
+MOMO_GATEWAY_MODE=sandbox
+SUPPORT_EMAIL=contact@novatickets.app
+LEGAL_COMPANY=NovaTickets — Cotonou, République du Bénin
