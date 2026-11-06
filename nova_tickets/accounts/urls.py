@@ -16,7 +16,7 @@ urlpatterns = [
     path("supprimer/", views.delete_account_view, name="delete"),
 
     # Mot de passe oublié : e-mail avec un lien à usage unique (valable 1 h) -> nouveau mot de passe.
-    path("mot-de-passe/oublie/", auth_views.PasswordResetView.as_view(
+    path("mot-de-passe/oublie/", views.ThrottledPasswordResetView.as_view(
         template_name="accounts/password_reset_form.html", email_template_name="accounts/password_reset_email.txt",
         html_email_template_name="accounts/password_reset_email.html", subject_template_name="accounts/password_reset_subject.txt",
         success_url=reverse_lazy("accounts:password_reset_done")), name="password_reset"),

@@ -10,7 +10,7 @@ from accounts.decorators import organizer_required
 from orders.models import Order, Withdrawal
 from orders.services import PurchaseError, organizer_balance, request_withdrawal
 
-from subscriptions.services import can_publish
+from subscriptions.services import can_publish, is_active
 
 from .forms import EventForm, TicketFormSet
 from .models import Event
@@ -41,6 +41,7 @@ def orga_dashboard(request):
         "net": agg["net"] or 0,
         "tickets": agg["tickets"] or 0,
         "balance": organizer_balance(user),
+        "subscribed": is_active(user),
         "events": events,
         "recent": recent,
         "today": timezone.localdate(),

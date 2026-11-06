@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from orders.services import qr_png
 
 from .palettes import rgb
+from payments import fedapay
 from payments.services import PaymentError
 
 from .pdf import card_pdf
@@ -37,7 +38,7 @@ def edit(request):
     # tout de suite les styles « Pagne », les couleurs, etc. dès la création.
     draft = card or BusinessCard(user=request.user, **_initial_for(request.user))
     return render(request, "cards/edit.html", {
-        "form": form, "card": card, "draft": draft, "price": card_price(), "activation_form": ActivationForm(),
+        "form": form, "card": card, "draft": draft, "price": card_price(), "activation_form": ActivationForm(), "fedapay": fedapay.enabled(),
     })
 
 
@@ -66,14 +67,15 @@ def activate(request):
         return redirect("cards:edit")
     data = form.cleaned_data if form.is_valid() else {"provider": "MTN", "phone": ""}
     try:
-        tx = start_activation(card, data["provider"], data["phone"], request.build_absolute_uri(reverse("payments:webhook")))
+        tx = start_activation(card, data["provider"], data["phone"], request.build_absolute_uri(reverse("payments:webhook")), request=request)
     except PaymentError as exc:
         messages.error(request, str(exc))
         return redirect("cards:edit")
     if tx is None:
         messages.success(request, "Carte activée : vous pouvez la partager.")
         return redirect("cards:edit")
-    return redirect("payments:status", pk=tx.pk)
+    from payments import fedapay
+    return redirect(fedapay.next_url(tx))
 
 
 def _visible_card(request, slug):

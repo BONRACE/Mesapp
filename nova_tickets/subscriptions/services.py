@@ -52,7 +52,7 @@ def activate(subscription, *, provider_ref=""):
     return sub
 
 
-def start_payment(user, method, phone, callback_url):
+def start_payment(user, method, phone, callback_url, request=None):
     """Lance le paiement avec le moyen choisi.
 
     - MTN MoMo / Moov Money (zone FCFA) : transaction PENDING + push USSD, activation par le webhook -> renvoie la Transaction.
@@ -62,6 +62,19 @@ def start_payment(user, method, phone, callback_url):
     from core.payments import process_payment
     from payments.models import Transaction
     from payments.services import PaymentError, create_transaction, generate_reference, launch_push
+
+    from payments import fedapay
+    if fedapay.enabled():
+        pending = Transaction.objects.filter(subscription__user=user, provider=Transaction.Provider.FEDAPAY,
+                                             status=Transaction.Status.PENDING).exclude(checkout_url="").first()
+        if pending and (timezone.now() - pending.created_at).total_seconds() < 1800:
+            return pending
+        sub = Subscription.objects.create(user=user, price=price(), days=duration_days(), method_key="fedapay",
+                                          method_label="FedaPay", reference="pending")
+        tx = fedapay.start_checkout(request, user=user, amount=sub.price, description="Abonnement organisateur", subscription=sub)
+        sub.reference = tx.reference
+        sub.save(update_fields=["reference"])
+        return tx
 
     if method["provider"]:
         pending = Transaction.objects.filter(subscription__user=user, status=Transaction.Status.PENDING).first()

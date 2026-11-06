@@ -62,9 +62,15 @@ def check_in(*, user, event, code, source=ScanLog.Source.CAMERA):
                     result = ScanLog.Result.DUPLICATE
                     message = f"Billet déjà utilisé le {local:%d/%m à %H:%M}."
                 else:
-                    ticket.used_at = timezone.now()
-                    ticket.save(update_fields=["used_at"])
-                    result, message = ScanLog.Result.VALID, "Entrée validée."
+                    # Mise à jour conditionnelle : « used_at » n'est posé que s'il est encore vide. Même sans verrou de ligne
+                    # (SQLite), un seul des scans simultanés obtient updated == 1 ; l'autre est un doublon.
+                    updated = Ticket.objects.filter(pk=ticket.pk, used_at__isnull=True).update(used_at=timezone.now())
+                    if updated:
+                        result, message = ScanLog.Result.VALID, "Entrée validée."
+                    else:
+                        ticket.refresh_from_db(fields=["used_at"])
+                        local = timezone.localtime(ticket.used_at)
+                        result, message = ScanLog.Result.DUPLICATE, f"Billet déjà utilisé le {local:%d/%m à %H:%M}."
             else:
                 ticket = None  # inexistant, impayé ou d'un autre organisateur : aucune fuite d'information
 

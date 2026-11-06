@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from accounts.decorators import organizer_required
+from payments import fedapay
 from payments.models import Transaction
 from payments.services import PaymentError
 
@@ -15,7 +16,7 @@ from .forms import SubscribeForm, grouped_methods
 def index(request):
     return render(request, "subscriptions/index.html", {
         "price": services.price(), "days": services.duration_days(), "until": services.active_until(request.user),
-        "required": services.required(), "groups": grouped_methods(request.user.country),
+        "required": services.required(), "fedapay": fedapay.enabled(), "groups": grouped_methods(request.user.country),
         "history": request.user.subscriptions.filter(is_paid=True)[:10],
     })
 
@@ -23,6 +24,13 @@ def index(request):
 @organizer_required
 @require_POST
 def pay(request):
+    if fedapay.enabled():
+        try:
+            tx = services.start_payment(request.user, None, "", "", request=request)
+        except PaymentError as exc:
+            messages.error(request, str(exc))
+            return redirect("subscriptions:index")
+        return redirect(fedapay.next_url(tx))
     form = SubscribeForm(request.POST, user=request.user)
     if not form.is_valid():
         messages.error(request, " ".join(form.non_field_errors()) or "Choisissez un moyen de paiement.")

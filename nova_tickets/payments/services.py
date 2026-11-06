@@ -97,7 +97,10 @@ def create_transaction(*, user_email, phone_number, amount, provider, order=None
     """
     if order is not None:
         amount = order.total
-    phone = normalize_phone(phone_number, country)
+    if provider == Transaction.Provider.FEDAPAY:      # FedaPay collecte le numéro / la carte sur sa propre page
+        phone = "".join(ch for ch in (phone_number or "") if ch.isdigit())[:15]
+    else:
+        phone = normalize_phone(phone_number, country)
     amount = parse_amount(amount)
     if provider not in Transaction.Provider.values:
         raise PaymentError("Opérateur non pris en charge.")
@@ -137,8 +140,11 @@ def push_payment(tx, callback_url):
         "callback_url": callback_url,       # URL du webhook ci-dessous
         "description": f"Billets NovaTickets {tx.reference}",
     }
+    base = _setting("MOMO_API_BASE_URL", "").rstrip("/")
+    if not base.startswith("https://") and not settings.DEBUG:          # jamais de clé API en clair sur le réseau
+        raise PaymentError("Le service Mobile Money est mal configuré.")
     req = urllib.request.Request(
-        _setting("MOMO_API_BASE_URL", "").rstrip("/") + "/collect",
+        base + "/collect",
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {_setting('MOMO_API_KEY', '')}"},
         method="POST",
@@ -198,6 +204,8 @@ def apply_gateway_status(reference, raw_status, gateway_reference="", amount=Non
         if not tx.is_pending:
             return tx, False
 
+        if new_status == Transaction.Status.SUCCESS and amount is None and _setting("MOMO_GATEWAY_MODE", "simulation") == "live":
+            raise PaymentError("Montant absent de la notification.")      # en production, jamais de validation sans montant
         if new_status == Transaction.Status.SUCCESS and amount is not None:
             try:
                 paid = Decimal(str(amount))

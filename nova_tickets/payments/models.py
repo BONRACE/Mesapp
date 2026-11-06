@@ -14,6 +14,7 @@ class Transaction(models.Model):
     class Provider(models.TextChoices):
         MTN = "MTN", "MTN MoMo"
         MOOV = "Moov", "Moov Money"
+        FEDAPAY = "FEDA", "FedaPay"          # paiement via la page FedaPay (Mobile Money, carte…)
 
     class Status(models.TextChoices):
         PENDING = "PENDING", "En attente"
@@ -34,6 +35,7 @@ class Transaction(models.Model):
     gateway_reference = models.CharField("Référence passerelle", max_length=80, blank=True)
     failure_reason = models.CharField("Motif d'échec", max_length=200, blank=True)
     paid_at = models.DateTimeField("Payée le", null=True, blank=True)
+    checkout_url = models.URLField("Page de paiement (FedaPay)", max_length=400, blank=True)
 
     # Ce que la transaction paie (au plus un des deux ; aucun = paiement autonome / démo).
     order = models.ForeignKey("orders.Order", null=True, blank=True, on_delete=models.SET_NULL, related_name="transactions")

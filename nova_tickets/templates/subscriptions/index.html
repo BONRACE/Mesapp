@@ -1,12 +1,14 @@
 {% extends "base.html" %}{% load nova %}
-{% block title %}Abonnement organisateur<script>
+{% block title %}Abonnement organisateur{% if not fedapay %}<script>
   (() => {
     const radios = document.querySelectorAll('input[name=method]'), phone = document.getElementById('sub-phone-box'), note = document.getElementById('sub-sim-note');
+    if (!phone) return;
     const sync = () => { const r = document.querySelector('input[name=method]:checked'); const momo = r && r.dataset.kind === 'momo';
       phone.style.display = momo ? '' : 'none'; note.style.display = r && !momo ? '' : 'none'; };
     radios.forEach(r => r.addEventListener('change', sync)); sync();
   })();
 </script>
+{% endif %}
 {% endblock %}
 {% block content %}
 <section class="section"><div class="container" style="max-width:640px">
@@ -19,8 +21,17 @@
       <p><span class="badge" style="background:#fef3c7;color:#92400e">Aucun abonnement actif</span></p>
       <p class="muted">{% if required %}Un abonnement actif est nécessaire pour créer et publier des événements.{% else %}Abonnez-vous pour profiter de la plateforme sans interruption.{% endif %}</p>
     {% endif %}
+    <p class="notice"><strong>0 % de commission</strong> sur toutes vos ventes tant que votre abonnement est actif (au lieu de {{ COMMISSION }} % par billet vendu).</p>
     <p style="font-size:1.6rem;font-weight:800;color:var(--green-900);margin:.4rem 0">{{ price|money }} <span class="muted small" style="font-weight:500">/ {{ days }} jours</span></p>
 
+    {% if fedapay %}
+    <form method="post" action="{% url 'subscriptions:pay' %}">{% csrf_token %}
+      <h3>Paiement</h3>
+      <p class="muted small">Paiement sécurisé par <strong>FedaPay</strong> : MTN MoMo, Moov Money, Celtiis, cartes bancaires… Vous choisirez votre moyen sur la page de paiement.</p>
+      <button class="btn btn-block" type="submit">{% if until %}Renouveler{% else %}S'abonner{% endif %} — {{ price|money }} avec FedaPay</button>
+      <p class="muted small center mt">Un reçu PDF vous est envoyé par e-mail après le paiement.</p>
+    </form>
+    {% else %}
     <form method="post" action="{% url 'subscriptions:pay' %}">{% csrf_token %}
       <h3>Moyens de paiement</h3>
       <p class="muted small">Disponibles pour votre pays : <span class="fi fi-{{ user.country|lower }}"></span> {{ user.country|country_name }}.</p>
@@ -36,6 +47,7 @@
       <button class="btn btn-block" type="submit">{% if until %}Renouveler{% else %}S'abonner{% endif %} — {{ price|money }}</button>
       <p class="muted small center mt">Un reçu PDF vous est envoyé par e-mail après le paiement.</p>
     </form>
+    {% endif %}
   </div>
   {% if history %}
   <h3 class="mt2">Historique</h3>

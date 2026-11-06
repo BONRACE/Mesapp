@@ -53,6 +53,7 @@
       <button class="btn" type="submit">Enregistrer</button>
     </form>
   </div>
+  {% if not user.is_organizer %}
   <div class="card mt2" style="border-color:#fecaca">
     <h3 style="color:var(--danger)">Supprimer mon compte</h3>
     <p class="muted small">Vos données personnelles seront effacées et vous ne pourrez plus vous connecter. Cette action est définitive.</p>
@@ -62,6 +63,7 @@
     {% endif %}
     <a class="btn btn-danger mt" href="{% url 'accounts:delete' %}">Supprimer mon compte</a>
   </div>
+  {% endif %}
 </div></section>
 {% if user.is_organizer %}<script>
 (() => {

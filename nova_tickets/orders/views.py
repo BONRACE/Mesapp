@@ -8,10 +8,12 @@ from django.views.decorators.http import require_POST
 
 from core.payments import find_method, methods_for_country
 from events.models import TicketType
+from payments import fedapay
+from payments.services import PaymentError
 
 from .models import Order, Ticket
 from .services import (
-    PurchaseError, create_order, order_receipt_pdf, pay_order, qr_png, start_mobile_money, ticket_pdf, tickets_pdf, verify_url,
+    PurchaseError, create_order, order_receipt_pdf, pay_order, qr_png, start_fedapay_order, start_mobile_money, ticket_pdf, tickets_pdf, verify_url,
 )
 
 
@@ -34,7 +36,7 @@ def checkout(request, pk):
 def _pay_context(request, order, methods):
     """Contexte de la page de paiement. Après une erreur de saisie, on garde le moyen choisi et le numéro tapé
     (sinon le premier moyen de la liste serait re-sélectionné et le client pourrait payer avec le mauvais opérateur)."""
-    return {"order": order, "methods": methods,
+    return {"order": order, "methods": methods, "fedapay": fedapay.enabled(),
             "selected": request.POST.get("method", ""), "phone": request.POST.get("phone", request.user.phone)}
 
 
@@ -44,6 +46,13 @@ def pay(request, reference):
     if order.status == Order.Status.PAID:
         return redirect("orders:confirmation", reference=order.reference)
     methods = methods_for_country(request.user.country)
+    if request.method == "POST" and fedapay.enabled():
+        try:
+            tx = start_fedapay_order(request, order)
+        except (PurchaseError, PaymentError) as exc:
+            messages.error(request, str(exc))
+            return render(request, "orders/pay.html", _pay_context(request, order, methods))
+        return redirect(fedapay.next_url(tx))
     if request.method == "POST":
         method = find_method(request.user.country, request.POST.get("method", ""))
         if method and method.get("provider"):
@@ -110,9 +119,16 @@ def ticket_pdf_view(request, reference):
     return resp
 
 
+@login_required
 def ticket_qr(request, reference):
-    ticket = get_object_or_404(Ticket, reference=reference)
-    return HttpResponse(qr_png(verify_url(ticket)), content_type="image/png")
+    """QR du billet : réservé au porteur (et à l'organisateur de l'événement). Il contient le lien signé de vérification :
+    le servir à n'importe qui annulerait l'intérêt de la signature."""
+    ticket = get_object_or_404(Ticket.objects.select_related("order__event"), reference=reference)
+    if request.user.id not in (ticket.order.buyer_id, ticket.order.event.organizer_id):
+        raise Http404
+    resp = HttpResponse(qr_png(verify_url(ticket)), content_type="image/png")
+    resp["Cache-Control"] = "private, no-store"
+    return resp
 
 
 def _pdf(content, filename):

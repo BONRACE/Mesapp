@@ -1,4 +1,6 @@
 from django import forms
+
+from core.validators import harden_image_fields
 from django.forms import inlineformset_factory
 
 from .models import Event, TicketType
@@ -19,6 +21,10 @@ class TimeInput(forms.TimeInput):
 
 
 class EventForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        harden_image_fields(self, "visual", "logo")
+
     class Meta:
         model = Event
         fields = ["name", "visual", "logo", "description", "location", "start_date", "end_date", "start_time", "purchase_deadline"]

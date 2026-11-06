@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, PasswordResetView
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -19,6 +19,20 @@ class NovaLoginView(LoginView):
 
     def get_success_url(self):
         return self.get_redirect_url() or home_for(self.request.user)
+
+
+class ThrottledPasswordResetView(PasswordResetView):
+    """Mot de passe oublié limité par IP (RESET_MAX_PER_HOUR/h) : évite le bombardement d'e-mails.
+
+    Au-delà de la limite, la réponse reste identique (« e-mail envoyé ») mais rien n'est envoyé : aucun signal exploitable."""
+
+    def form_valid(self, form):
+        from django.http import HttpResponseRedirect
+
+        from . import throttle
+        if throttle.hit_hourly(self.request, "reset"):
+            return HttpResponseRedirect(self.get_success_url())
+        return super().form_valid(form)
 
 
 def register_choice(request):
@@ -62,6 +76,9 @@ def delete_account_view(request):
 
     from .services import CONFIRM_WORD, blockers, delete_account
 
+    if request.user.is_organizer:               # la suppression en libre-service n'existe pas pour les organisateurs
+        messages.info(request, "La suppression de compte n'est pas disponible pour un compte organisateur. Contactez le support.")
+        return redirect("accounts:profile")
     reasons = blockers(request.user)
     if request.method == "POST":
         if reasons:

@@ -57,7 +57,10 @@
           <h3>Activer le partage</h3>
           <p class="muted small">Votre carte est en brouillon : vous seul la voyez. {% if price %}L'activation coûte <strong>{{ price|money }}</strong> (paiement unique par Mobile Money).{% else %}L'activation est gratuite.{% endif %}</p>
           <form method="post" action="{% url 'cards:activate' %}">{% csrf_token %}
-            {% if price %}
+            {% if price and fedapay %}
+            <p class="muted small">Paiement sécurisé par FedaPay (Mobile Money, carte…).</p>
+            <button class="btn btn-block" type="submit">Payer {{ price|money }} avec FedaPay</button>
+            {% elif price %}
             <div class="providers" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
               {% for radio in activation_form.provider %}<label class="method" style="margin:0">{{ radio.tag }}{{ radio.choice_label }}</label>{% endfor %}
             </div>

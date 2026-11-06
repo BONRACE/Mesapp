@@ -142,7 +142,9 @@ class NovaTests(TestCase):
         pdf = self.client.get(reverse("orders:ticket_pdf", args=[t.reference]))
         self.assertEqual(pdf["Content-Type"], "application/pdf")
         self.assertEqual(self.client.get(reverse("orders:ticket_qr", args=[t.reference]))["Content-Type"], "image/png")
-        self.assertEqual(self.client.get(reverse("core:verify", args=[t.reference])).status_code, 200)
+        from orders.services import ticket_signature
+        self.assertEqual(self.client.get(reverse("core:verify", args=[t.reference])).status_code, 404)        # lien non signé : refusé
+        self.assertEqual(self.client.get(reverse("core:verify", args=[t.reference]) + "?s=" + ticket_signature(t.reference)).status_code, 200)
 
     def test_http_organizer_blocked_on_own_event(self):
         self.client.login(username="o@t.test", password="pw-test-1234")

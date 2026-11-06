@@ -69,6 +69,11 @@ def process_payment(method, phone, amount):
 
     Pour tester un échec : utiliser un numéro finissant par 0000.
     """
+    from django.conf import settings
+
+    if not getattr(settings, "ALLOW_SIMULATED_PAYMENTS", False):
+        # Production : sans passerelle réelle branchée ici, on REFUSE (sinon n'importe qui obtiendrait des billets gratuits).
+        return False, "", "Ce moyen de paiement n'est pas encore disponible. Utilisez MTN MoMo ou Moov Money."
     digits = "".join(ch for ch in (phone or "") if ch.isdigit())
     if method["kind"] == "momo" and digits.endswith("0000"):
         return False, "", "Paiement refusé par l'opérateur (solde insuffisant — simulation)."

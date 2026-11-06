@@ -30,7 +30,7 @@ def activate_card(card):
     return card
 
 
-def start_activation(card, provider, phone, callback_url):
+def start_activation(card, provider, phone, callback_url, request=None):
     """Active tout de suite si la carte est gratuite, sinon lance un paiement MTN / Moov.
 
     Renvoie la Transaction à suivre, ou None si la carte a été activée directement.
@@ -43,9 +43,12 @@ def start_activation(card, provider, phone, callback_url):
     from payments.models import Transaction
     from payments.services import create_transaction, launch_push
 
+    from payments import fedapay
     pending = card.transactions.filter(status=Transaction.Status.PENDING).first()
-    if pending and (timezone.now() - pending.created_at).total_seconds() < 300:
+    if pending and (timezone.now() - pending.created_at).total_seconds() < (1800 if pending.checkout_url else 300):
         return pending
+    if fedapay.enabled():
+        return fedapay.start_checkout(request, user=card.user, amount=price, description="Activation carte de visite", business_card=card)
     tx = create_transaction(user_email=card.user.email, phone_number=phone, amount=price, provider=provider,
                             business_card=card, country=card.user.country)
     launch_push(tx, callback_url)

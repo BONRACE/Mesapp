@@ -28,7 +28,7 @@
 
     <div class="card mb">
       <div class="row between"><h3>Types de tickets</h3><button type="button" class="btn btn-outline btn-sm" id="tt-add">+ Ajouter un type</button></div>
-      <p class="muted small">Prix en {{ CURRENCY }}. Une commission de {{ COMMISSION }} % est prélevée sur chaque billet vendu.</p>
+      <p class="muted small">Prix en {{ CURRENCY }}. Une commission de {{ COMMISSION }} % est prélevée sur chaque billet vendu, <strong>sauf avec un abonnement organisateur actif (0 % de commission)</strong>.</p>
       {{ formset.non_form_errors }}
       <div id="tt-formset" data-prefix="tt">
         {{ formset.management_form }}

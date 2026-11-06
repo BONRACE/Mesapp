@@ -37,6 +37,13 @@ class BusinessCardForm(forms.ModelForm):
 
 class ActivationForm(forms.Form):
     """Paiement Mobile Money de l'activation de la carte."""
-    provider = forms.ChoiceField(label="Opérateur", choices=Transaction.Provider.choices, widget=forms.RadioSelect)
+    provider = forms.ChoiceField(label="Opérateur", choices=[c for c in Transaction.Provider.choices if c[0] != "FEDA"], widget=forms.RadioSelect, required=False)
     phone = forms.CharField(label="Numéro Mobile Money", max_length=20,
-                            widget=forms.TextInput(attrs={"inputmode": "tel", "placeholder": "01 97 00 00 01"}))
+                            widget=forms.TextInput(attrs={"inputmode": "tel", "placeholder": "01 97 00 00 01"}), required=False)
+
+    def clean(self):
+        data = super().clean()
+        from payments import fedapay
+        if not fedapay.enabled() and not (data.get("provider") and data.get("phone")):
+            raise forms.ValidationError("Choisissez un opérateur et saisissez votre numéro Mobile Money.")
+        return data

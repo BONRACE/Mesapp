@@ -79,6 +79,7 @@ Tests : `python manage.py test` (120+ tests : paiements, webhook, commandes, sca
 ### Abonnement organisateur
 - 5 000 FCFA pour 30 jours (`SUBSCRIPTION_PRICE`, `SUBSCRIPTION_DAYS`), réservé aux organisateurs : `/organisateur/abonnement/` (onglet « Abonnement » + bouton sur le tableau de bord).
 - Section « Moyens de paiement » : tous ceux du pays de l'organisateur (`core/payments.py`), rangés par famille — Mobile Money, carte, PayPal, virement. MTN MoMo / Moov Money : push + webhook ; les autres sont simulés (`process_payment`, à brancher sur FedaPay / KkiaPay / CinetPay / Stripe). Reçu PDF par e-mail dans tous les cas. Un renouvellement s'ajoute à la fin de la période en cours.
+- **Commission : 0 % pour un organisateur abonné** (abonnement actif au moment du paiement du billet) ; sans abonnement, 2,5 % (`PLATFORM_COMMISSION_PERCENT`). Les ventes passées ne changent pas.
 - `SUBSCRIPTION_REQUIRED=True` (dans `.env`) : sans abonnement actif, impossible de créer ou publier un événement. Désactivé par défaut.
 
 ### Signature de l'organisateur (reçus PDF + e-mails)
@@ -131,3 +132,22 @@ payments/    Transaction Mobile Money, webhook, page de suivi
 scanner/     contrôle d'entrée         cards/      cartes de visite
 analytics/   statistiques en direct    payouts/    moyens de retrait
 ```
+
+## Paiement en ligne avec FedaPay
+
+NovaTickets utilise **FedaPay** (Mobile Money MTN / Moov / Celtiis, cartes…) pour les billets, l'activation des cartes de visite et l'abonnement organisateur.
+
+Configuration (`.env`) :
+
+```
+PAYMENT_GATEWAY=fedapay
+FEDAPAY_ENV=sandbox            # puis live en production
+FEDAPAY_SECRET_KEY=sk_sandbox_...
+FEDAPAY_WEBHOOK_SECRET=wh_sandbox_...
+```
+
+1. Compte sur https://app.fedapay.com → clés API (sandbox pour tester, live pour de vrai).
+2. Webhooks → créer un endpoint `https://VOTRE-DOMAINE/paiement/webhook/` (événements `transaction.*`) et copier son secret `wh_...`.
+3. `python manage.py migrate`, relancer le serveur.
+
+Sécurité : le statut d'un paiement n'est jamais pris dans la requête reçue ; il est relu auprès de l'API FedaPay (clé secrète), avec contrôle du montant et traitement idempotent. Le webhook ne sert qu'à déclencher cette vérification. En production, `PAYMENT_GATEWAY=fedapay` désactive le webhook générique et exige clés et secret (démarrage refusé sinon). Le format exact de l'en-tête `X-FEDAPAY-SIGNATURE` n'étant pas détaillé par FedaPay, testez un vrai webhook en sandbox.

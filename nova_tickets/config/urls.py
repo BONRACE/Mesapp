@@ -3,8 +3,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from accounts.admin_login import ThrottledAdminAuthenticationForm
+
+admin.site.login_form = ThrottledAdminAuthenticationForm
+admin.site.site_header = "NovaTickets — administration"
+
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
     path("", include("core.urls")),
     path("compte/", include("accounts.urls")),
     path("", include("events.urls")),

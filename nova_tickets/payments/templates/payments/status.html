@@ -6,9 +6,15 @@
 {% if tx.is_pending %}
   <div class="state wait"><div class="spinner"></div></div>
   <h1>En attente de votre validation</h1>
+  {% if tx.checkout_url %}
+  <p class="center">Paiement de <strong>{{ tx.amount|floatformat:"0g" }} FCFA</strong> via FedaPay en cours de validation.<br>
+     Cette page se met à jour automatiquement dès que le paiement est confirmé.</p>
+  <p class="center"><a class="btn" href="{{ tx.checkout_url }}">Ouvrir / reprendre la page de paiement FedaPay</a></p>
+  {% else %}
   <p class="center">Une demande de paiement de <strong>{{ tx.amount|floatformat:"0g" }} FCFA</strong> a été envoyée au
      <strong>{{ tx.masked_phone }}</strong> ({{ tx.get_provider_display }}).<br>
      Composez votre code secret sur le téléphone pour confirmer. Cette page se met à jour automatiquement.</p>
+  {% endif %}
   {% if simulation %}
   <form method="post" action="{% url 'payments:simulate' tx.pk %}" class="dev">
     {% csrf_token %}

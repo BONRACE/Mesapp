@@ -5,6 +5,7 @@ from django import forms
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm
 
+from core.validators import harden_image_fields
 from core.countries import COUNTRIES, COUNTRY_CHOICES, DEFAULT_COUNTRY, DIAL_BY_CODE
 
 from .models import User
@@ -41,6 +42,19 @@ class LoginForm(AuthenticationForm):
     def clean_username(self):
         return self.cleaned_data["username"].strip()
 
+    def clean(self):
+        from . import throttle
+        ident = self.cleaned_data.get("username", "")
+        if throttle.is_locked(self.request, ident):
+            raise forms.ValidationError("Trop de tentatives de connexion. Réessayez dans quelques minutes ou réinitialisez votre mot de passe.", code="locked")
+        try:
+            data = super().clean()
+        except forms.ValidationError:
+            throttle.register_failure(self.request, ident)
+            raise
+        throttle.reset(self.request, ident)
+        return data
+
 
 def flag_emoji(code):
     """BJ -> 🇧🇯 (deux lettres régionales Unicode)."""
@@ -67,6 +81,7 @@ class BaseRegisterForm(PhoneMixin, forms.ModelForm):
         for name in ("last_name", "first_name", "sexe"):
             self.fields[name].required = True
         self.fields["sexe"].choices = [("", "Choisir…")] + list(User.Sexe.choices)
+        harden_image_fields(self, "photo", "org_logo")
 
     def clean_username(self):
         username = self.cleaned_data["username"].strip()
@@ -87,7 +102,9 @@ class BaseRegisterForm(PhoneMixin, forms.ModelForm):
         if p1 and p2 and p1 != p2:
             raise forms.ValidationError("Les mots de passe ne correspondent pas.")
         if p2:
-            password_validation.validate_password(p2)
+            d = self.cleaned_data       # le validateur de similarité compare le mot de passe au nom, à l'e-mail et à l'identifiant
+            password_validation.validate_password(p2, User(username=d.get("username", ""), email=d.get("email", ""),
+                                                           first_name=d.get("first_name", ""), last_name=d.get("last_name", "")))
         return p2
 
     def save(self, commit=True):
@@ -149,6 +166,7 @@ class ProfileForm(PhoneMixin, forms.ModelForm):
                 help_text="Ex : Adama Touré – Directeur. Utilisé avec « Signature avec le nom du manager ».")
             self.fields["signature_image"] = forms.ImageField(label="Importer une signature (image)", required=False)
             self.fields["signature_drawn"] = forms.CharField(required=False, widget=forms.HiddenInput)
+        harden_image_fields(self, "photo", "org_logo", "signature_image")
         self.fields["last_name"].required = True
         self.fields["first_name"].required = True
         self.fields["sexe"].required = True

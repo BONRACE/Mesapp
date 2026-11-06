@@ -37,8 +37,18 @@ def make_reference(prefix="NT", length=8):
     return f"{prefix}-" + "".join(secrets.choice(ALPHABET) for _ in range(length))
 
 
-def compute_amounts(total):
-    pct = Decimal(str(settings.PLATFORM_COMMISSION_PERCENT))
+def commission_percent(organizer=None):
+    """Taux de commission applicable à une vente de cet organisateur : 0 % avec un abonnement actif, sinon le taux standard (2,5 %)."""
+    if organizer is not None:
+        from subscriptions.services import is_active
+        if is_active(organizer):
+            return Decimal("0")
+    return Decimal(str(settings.PLATFORM_COMMISSION_PERCENT))
+
+
+def compute_amounts(total, organizer=None):
+    """(commission, part de l'organisateur). `organizer` : s'il a un abonnement actif, aucune commission n'est prélevée."""
+    pct = commission_percent(organizer)
     commission = int((Decimal(total) * pct / 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
     return commission, total - commission
 
@@ -57,7 +67,7 @@ def create_order(buyer, ticket_type, quantity):
     if ticket_type.remaining < quantity:
         raise PurchaseError(f"Il ne reste que {ticket_type.remaining} billet(s) de ce type.")
     total = ticket_type.price * quantity
-    commission, net = compute_amounts(total)
+    commission, net = compute_amounts(total, event.organizer)
     return Order.objects.create(
         reference=make_reference("CMD"), buyer=buyer, event=event, ticket_type=ticket_type,
         quantity=quantity, unit_price=ticket_type.price, total=total,
@@ -86,10 +96,37 @@ def finalize_order(order, method_key, method_label, phone, provider_ref):
             logger.error("Commande %s payée mais stock épuisé : remboursement nécessaire", order.reference)
             return order, False
         order.status = Order.Status.PAID
+        # La commission suit l'abonnement de l'organisateur AU MOMENT DU PAIEMENT (abonné : 0 %, sinon 2,5 %).
+        order.commission, order.organizer_amount = compute_amounts(order.total, order.event.organizer)
         order.save()
         for _ in range(order.quantity):
             Ticket.objects.create(order=order, reference=make_reference("TK", 10))
     return order, True
+
+
+def start_fedapay_order(request, order):
+    """Paiement d'une commande via la page FedaPay (Mobile Money, carte…). Renvoie la Transaction (à ouvrir via fedapay.next_url).
+
+    Mêmes garde-fous que le Mobile Money direct ; une transaction FedaPay encore en attente depuis moins de 30 min est reprise.
+    """
+    from datetime import timedelta
+
+    from payments import fedapay
+    from payments.models import Transaction
+
+    if order.status != Order.Status.PENDING:
+        raise PurchaseError("Cette commande n'est plus en attente de paiement.")
+    if order.buyer_id == order.event.organizer_id:
+        raise PurchaseError("Vous ne pouvez pas acheter de billets pour votre propre événement.")
+    if order.event.sales_closed:
+        raise PurchaseError("La vente des billets est terminée.")
+    if order.ticket_type.remaining < order.quantity:
+        raise PurchaseError("Stock épuisé entre-temps : il ne reste plus assez de billets.")
+    recent = order.transactions.filter(provider=Transaction.Provider.FEDAPAY, status=Transaction.Status.PENDING,
+                                       created_at__gte=timezone.now() - timedelta(minutes=30)).exclude(checkout_url="").first()
+    if recent:
+        return recent
+    return fedapay.start_checkout(request, user=order.buyer, amount=order.total, description=f"Billets {order.event.name}", order=order)
 
 
 def start_mobile_money(order, method, phone, callback_url):
@@ -191,8 +228,18 @@ def request_withdrawal(user, amount, payout_method):
 
 # ----------------------------------------------------------------------------- QR code
 
+def ticket_signature(reference):
+    """Signature courte (HMAC dérivé de SECRET_KEY) de la référence : le QR porte « ?s=… ».
+
+    Elle empêche d'énumérer des références au hasard sur la page publique de vérification, et de fabriquer un lien
+    de vérification valide sans avoir vu le vrai QR code. (Un QR photographié reste copiable : le premier scan gagne,
+    les suivants sont signalés « déjà utilisé » — voir scanner.services.check_in.)"""
+    from django.utils.crypto import salted_hmac
+    return salted_hmac("novatickets.ticket-qr.v1", reference).hexdigest()[:16]
+
+
 def verify_url(ticket):
-    return settings.SITE_URL.rstrip("/") + reverse("core:verify", args=[ticket.reference])
+    return settings.SITE_URL.rstrip("/") + reverse("core:verify", args=[ticket.reference]) + "?s=" + ticket_signature(ticket.reference)
 
 
 def qr_png(data, color=GREEN):

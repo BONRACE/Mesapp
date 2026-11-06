@@ -117,3 +117,59 @@ class SubscriptionTests(TestCase):
         self.assertContains(self.client.get(reverse("events:orga_dashboard")), url)
         self.client.force_login(mk("spectateur", 3))
         self.assertNotContains(self.client.get("/"), url)
+
+
+class CommissionWithSubscriptionTests(TestCase):
+    """Abonnement actif = 0 % de commission ; sinon 2,5 %."""
+
+    def setUp(self):
+        from core.tests_security import event, user
+        self.orga, self.fan = user("organisateur", 11), user("spectateur", 12)
+        self.ev, self.tt = event(self.orga)
+
+    def buy(self):
+        from orders.services import create_order, finalize_order
+        order = create_order(self.fan, self.tt, 2)
+        order, _ = finalize_order(order, "mtn_bj", "MTN MoMo", "229", "R")
+        order.refresh_from_db()
+        return order
+
+    def subscribe(self, days=30):
+        services.activate(Subscription.objects.create(user=self.orga, price=5000, days=days))
+
+    def test_without_subscription_commission_is_2_5_percent(self):
+        o = self.buy()
+        self.assertEqual((o.total, o.commission, o.organizer_amount), (20000, 500, 19500))
+
+    def test_with_active_subscription_no_commission(self):
+        self.subscribe()
+        o = self.buy()
+        self.assertEqual((o.total, o.commission, o.organizer_amount), (20000, 0, 20000))
+
+    def test_expired_subscription_commission_returns(self):
+        self.subscribe()
+        Subscription.objects.update(ends_at=timezone.now() - timedelta(minutes=1))
+        o = self.buy()
+        self.assertEqual((o.commission, o.organizer_amount), (500, 19500))
+
+    def test_commission_follows_subscription_at_payment_time(self):
+        from orders.services import create_order, finalize_order
+        order = create_order(self.fan, self.tt, 1)                  # créée sans abonnement : 250 prévus
+        self.assertEqual(order.commission, 250)
+        self.subscribe()                                           # l'organisateur s'abonne avant le paiement
+        order, _ = finalize_order(order, "mtn_bj", "MTN MoMo", "229", "R")
+        order.refresh_from_db()
+        self.assertEqual((order.commission, order.organizer_amount), (0, 10000))
+
+    def test_balance_and_dashboard_reflect_zero_commission(self):
+        from orders.services import organizer_balance
+        self.subscribe()
+        self.buy()
+        self.assertEqual(organizer_balance(self.orga), 20000)
+        self.client.force_login(self.orga)
+        self.assertContains(self.client.get(reverse("events:orga_dashboard")), "0 % — abonné")
+
+    def test_terms_and_subscription_page_mention_zero_commission(self):
+        self.assertContains(self.client.get(reverse("core:terms")), "aucune commission")
+        self.client.force_login(self.orga)
+        self.assertContains(self.client.get(reverse("subscriptions:index")), "0 % de commission")

@@ -45,7 +45,8 @@
     <li><strong>Spectateur</strong> : Utilisateur qui achète ou détient un billet.</li>
     <li><strong>Organisateur</strong> : Utilisateur qui crée un événement et vend des billets.</li>
     <li><strong>Billet</strong> : titre d'accès numérique, nominatif, identifié par une référence et un QR code uniques.</li>
-    <li><strong>Commission</strong> : rémunération de la Plateforme, égale à {{ COMMISSION }} % du prix de chaque billet vendu.</li>
+    <li><strong>Commission</strong> : rémunération de la Plateforme, égale à {{ COMMISSION }} % du prix de chaque billet vendu, sauf pour l'Organisateur disposant d'un Abonnement actif (0 %).</li>
+    <li><strong>Abonnement</strong> : formule payante de l'Organisateur ({{ sub_price|money }} pour {{ sub_days }} jours) qui supprime la commission sur ses ventes pendant sa durée de validité.</li>
     <li><strong>Moyen de paiement</strong> : service de paiement proposé selon le pays de l'Utilisateur (Mobile Money MTN MoMo, Moov Money, autres portefeuilles ou carte).</li>
   </ul>
 
@@ -143,6 +144,7 @@
     <li>Le calcul porte sur le total de la commande ; le résultat est arrondi au franc le plus proche (0,5 est arrondi au franc supérieur).</li>
     <li><em>Exemple :</em> pour un billet de 10 000 {{ CURRENCY }}, la commission est de 250 {{ CURRENCY }} et 9 750 {{ CURRENCY }} reviennent à l'Organisateur.</li>
     <li>Le taux applicable est celui en vigueur au moment de la vente. Toute modification est annoncée à l'avance et ne s'applique qu'aux ventes futures.</li>
+    <li><strong>Abonnement organisateur :</strong> tant que l'Organisateur dispose d'un Abonnement actif ({{ sub_price|money }} pour {{ sub_days }} jours, renouvelable), <strong>la Plateforme ne prélève aucune commission</strong> sur ses ventes : la totalité du prix du billet lui est reversée. Le taux de 0 % s'apprécie à la date du paiement du billet par le Spectateur ; à l'expiration de l'Abonnement, la commission de {{ COMMISSION }} % s'applique de nouveau aux ventes suivantes. Les ventes déjà réalisées ne sont pas modifiées. L'Abonnement n'est pas remboursable une fois la période entamée, sauf disposition légale contraire.</li>
   </ul>
   <h3>8.3 Reversement et retrait des gains</h3>
   <ul>

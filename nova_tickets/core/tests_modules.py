@@ -415,6 +415,8 @@ class PdfTests(ModulesBase):
         card = BusinessCard.objects.create(user=self.fan, full_name="K D")
         tx = Transaction.objects.create(user_email="f@t.test", phone_number="2290197000003", amount=100, provider="MTN",
                                         reference="NT-TEST-CARD", business_card=card, status="SUCCESS", paid_at=timezone.now())
+        self.assertEqual(self.client.get(reverse("payments:receipt_pdf", args=[tx.pk])).status_code, 404)   # anonyme : refusé
+        self.client.force_login(self.fan)
         self.assertEqual(self.client.get(reverse("payments:receipt_pdf", args=[tx.pk]))["Content-Type"], "application/pdf")
 
 

@@ -56,6 +56,12 @@ def webhook(request):
     Corps JSON attendu : {"reference": "...", "status": "APPROVED", "transaction_id": "...", "amount": 15000}
     """
     body = request.body
+    if "X-Fedapay-Signature" in request.headers:        # notification FedaPay : statut relu auprès de l'API
+        from . import fedapay
+        code, data = fedapay.handle_webhook(body, request.headers.get("X-Fedapay-Signature", ""))
+        return JsonResponse(data, status=code)
+    if getattr(settings, "PAYMENT_GATEWAY", "simulation") == "fedapay" and not settings.DEBUG:
+        return HttpResponse(status=403)                  # FedaPay actif en production : seules ses notifications signées passent
     if not signature_is_valid(body, request.headers.get("X-Signature", "")):
         logger.warning("Webhook refusé : signature invalide (IP %s)", request.META.get("REMOTE_ADDR"))
         return HttpResponse(status=403)
@@ -65,6 +71,16 @@ def webhook(request):
         reference, raw_status = payload["reference"], payload["status"]
     except (ValueError, KeyError, TypeError, AttributeError):
         return JsonResponse({"detail": "Corps invalide."}, status=400)
+
+    ts = payload.get("timestamp") if isinstance(payload, dict) else None
+    if ts is not None:                                   # anti-rejeu : une notification trop ancienne est refusée
+        import time
+        try:
+            if abs(time.time() - float(ts)) > getattr(settings, "MOMO_WEBHOOK_MAX_AGE", 600):
+                logger.warning("Webhook refusé : notification périmée (%s)", reference)
+                return JsonResponse({"detail": "Notification périmée."}, status=400)
+        except (TypeError, ValueError):
+            return JsonResponse({"detail": "Horodatage invalide."}, status=400)
 
     try:
         tx, changed = apply_gateway_status(
@@ -83,6 +99,16 @@ def webhook(request):
 
 # ----------------------------------------------------------------------------- 4. statut / reçu
 
+def _owner_or_404(request, tx):
+    """Une transaction liée à une commande / carte / abonnement n'est visible que par son propriétaire connecté
+    (l'UUID est non devinable, mais il peut fuiter : historique, capture d'écran, journal de proxy…).
+    Un paiement autonome (démo) reste accessible par son seul UUID."""
+    owner_id = (tx.order.buyer_id if tx.order_id else tx.business_card.user_id if tx.business_card_id
+                else tx.subscription.user_id if tx.subscription_id else None)
+    if owner_id is not None and (not request.user.is_authenticated or request.user.id != owner_id):
+        raise Http404
+
+
 def payment_status(request, pk):
     """Page de retour : attente (rafraîchissement auto), reçu si SUCCESS, message + relance si FAILED.
 
@@ -90,6 +116,10 @@ def payment_status(request, pk):
     d'URL de retour (redirect_url) pour la passerelle.
     """
     tx = get_object_or_404(Transaction, pk=pk)
+    _owner_or_404(request, tx)
+    if tx.provider == Transaction.Provider.FEDAPAY:      # retour depuis FedaPay : on relit le statut chez eux
+        from . import fedapay
+        tx = fedapay.sync(tx)
     return render(request, "payments/status.html", {
         "tx": tx,
         "refresh_seconds": 4 if tx.is_pending else 0,
@@ -100,12 +130,17 @@ def payment_status(request, pk):
 def payment_status_json(request, pk):
     """Même information en JSON, pour un éventuel rafraîchissement AJAX."""
     tx = get_object_or_404(Transaction, pk=pk)
+    _owner_or_404(request, tx)
+    if tx.provider == Transaction.Provider.FEDAPAY:
+        from . import fedapay
+        tx = fedapay.sync(tx)
     return JsonResponse({"reference": tx.reference, "status": tx.status})
 
 
 def receipt_pdf(request, pk):
     """Reçu PDF téléchargeable ; seulement une fois le paiement réussi (accès par UUID non devinable)."""
     tx = get_object_or_404(Transaction, pk=pk, status=Transaction.Status.SUCCESS)
+    _owner_or_404(request, tx)
     resp = HttpResponse(transaction_receipt_pdf(tx), content_type="application/pdf")
     resp["Content-Disposition"] = f'attachment; filename="recu-{tx.reference}.pdf"'
     return resp

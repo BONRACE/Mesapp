@@ -136,10 +136,16 @@ class DeleteAccountTests(TestCase):
         return User.objects.create_user(email=f"d{n}@x.test", username=f"d{n}", password="pw123456!", role=role,
                                         first_name="Ada", last_name="Zinsou", phone="+22997000000")
 
-    def test_profile_shows_delete_button_for_both_roles(self):
-        for i, role in enumerate(("spectateur", "organisateur")):
-            self.client.force_login(self.mk(role, i))
-            self.assertContains(self.client.get(reverse("accounts:profile")), reverse("accounts:delete"))
+    def test_delete_button_for_spectator_only(self):
+        self.client.force_login(self.mk("spectateur", 0))
+        self.assertContains(self.client.get(reverse("accounts:profile")), reverse("accounts:delete"))
+        o = self.mk("organisateur", 1)
+        self.client.force_login(o)
+        self.assertNotContains(self.client.get(reverse("accounts:profile")), reverse("accounts:delete"))
+        r = self.client.post(reverse("accounts:delete"), {"password": "pw123456!", "confirm": "SUPPRIMER"})
+        self.assertRedirects(r, reverse("accounts:profile"))
+        o.refresh_from_db()
+        self.assertTrue(o.is_active)
 
     def test_wrong_password_or_word_keeps_account(self):
         u = self.mk("spectateur", 1)
@@ -161,16 +167,6 @@ class DeleteAccountTests(TestCase):
         self.assertFalse(u.has_usable_password())
         self.assertNotIn("_auth_user_id", self.client.session)
         self.assertFalse(self.client.login(username="d2", password="pw123456!"))
-
-    def test_organizer_with_balance_is_blocked(self):
-        from unittest import mock
-        u = self.mk("organisateur", 3)
-        self.client.force_login(u)
-        with mock.patch("accounts.services.organizer_balance", return_value=5000):
-            self.client.post(reverse("accounts:delete"), {"password": "pw123456!", "confirm": "SUPPRIMER"})
-            self.assertContains(self.client.get(reverse("accounts:delete")), "solde")
-        u.refresh_from_db()
-        self.assertTrue(u.is_active)
 
     def test_organizer_deleted_unpublishes_events(self):
         from accounts.services import delete_account

@@ -18,7 +18,7 @@
     <div class="kpi main"><div class="label">Solde disponible</div><div class="value">{{ balance|money }}</div></div>
     <div class="kpi"><div class="label">Billets vendus</div><div class="value">{{ tickets }}</div></div>
     <div class="kpi"><div class="label">Ventes brutes</div><div class="value">{{ gross|money }}</div></div>
-    <div class="kpi"><div class="label">Commission ({{ COMMISSION }} %)</div><div class="value">{{ commission|money }}</div></div>
+    <div class="kpi"><div class="label">Commission ({% if subscribed %}0 % — abonné{% else %}{{ COMMISSION }} %{% endif %})</div><div class="value">{{ commission|money }}</div></div>
     <div class="kpi"><div class="label">Revenus nets</div><div class="value">{{ net|money }}</div></div>
   </div>
 

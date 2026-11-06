@@ -62,7 +62,7 @@
 {% block footer %}{% if not user.is_authenticated %}<footer class="footer">
   <div class="container">
     <div class="row"><img src="{% static 'img/logo-horizontal.png' %}" alt="{{ PLATFORM_NAME }}" height="34" style="height:34px;width:auto"><span>La billetterie en ligne pour l'Afrique de l'Ouest.</span></div>
-    <span>Commission plateforme : {{ COMMISSION }} % par billet vendu · <a href="{% url 'core:terms' %}">Conditions d'utilisation</a></span>
+    <span>Commission plateforme : {{ COMMISSION }} % par billet vendu (0 % avec l'abonnement organisateur) · <a href="{% url 'core:terms' %}">Conditions d'utilisation</a></span>
   </div>
 </footer>{% endif %}{% endblock %}
 
